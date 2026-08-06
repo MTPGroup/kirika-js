@@ -3,8 +3,20 @@
 	"version": "0.1.0",
 	"license": "MIT",
 	"scripts": {
-		"build": "tsdown",
-		"test": "vitest run"
+		"build": "tsdown --dts",
+		"test": "vitest run",
+		"lint": "biome check .",
+		"check-types": "tsc --noEmit"
+	},
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.mts",
+			"import": "./dist/index.mjs"
+		}
 	},
 	"dependencies": {
 		"crc": "^4.3.2",

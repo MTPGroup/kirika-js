@@ -1,103 +1,101 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { parseJsonCharacterCard, parsePngCharacterCard } from '../src/parsers'
+import { createValidV1Card, createValidV2Card } from './helpers/cards'
 
 describe('parseJsonCharacterCard', () => {
-	it('应该能够成功解析标准 CCv2 JSON 格式', () => {
-		const validCCv2Json = JSON.stringify({
+	test('严格解析标准 CCv2 JSON', () => {
+		const card = createValidV2Card({
+			name: '爱丽丝',
+			alternate_greetings: ['嗨！', '早安！'],
+			extensions: { 'test/value': { enabled: true } },
+		})
+		expect(parseJsonCharacterCard(JSON.stringify(card))).toEqual(card)
+	})
+
+	test('将字段完整的 TavernAI V1 升级为 CCv2', () => {
+		const v1 = createValidV1Card({ name: '旧版角色' })
+		const result = parseJsonCharacterCard(JSON.stringify(v1))
+
+		expect(result).toEqual({
 			spec: 'chara_card_v2',
 			spec_version: '2.0',
 			data: {
-				name: '爱丽丝',
-				description: '性格温和的 AI 助手。',
-				personality: '友善、细心',
-				scenario: '在实验室中',
-				first_mes: '你好！有什么我可以帮你的？',
-				mes_example: '<user>: 你好\n<bot>: 你好呀！',
-				creator_notes: '测试角色卡',
+				...v1,
+				creator_notes: '',
 				system_prompt: '',
 				post_history_instructions: '',
-				alternate_greetings: ['嗨！', '早安！'],
-				tags: ['AI', '助手'],
-				creator: 'Developer',
-				character_version: '1.0',
+				alternate_greetings: [],
+				tags: [],
+				creator: '',
+				character_version: '',
 				extensions: {},
 			},
 		})
-
-		const result = parseJsonCharacterCard(validCCv2Json)
-
-		expect(result.spec).toBe('chara_card_v2')
-		expect(result.data.name).toBe('爱丽丝')
-		expect(result.data.alternate_greetings).toEqual(['嗨！', '早安！'])
 	})
 
-	it('应该能够将 TavernAI V1 平铺格式自动升级为 CCv2', () => {
-		const v1Json = JSON.stringify({
-			name: '旧版角色',
-			description: '这是一个旧版 TavernAI 角色卡',
-			personality: '沉稳',
-			scenario: '无',
-			first_mes: '你好。',
-			mes_example: '',
-		})
-
-		const result = parseJsonCharacterCard(v1Json)
-
-		expect(result.spec).toBe('chara_card_v2')
-		expect(result.spec_version).toBe('2.0')
-		expect(result.data.name).toBe('旧版角色')
-		expect(result.data.description).toBe('这是一个旧版 TavernAI 角色卡')
+	test('拒绝缺失字段、错误类型和 extensions 外的未知字段', () => {
+		expect(() =>
+			parseJsonCharacterCard(
+				JSON.stringify({ ...createValidV1Card(), personality: null }),
+			),
+		).toThrow()
+		expect(() =>
+			parseJsonCharacterCard(
+				JSON.stringify({
+					...createValidV2Card(),
+					data: { name: 'Incomplete' },
+				}),
+			),
+		).toThrow()
+		expect(() =>
+			parseJsonCharacterCard(
+				JSON.stringify({
+					...createValidV2Card(),
+					data: { ...createValidV2Card().data, avatar: 'avatar.png' },
+				}),
+			),
+		).toThrow()
 	})
 
-	it('对于缺失的可选字段，应该自动使用默认安全值（如空字符串/空数组）', () => {
-		const incompleteJson = JSON.stringify({
-			spec: 'chara_card_v2',
-			spec_version: '2.0',
-			data: {
-				name: '测试角色',
-				// 故意缺失 description, personality 等，甚至传入 null
-				description: null,
-				alternate_greetings: null,
-			},
-		})
-
-		const result = parseJsonCharacterCard(incompleteJson)
-
-		expect(result.data.name).toBe('测试角色')
-		expect(result.data.description).toBe('')
-		expect(result.data.alternate_greetings).toEqual([])
-		expect(result.data.extensions).toEqual({})
-	})
-
-	it('对于无效的 JSON 文本，应该抛出 Error 异常', () => {
-		expect(() => parseJsonCharacterCard('invalid json string')).toThrow(
-			/Failed to parse JSON/,
+	test('支持 UTF-8 Uint8Array，并拒绝非法 UTF-8', () => {
+		const input = new TextEncoder().encode(
+			JSON.stringify(createValidV2Card({ name: '辉夜 🌙' })),
 		)
+		expect(parseJsonCharacterCard(input).data.name).toBe('辉夜 🌙')
+		expect(() =>
+			parseJsonCharacterCard(new Uint8Array([0x7b, 0xff, 0x7d])),
+		).toThrow()
+	})
+
+	test('拒绝无效 JSON、非对象根节点和错误规范版本', () => {
+		expect(() => parseJsonCharacterCard('invalid json')).toThrow(
+			'Failed to parse JSON string',
+		)
+		for (const input of ['null', '42', '"plain text"', '[]']) {
+			expect(() => parseJsonCharacterCard(input)).toThrow(
+				'Invalid character card format: Root must be an object',
+			)
+		}
+		expect(() =>
+			parseJsonCharacterCard(
+				JSON.stringify({ ...createValidV2Card(), spec_version: '2.1' }),
+			),
+		).toThrow()
 	})
 })
 
 describe('parsePngCharacterCard', () => {
-	it('非法 PNG 魔数头应该直接抛出 Invalid .png file header 错误', () => {
-		const invalidBuffer = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04])
-		expect(() => parsePngCharacterCard(invalidBuffer)).toThrow(
-			/Invalid .png file header/,
+	test('严格拒绝真实文件中的非标准字段和无角色卡数据', () => {
+		const extendedCard = fs.readFileSync(
+			path.join(__dirname, 'fixtures/valid-card.png'),
 		)
-	})
+		expect(() => parsePngCharacterCard(extendedCard)).toThrow()
 
-	it('应该能成功从真实 PNG 角色卡图片中解析出 spec', () => {
-		const fixturePath = path.join(__dirname, 'fixtures/valid-card.png')
-		if (fs.existsSync(fixturePath)) {
-			const buffer = fs.readFileSync(fixturePath)
-			const card = parsePngCharacterCard(buffer)
-			expect(card.spec).toBe('chara_card_v2')
-		}
-	})
-
-	it('应该无法从错误的 PNG 图片中解析出角色卡并抛出异常', () => {
-		const fixturePath = path.join(__dirname, 'fixtures/invalid-card.png')
-		const buffer = fs.readFileSync(fixturePath)
-		expect(() => parsePngCharacterCard(buffer)).toThrow()
+		const noCard = fs.readFileSync(
+			path.join(__dirname, 'fixtures/invalid-card.png'),
+		)
+		expect(() => parsePngCharacterCard(noCard)).toThrow()
 	})
 })

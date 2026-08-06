@@ -1,9 +1,33 @@
 import type { CharacterCardV2 } from '../validators'
-import { extractChunks } from './png-chunk-extractor'
+import { parseJsonCharacterCard } from './json-parser'
+import {
+	extractChunks,
+	type PngChunkExtractionOptions,
+} from './png-chunk-extractor'
 
-export function parsePngCharacterCard(buffer: Uint8Array): CharacterCardV2 {
-	const chunks = extractChunks(buffer)
-	const decoder = new TextDecoder('utf-8')
+export interface PngCharacterCardParseOptions
+	extends PngChunkExtractionOptions {
+	maxCharacterDataBytes?: number
+}
+
+const DEFAULT_MAX_CHARACTER_DATA_BYTES = 4 * 1024 * 1024
+
+export function parsePngCharacterCard(
+	buffer: Uint8Array,
+	options: PngCharacterCardParseOptions = {},
+): CharacterCardV2 {
+	const maxCharacterDataBytes =
+		options.maxCharacterDataBytes ?? DEFAULT_MAX_CHARACTER_DATA_BYTES
+	if (
+		!Number.isSafeInteger(maxCharacterDataBytes) ||
+		maxCharacterDataBytes <= 0
+	) {
+		throw new Error('maxCharacterDataBytes must be a positive safe integer')
+	}
+
+	const chunks = extractChunks(buffer, options)
+	const decoder = new TextDecoder('utf-8', { fatal: true })
+	let characterData: Uint8Array | undefined
 
 	for (const chunk of chunks) {
 		if (chunk.name === 'tEXt') {
@@ -13,28 +37,26 @@ export function parsePngCharacterCard(buffer: Uint8Array): CharacterCardV2 {
 			const keyword = decoder.decode(chunk.data.subarray(0, nullIndex))
 
 			if (keyword === 'chara') {
-				const base64Str = decoder.decode(chunk.data.subarray(nullIndex + 1))
-
-				// 容错解决多字节 UTF-8 (中文/Emoji) 乱码问题
-				const binaryStr = atob(base64Str)
-				const bytes = Uint8Array.from(binaryStr, (m) => m.charCodeAt(0))
-				const jsonStr = decoder.decode(bytes)
-
-				const parsed = JSON.parse(jsonStr)
-
-				// 针对 V1 (平铺结构) 自动升级为标准的 CCv2
-				if (!parsed.spec && parsed.name) {
-					return {
-						spec: 'chara_card_v2',
-						spec_version: '2.0',
-						data: parsed,
-					} as CharacterCardV2
+				if (characterData) {
+					throw new Error('PNG contains multiple character card data chunks')
 				}
-
-				return parsed as CharacterCardV2
+				characterData = chunk.data.subarray(nullIndex + 1)
 			}
 		}
 	}
 
-	throw new Error('No character card data (chara tEXt chunk) found in PNG.')
+	if (!characterData) {
+		throw new Error('No character card data (chara tEXt chunk) found in PNG.')
+	}
+	if (characterData.length > maxCharacterDataBytes) {
+		throw new Error(
+			`Character card data exceeds size limit of ${maxCharacterDataBytes} bytes`,
+		)
+	}
+
+	const base64Str = decoder.decode(characterData)
+	const binaryStr = atob(base64Str)
+	const bytes = Uint8Array.from(binaryStr, (value) => value.charCodeAt(0))
+	const jsonStr = decoder.decode(bytes)
+	return parseJsonCharacterCard(jsonStr)
 }

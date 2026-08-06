@@ -1,37 +1,42 @@
 import { z } from 'zod'
-import { recordDefault, stringArrayDefault, stringDefault } from './helpers'
+import { ExtensionsSchema } from './helpers'
 import { CharacterBookSchema } from './lorebook-schema'
 
-export const CharacterCardV2DataSchema = z.object({
-	name: z
-		.string()
-		.min(1, '角色名字不能为空')
-		.nullish()
-		.catch('Unnamed')
-		.transform((val) => val ?? 'Unnamed'),
-	description: stringDefault(),
-	personality: stringDefault(),
-	scenario: stringDefault(),
-	first_mes: stringDefault(),
-	mes_example: stringDefault(),
-
-	creator_notes: stringDefault(),
-	system_prompt: stringDefault(),
-	post_history_instructions: stringDefault(),
-	alternate_greetings: stringArrayDefault(),
-	character_book: CharacterBookSchema.optional(),
-
-	tags: stringArrayDefault(),
-	creator: stringDefault(),
-	character_version: stringDefault(),
-	extensions: recordDefault(),
+export const TavernCardV1Schema = z.strictObject({
+	name: z.string(),
+	description: z.string(),
+	personality: z.string(),
+	scenario: z.string(),
+	first_mes: z.string(),
+	mes_example: z.string(),
 })
 
-export const CharacterCardV2Schema = z.object({
+export const CharacterCardV2DataSchema = z.strictObject({
+	name: z.string(),
+	description: z.string(),
+	personality: z.string(),
+	scenario: z.string(),
+	first_mes: z.string(),
+	mes_example: z.string(),
+
+	creator_notes: z.string(),
+	system_prompt: z.string(),
+	post_history_instructions: z.string(),
+	alternate_greetings: z.array(z.string()),
+	character_book: CharacterBookSchema.optional(),
+
+	tags: z.array(z.string()),
+	creator: z.string(),
+	character_version: z.string(),
+	extensions: ExtensionsSchema,
+})
+
+export const CharacterCardV2Schema = z.strictObject({
 	spec: z.literal('chara_card_v2'),
-	spec_version: z.string().default('2.0'),
+	spec_version: z.literal('2.0'),
 	data: CharacterCardV2DataSchema,
 })
 
+export type TavernCardV1 = z.infer<typeof TavernCardV1Schema>
 export type CharacterCardV2Data = z.infer<typeof CharacterCardV2DataSchema>
 export type CharacterCardV2 = z.infer<typeof CharacterCardV2Schema>

@@ -1,33 +1,57 @@
-import { crc32 } from 'crc'
+import crc32 from 'crc/calculators/crc32'
 
 export interface PngChunk {
 	name: string
 	data: Uint8Array
 }
+
+export interface PngChunkExtractionOptions {
+	maxFileBytes?: number
+	maxChunkBytes?: number
+}
+
+const DEFAULT_MAX_FILE_BYTES = 20 * 1024 * 1024
+const DEFAULT_MAX_CHUNK_BYTES = 10 * 1024 * 1024
+
+function validatePositiveInteger(value: number, name: string): number {
+	if (!Number.isSafeInteger(value) || value <= 0) {
+		throw new Error(`${name} must be a positive safe integer`)
+	}
+	return value
+}
 /**
- * 从 PNG 格式的二进制 Buffer 中解析并提取所有的 PNG Chunk 块。
+ * 从 PNG 格式的二进制 Buffer 中解析并提取所有的 PNG Chunk
  *
  * @param buffer - 完整的 PNG 图片文件二进制数据 (Uint8Array)
+ * @param options - 文件与单个 Chunk 的大小限制
  * @returns 解析得到的 PNG 块对象数组
+ * @throws {Error} 当文件头、Chunk 结构、CRC、大小或结束标记不合法时抛出
  *
- * @throws {Error} 当 PNG 魔数头不匹配、缺少 IHDR 头、CRC32 校验失败或文件非正常截断时抛出异常
- *
- * @copyright Based on png-chunks-extract by Hugh Kennedy (MIT License)
+ * @copyright Adapted from png-chunks-extract by Hugh Kennedy (MIT)
  * @see {@link https://github.com/hughsk/png-chunks-extract}
- *
- * License Notice:
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software.
  */
-export function extractChunks(buffer: Uint8Array): PngChunk[] {
-	const uint8 = new Uint8Array(4)
-	const int32 = new Int32Array(uint8.buffer)
-	const uint32 = new Uint32Array(uint8.buffer)
+export function extractChunks(
+	buffer: Uint8Array,
+	options: PngChunkExtractionOptions = {},
+): PngChunk[] {
+	const maxFileBytes = validatePositiveInteger(
+		options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES,
+		'maxFileBytes',
+	)
+	const maxChunkBytes = validatePositiveInteger(
+		options.maxChunkBytes ?? DEFAULT_MAX_CHUNK_BYTES,
+		'maxChunkBytes',
+	)
+
+	if (!(buffer instanceof Uint8Array)) {
+		throw new Error('Invalid input: Expected Uint8Array')
+	}
+	if (buffer.length > maxFileBytes) {
+		throw new Error(`PNG file exceeds size limit of ${maxFileBytes} bytes`)
+	}
 
 	if (
+		buffer.length < 8 ||
 		buffer[0] !== 0x89 ||
 		buffer[1] !== 0x50 ||
 		buffer[2] !== 0x4e ||
@@ -43,49 +67,47 @@ export function extractChunks(buffer: Uint8Array): PngChunk[] {
 	let ended = false
 	const chunks: PngChunk[] = []
 	let idx = 8
+	let seenIhdr = false
+	const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
 
 	while (idx < buffer.length) {
-		uint8[3] = buffer[idx++]
-		uint8[2] = buffer[idx++]
-		uint8[1] = buffer[idx++]
-		uint8[0] = buffer[idx++]
+		if (buffer.length - idx < 12) {
+			throw new Error('.png file ended prematurely while reading a chunk')
+		}
 
-		const dataLength = uint32[0]
-		const length = dataLength + 4
-		const chunk = new Uint8Array(length)
+		const dataLength = view.getUint32(idx)
+		if (dataLength > maxChunkBytes) {
+			throw new Error(`PNG chunk exceeds size limit of ${maxChunkBytes} bytes`)
+		}
 
-		chunk[0] = buffer[idx++]
-		chunk[1] = buffer[idx++]
-		chunk[2] = buffer[idx++]
-		chunk[3] = buffer[idx++]
+		const typeStart = idx + 4
+		const dataStart = typeStart + 4
+		const dataEnd = dataStart + dataLength
+		const chunkEnd = dataEnd + 4
+		if (chunkEnd > buffer.length) {
+			throw new Error('.png file ended prematurely while reading a chunk')
+		}
 
 		const name =
-			String.fromCharCode(chunk[0]) +
-			String.fromCharCode(chunk[1]) +
-			String.fromCharCode(chunk[2]) +
-			String.fromCharCode(chunk[3])
+			String.fromCharCode(buffer[typeStart]) +
+			String.fromCharCode(buffer[typeStart + 1]) +
+			String.fromCharCode(buffer[typeStart + 2]) +
+			String.fromCharCode(buffer[typeStart + 3])
 
 		if (chunks.length === 0 && name !== 'IHDR') {
 			throw new Error('IHDR header missing')
 		}
-
-		if (name === 'IEND') {
-			ended = true
-			chunks.push({ name, data: new Uint8Array(0) })
-			break
+		if (name === 'IHDR') {
+			if (seenIhdr) throw new Error('PNG contains multiple IHDR chunks')
+			if (dataLength !== 13) throw new Error('Invalid IHDR chunk length')
+			seenIhdr = true
+		}
+		if (name === 'IEND' && dataLength !== 0) {
+			throw new Error('Invalid IEND chunk length')
 		}
 
-		for (let i = 4; i < length; i++) {
-			chunk[i] = buffer[idx++]
-		}
-
-		uint8[3] = buffer[idx++]
-		uint8[2] = buffer[idx++]
-		uint8[1] = buffer[idx++]
-		uint8[0] = buffer[idx++]
-
-		const crcActual = int32[0]
-		const crcExpect = crc32(chunk) | 0
+		const crcActual = view.getUint32(dataEnd)
+		const crcExpect = crc32(buffer.subarray(typeStart, dataEnd)) >>> 0
 
 		if (crcExpect !== crcActual) {
 			throw new Error(`CRC values for ${name} header do not match`)
@@ -93,8 +115,17 @@ export function extractChunks(buffer: Uint8Array): PngChunk[] {
 
 		chunks.push({
 			name,
-			data: chunk.subarray(4),
+			data: buffer.subarray(dataStart, dataEnd),
 		})
+		idx = chunkEnd
+
+		if (name === 'IEND') {
+			ended = true
+			if (idx !== buffer.length) {
+				throw new Error('Unexpected data found after IEND chunk')
+			}
+			break
+		}
 	}
 
 	if (!ended) {

@@ -6,8 +6,9 @@
 		"dev": "turbo run dev",
 		"test": "turbo run test",
 		"lint": "turbo run lint",
-		"format": "turbo run format",
-		"check-type": "biome check --write ."
+		"format": "biome format --write .",
+		"check-types": "turbo run check-types",
+		"check": "pnpm lint && pnpm check-types && pnpm test && pnpm build"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.7",
