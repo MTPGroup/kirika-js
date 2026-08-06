@@ -1,0 +1,8 @@
+{
+	"compilerOptions": {
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"types": ["node", "vitest/globals"]
+	},
+	"include": ["src", "test"]
+}
