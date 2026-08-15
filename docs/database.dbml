@@ -1,0 +1,164 @@
+Table characters {
+  id uuid [pk]
+  owner_id uuid [not null]
+  current_revision_id uuid
+  alias text
+
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    owner_id
+  }
+
+}
+
+Table character_revisions {
+  id uuid [pk]
+  character_id uuid [not null]
+
+  version integer [not null, default: 0, check: `version >= 0`]
+  name text [not null]
+  description text [not null, default: ""]
+  personality text [not null, default: ""]
+  scenario text [not null, default: ""]
+
+  system_prompt text [not null, default: ""]
+  post_history_instructions text [not null, default: ""]
+
+  greetings text[]
+  examples text[]
+
+  extensions jsonb [not null, default: `'{}'::jsonb`]
+
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Ref: character_revisions.character_id > characters.id [delete: cascade]
+Ref: character_revisions.(id, character_id) - characters.(current_revision_id, id)
+
+Enum asset_kind {
+  avatar
+  background
+  emotion
+  audio
+  video
+  model
+  other
+}
+
+Table assets {
+  id uuid [pk]
+  storage_key text
+  media_type text
+  byte_size bigint [check: `byte_size >= 0`]
+  sha256 bytea [check: `octet_length(sha256) = 32`]
+}
+
+Table revision_assets {
+  character_revision_id uuid [not null]
+  asset_id uuid [not null]
+  ordinal integer [not null, default: 0, check: `ordinal >= 0`]
+
+  kind asset_kind [not null]
+  name text [not null]
+  uri text [not null]
+  extensions jsonb [not null, default: `'{}'::jsonb`]
+
+  indexes {
+    (character_revision_id, kind, ordinal) [pk, name: "pk_revision_assets"]
+    asset_id [name: 'idx_revision_assets_asset_id']
+  }
+
+}
+
+Ref: revision_assets.character_revision_id > character_revisions.id [delete: cascade]
+Ref: revision_assets.asset_id > assets.id [delete: restrict]
+
+Table lorebooks {
+  id uuid [pk]
+  owner_id uuid [not null]
+  current_revision_id uuid
+
+  alias text
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    owner_id
+  }
+
+}
+
+Table lorebook_revisions {
+  id uuid [pk]
+  lorebook_id uuid [not null]
+
+  version integer [not null, default: 0, check: `version >= 0`]
+  name text [not null]
+  description text [not null, default: ""]
+
+  scan_messages integer [not null, default: 20, check: `scan_messages >= 0`]
+  token_budget integer [not null, default: 5120, check: `token_budget >= 0`]
+
+  recursive bool [not null, default: false]
+  extensions jsonb [not null, default: `'{}'::jsonb`]
+
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    lorebook_id
+    (id, lorebook_id) [unique, name: 'uq_lorebook_revision_identity']
+    (lorebook_id, version) [unique, name: 'uq_lorebook_revision_version']
+  }
+
+}
+
+Ref: lorebook_revisions.lorebook_id > lorebooks.id [delete: cascade]
+Ref: lorebook_revisions.(id, lorebook_id) - lorebooks.(current_revision_id, id)
+
+Enum lore_entry_position {
+  before_history
+  after_history
+}
+
+Table lorebook_entries {
+  id uuid [pk]
+  lorebook_revision_id uuid [not null]
+
+  entry_key text [not null]
+  ordinal integer [not null, default: 0]
+
+  title text [not null, default: ""]
+  enabled bool [not null, default: true]
+  content text [not null, default: ""]
+  position lore_entry_position [not null, default: lore_entry_position.before_history]
+  priority integer [not null, default: 0]
+  max_tokens integer [check: `max_tokens >= 0`, note: "NULL 表示无限制"]
+
+  indexes {
+    (lorebook_revision_id, entry_key) [unique, name: 'uq_lorebook_entries_key']
+    (lorebook_revision_id, ordinal) [unique, name: 'uq_lorebook_entries_ordinal']
+  }
+
+}
+
+Ref: lorebook_entries.lorebook_revision_id > lorebook_revisions.id [delete: cascade]
+
+Table character_revision_lorebooks {
+  character_revision_id uuid [not null]
+  lorebook_revision_id uuid [not null]
+
+  ordinal integer [not null, default: 0, check: `ordinal >= 0`]
+  enabled bool [not null, default: true]
+
+  indexes {
+    (character_revision_id, lorebook_revision_id) [pk, name: 'pk_character_revision_lorebooks']
+    (character_revision_id, ordinal) [unique, name: 'uq_character_revision_lorebook_ordinal']
+    lorebook_revision_id
+  }
+
+}
+
+Ref: character_revision_lorebooks.character_revision_id > character_revisions.id [delete: cascade]
+Ref: character_revision_lorebooks.lorebook_revision_id > lorebook_revisions.id [delete: restrict]
