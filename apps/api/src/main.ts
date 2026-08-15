@@ -17,6 +17,8 @@ async function bootstrap() {
 		jsonDocumentUrl: 'swagger/json',
 	})
 
+	app.enableShutdownHooks()
+
 	const _appConfig = app.get<ConfigType<typeof appConfig>>(appConfig.KEY)
 	await app.listen(_appConfig.port)
 }

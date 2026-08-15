@@ -5,7 +5,7 @@
 		"target": "ES2025",
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"types": ["node", "express", "supertest"],
+		"types": ["node", "express", "supertest", "pg"],
 		"resolvePackageJsonExports": true,
 		"isolatedModules": true,
 		"experimentalDecorators": true,

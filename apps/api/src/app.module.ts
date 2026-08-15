@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { appConfig } from './app.config'
+import { DatabaseModule } from './database/database.module';
 
 @Module({
 	imports: [
@@ -9,6 +10,7 @@ import { appConfig } from './app.config'
 			cache: true,
 		}),
 		ConfigModule.forFeature(appConfig),
+		DatabaseModule,
 	],
 	controllers: [],
 	providers: [],
