@@ -10,11 +10,14 @@ export default defineConfig({
 	plugins: [
 		swc.vite({
 			module: { type: 'es6' },
+			jsc: {
+				target: 'es2022',
+			},
 		}),
 	],
 	resolve: {
 		alias: {
-			src: resolve(__dirname, './src'),
+			src: resolve(import.meta.dirname, './src'),
 		},
 	},
 })
