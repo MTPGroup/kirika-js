@@ -12,4 +12,5 @@ catalog:
   zod: ^4.4.3
 
 allowBuilds:
+  '@scarf/scarf': true
   "@swc/core": true
