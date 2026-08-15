@@ -1,5 +1,7 @@
+import type { ConfigType } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import { appConfig } from './app.config'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
@@ -15,6 +17,7 @@ async function bootstrap() {
 		jsonDocumentUrl: 'swagger/json',
 	})
 
-	await app.listen(process.env.PORT ?? 3000)
+	const _appConfig = app.get<ConfigType<typeof appConfig>>(appConfig.KEY)
+	await app.listen(_appConfig.port)
 }
 bootstrap()
