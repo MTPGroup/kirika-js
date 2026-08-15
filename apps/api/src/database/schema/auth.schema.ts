@@ -87,16 +87,17 @@ export const authRelations = defineRelationsPart(
 			}),
 		},
 		sessions: {
-			user: r.one.users({
+			users: r.one.users({
 				from: r.sessions.userId,
 				to: r.users.id,
 			}),
 		},
 		accounts: {
-			user: r.one.users({
+			users: r.one.users({
 				from: r.accounts.userId,
 				to: r.users.id,
 			}),
 		},
+		verifications: {},
 	}),
 )
