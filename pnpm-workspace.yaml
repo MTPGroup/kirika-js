@@ -5,8 +5,11 @@ packages:
 disallowWorkspaceCycles: true
 
 catalog:
-  "@biomejs/biome": 2.5.7
+  "@biomejs/biome": 2.5.8
   tsdown: ^0.22.14
-  typescript: 5.9.2
+  typescript: ^7.0.2
   vitest: ^4.1.10
   zod: ^4.4.3
+
+allowBuilds:
+  "@swc/core": true
