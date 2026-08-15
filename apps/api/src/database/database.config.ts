@@ -1,16 +1,21 @@
+import 'dotenv/config'
 import { registerAs } from '@nestjs/config'
 import { z } from 'zod'
 
-export const databaseConfig = registerAs('database', () => {
-	const environment = z
-		.object({
-			DATABASE_URL: z.string().min(1),
-			DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
-		})
-		.parse(process.env)
+const databaseEnvironmentSchema = z.object({
+	DATABASE_URL: z.string().min(1),
+	DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
+})
+
+export function parseDatabaseConfig(environment: NodeJS.ProcessEnv) {
+	const result = databaseEnvironmentSchema.parse(environment)
 
 	return {
-		url: environment.DATABASE_URL,
-		poolMax: environment.DATABASE_POOL_MAX,
+		url: result.DATABASE_URL,
+		poolMax: result.DATABASE_POOL_MAX,
 	}
-})
+}
+
+export const databaseConfig = registerAs('database', () =>
+	parseDatabaseConfig(process.env),
+)

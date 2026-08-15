@@ -3,15 +3,13 @@ import type { ConfigType } from '@nestjs/config'
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { databaseConfig } from './database.config'
-import * as schema from './schema'
-
-export type Database = NodePgDatabase<typeof schema>
+import { authRelations } from './schema'
 
 @Injectable()
 export class DatabaseService implements OnApplicationShutdown {
 	private readonly pool: Pool
 
-	readonly db: Database
+	readonly db: NodePgDatabase
 
 	constructor(
 		@Inject(databaseConfig.KEY)
@@ -24,6 +22,9 @@ export class DatabaseService implements OnApplicationShutdown {
 
 		this.db = drizzle({
 			client: this.pool,
+			relations: {
+				...authRelations,
+			},
 		})
 	}
 

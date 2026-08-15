@@ -5,7 +5,9 @@ import { appConfig } from './app.config'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule)
+	const app = await NestFactory.create(AppModule, {
+		bodyParser: false,
+	})
 
 	const config = new DocumentBuilder()
 		.setTitle('Kirika API')
@@ -18,6 +20,7 @@ async function bootstrap() {
 	})
 
 	app.enableShutdownHooks()
+	app.setGlobalPrefix('api')
 
 	const _appConfig = app.get<ConfigType<typeof appConfig>>(appConfig.KEY)
 	await app.listen(_appConfig.port)

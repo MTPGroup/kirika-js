@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { appConfig } from './app.config'
-import { DatabaseModule } from './database/database.module';
+import { AuthModule } from './auth/auth.module'
+import { DatabaseModule } from './database/database.module'
 
 @Module({
 	imports: [
@@ -11,6 +12,7 @@ import { DatabaseModule } from './database/database.module';
 		}),
 		ConfigModule.forFeature(appConfig),
 		DatabaseModule,
+		AuthModule,
 	],
 	controllers: [],
 	providers: [],
