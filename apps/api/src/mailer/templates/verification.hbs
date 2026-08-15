@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邮箱验证</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            border: 1px solid #e1e8ed;
+        }
+
+        .header {
+            background-color: #00bcd4;
+            /* Azusa 青色 */
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .content {
+            padding: 40px 30px;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .content p {
+            margin-bottom: 24px;
+            font-size: 16px;
+        }
+
+        .otp-container {
+            background-color: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .otp-code {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: 8px;
+            color: #00bcd4;
+            margin: 0;
+        }
+
+        .footer {
+            background-color: #f8fafc;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .warning {
+            font-size: 13px;
+            color: #ef4444;
+            margin-top: 20px;
+        }
+
+        @media screen and (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>{{ app_name }}</h1>
+        </div>
+
+        <!-- 主体内容 -->
+        <div class="content">
+            <p>您好！</p>
+            <p>感谢您使用 <strong>{{ app_name }}</strong>。我们收到了您{{ topic }}的请求，请使用下方的验证码完成验证：</p>
+
+            <div class="otp-container">
+                <div class="otp-code">{{ otp }}</div>
+            </div>
+
+            <p>此验证码将在 <strong>10 分钟</strong> 后失效。为了您的账号安全，请勿将验证码泄露给他人。</p>
+
+            <p class="warning">如果您没有请求过此邮件，请忽略，您的账号目前是安全的。</p>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>&copy; 2026 {{ app_name }} Cloud Services. All rights reserved.</p>
+            <p>这是一封自动生成的邮件，请勿直接回复。</p>
+        </div>
+    </div>
+</body>
+
+</html>

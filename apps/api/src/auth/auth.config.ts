@@ -31,6 +31,4 @@ export function parseAuthConfig(environment: NodeJS.ProcessEnv) {
 	}
 }
 
-export const authConfig = registerAs('auth', () =>
-	parseAuthConfig(process.env),
-)
+export const authConfig = registerAs('auth', () => parseAuthConfig(process.env))

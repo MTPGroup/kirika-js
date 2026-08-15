@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config'
 import { appConfig } from './app.config'
 import { AuthModule } from './auth/auth.module'
 import { DatabaseModule } from './database/database.module'
+import { MailerModule } from './mailer/mailer.module'
 
 @Module({
 	imports: [
@@ -12,6 +13,7 @@ import { DatabaseModule } from './database/database.module'
 		}),
 		ConfigModule.forFeature(appConfig),
 		DatabaseModule,
+		MailerModule,
 		AuthModule,
 	],
 	controllers: [],
