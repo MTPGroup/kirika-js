@@ -1,7 +1,8 @@
 {
 	"name": "@kirika-js/character-spec",
-	"version": "0.1.0",
+	"version": "0.0.0",
 	"license": "MIT",
+	"private": true,
 	"scripts": {
 		"build": "tsdown --dts",
 		"test": "vitest run",
@@ -23,9 +24,10 @@
 		"zod": "catalog:"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "catalog:",
 		"@types/node": "^26.1.2",
-		"tsdown": "^0.22.14",
-		"typescript": "5.9.2",
-		"vitest": "^4.1.10"
+		"tsdown": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
 	}
 }

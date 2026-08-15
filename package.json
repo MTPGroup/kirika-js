@@ -11,13 +11,11 @@
 		"check": "pnpm lint && pnpm check-types && pnpm test && pnpm build"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.5.7",
-		"turbo": "^2.10.8",
-		"typescript": "5.9.2",
-		"vitest": "^4.1.10"
+		"@biomejs/biome": "catalog:",
+		"turbo": "^2.10.8"
 	},
 	"packageManager": "pnpm@11.20.0",
 	"engines": {
-		"node": ">=18"
+		"node": ">=22.12.0"
 	}
 }

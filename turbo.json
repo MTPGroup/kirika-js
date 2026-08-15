@@ -4,22 +4,22 @@
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
-			"inputs": ["$TURBO_DEFAULT$", ".env*"],
+			"inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.base.json", ".env*"],
 			"outputs": ["dist/**"]
 		},
 		"lint": {
-			"inputs": ["$TURBO_DEFAULT$", "biome.json"]
+			"inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/biome.json"]
 		},
 		"check-types": {
-			"dependsOn": ["^check-types"]
+			"dependsOn": ["^check-types"],
+			"inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.base.json"]
 		},
 		"format": {
-			"inputs": ["$TURBO_DEFAULT$", "biome.json"]
+			"inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/biome.json"]
 		},
 		"test": {
-			"dependsOn": ["build"],
-			"inputs": ["src/**", "test/**", "vitest.config.ts"],
-			"outputs": ["coverage/**"]
+			"dependsOn": ["^build"],
+			"inputs": ["src/**", "test/**", "vitest.config.ts"]
 		},
 		"dev": {
 			"cache": false,
