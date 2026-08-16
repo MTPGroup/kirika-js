@@ -1,10 +1,10 @@
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { parseDatabaseConfig } from './src/database/database.config'
-import { authRelations } from './src/database/schema'
-import { parseAuthConfig } from './src/modules/auth/auth.config'
-import { createAuth } from './src/modules/auth/auth.factory'
+import { parseAuthConfig } from './src/auth/auth.config'
+import { createAuth } from './src/auth/auth.factory'
+import { parseDatabaseConfig } from './src/core/database/database.config'
+import { authRelations } from './src/core/database/schema'
 
 const databaseConfig = parseDatabaseConfig(process.env)
 const authConfig = parseAuthConfig(process.env)
@@ -21,4 +21,8 @@ const database = drizzle({
 	},
 })
 
-export const auth = createAuth(database, authConfig)
+const cliMailer = {
+	async sendVerificationOtp() {},
+}
+
+export const auth = createAuth(database, authConfig, cliMailer)

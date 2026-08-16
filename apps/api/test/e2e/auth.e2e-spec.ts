@@ -9,7 +9,7 @@ import { AppModule } from '../../src/app.module'
 import {
 	AuthMailerService,
 	type VerificationOTPType,
-} from '../../src/mailer/auth-mailer.service'
+} from '../../src/core/mailer/auth-mailer.service'
 
 interface SentOTP {
 	email: string
