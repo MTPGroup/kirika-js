@@ -1,21 +1,20 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2'
-import type { ConfigType } from '@nestjs/config'
 import { betterAuth } from 'better-auth/minimal'
 import { emailOTP, openAPI } from 'better-auth/plugins'
 import type { DatabaseService } from '~/core/database/database.service'
 import * as schema from '~/core/database/schema'
 import type { AuthMailerService } from '~/core/mailer/auth-mailer.service'
-import type { authConfig } from './auth.config'
+import type { AuthOptions } from './auth.types'
 
 export function createAuth(
 	database: DatabaseService['db'],
-	config: ConfigType<typeof authConfig>,
+	options: AuthOptions,
 	authMailerService: Pick<AuthMailerService, 'sendVerificationOtp'>,
 ) {
 	return betterAuth({
-		baseURL: config.baseUrl,
-		secret: config.secret,
-		trustedOrigins: config.trustedOrigins,
+		baseURL: options.baseUrl,
+		secret: options.secret,
+		trustedOrigins: options.trustedOrigins,
 
 		database: drizzleAdapter(database, {
 			provider: 'pg',

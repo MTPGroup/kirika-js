@@ -1,17 +1,15 @@
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { parseAuthConfig } from './src/auth/auth.config'
-import { createAuth } from './src/auth/auth.factory'
-import { parseDatabaseConfig } from './src/core/database/database.config'
-import { authRelations } from './src/core/database/schema'
+import { createAuth } from './src/auth/auth.factory.js'
+import { loadConfiguration } from './src/core/config/config.loader.js'
+import { authRelations } from './src/core/database/schema/index.js'
 
-const databaseConfig = parseDatabaseConfig(process.env)
-const authConfig = parseAuthConfig(process.env)
+const config = loadConfiguration()
 
 const pool = new Pool({
-	connectionString: databaseConfig.url,
-	max: databaseConfig.poolMax,
+	connectionString: config.database.url,
+	max: config.database.poolMax,
 })
 
 const database = drizzle({
@@ -25,4 +23,4 @@ const cliMailer = {
 	async sendVerificationOtp() {},
 }
 
-export const auth = createAuth(database, authConfig, cliMailer)
+export const auth = createAuth(database, config.auth, cliMailer)

@@ -1,0 +1,12 @@
+[database]
+url = "postgresql://user:password@localhost:5432/kirika"
+
+[auth]
+baseUrl = "http://localhost:3000"
+
+secret = "replace-with-a-secure-random-secret"
+
+[mailer]
+host = "localhost"
+user = "username"
+password = "password"

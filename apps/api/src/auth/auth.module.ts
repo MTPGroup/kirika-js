@@ -1,23 +1,24 @@
 import { Module } from '@nestjs/common'
-import { ConfigModule, type ConfigType } from '@nestjs/config'
 import { AuthModule as BetterAuthModule } from '@thallesp/nestjs-better-auth'
+import { APP_CONFIGURATION } from '~/core/config/config.loader'
+import { AppConfigModule } from '~/core/config/config.module'
+import type { Configuration } from '~/core/config/config.schema'
 import { CoreModule } from '~/core/core.module'
 import { DatabaseService } from '~/core/database/database.service'
 import { AuthMailerService } from '~/core/mailer/auth-mailer.service'
-import { authConfig } from './auth.config'
 import { createAuth } from './auth.factory'
 
 @Module({
 	imports: [
 		BetterAuthModule.forRootAsync({
-			imports: [CoreModule, ConfigModule.forFeature(authConfig)],
-			inject: [DatabaseService, authConfig.KEY, AuthMailerService],
+			imports: [CoreModule, AppConfigModule],
+			inject: [DatabaseService, APP_CONFIGURATION, AuthMailerService],
 			useFactory: (
 				database: DatabaseService,
-				config: ConfigType<typeof authConfig>,
+				configuration: Configuration,
 				authMailerService: AuthMailerService,
 			) => ({
-				auth: createAuth(database.db, config, authMailerService),
+				auth: createAuth(database.db, configuration.auth, authMailerService),
 				bodyParser: {
 					json: { limit: '2mb' },
 					urlencoded: { limit: '2mb', extended: true },

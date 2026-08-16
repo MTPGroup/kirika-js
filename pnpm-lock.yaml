@@ -89,9 +89,15 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      smol-toml:
+        specifier: ^1.8.0
+        version: 1.8.0
       zod:
         specifier: 'catalog:'
         version: 4.4.3
+      zod-config:
+        specifier: ^1.4.0
+        version: 1.4.0(dotenv@17.4.2)(json5@2.2.3)(smol-toml@1.8.0)(yaml@2.9.0)(zod@4.4.3)
     devDependencies:
       '@biomejs/biome':
         specifier: 'catalog:'
@@ -4833,6 +4839,10 @@ packages:
   slick@1.12.2:
     resolution: {integrity: sha512-4qdtOGcBjral6YIBCWJ0ljFSKNLz9KkhbWtuGvUyRowl1kxfuE1x/Z/aJcaiilpb3do9bl5K7/1h9XC5wWpY/A==}
 
+  smol-toml@1.8.0:
+    resolution: {integrity: sha512-kCZr2V3ch9i00x8zXRhjUNVcjG9ijES5dDudkXvUVCT5QlJNQWElSJdZqyPemffHoLNUYwOcou0Fy+ojN0uHSQ==}
+    engines: {node: '>= 18'}
+
   sort-keys-length@1.0.1:
     resolution: {integrity: sha512-GRbEOUqCxemTAk/b32F2xa8wDTs+Z1QHOkbhJDQTvv/6G3ZkbJ+frYWsTcc7cBB3Fu4wy4XlLCuNtJuMn7Gsvw==}
     engines: {node: '>=0.10.0'}
@@ -5515,6 +5525,25 @@ packages:
   zip-stream@6.0.1:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
+
+  zod-config@1.4.0:
+    resolution: {integrity: sha512-1+SlrNzoWeid0/t+7hvxmKVK8gVYTiiWjmXYodEdUTADNrmMnvClmkzs2ht0HfZsmDgOv1SYHFwrvyiwsN+3xA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      dotenv: '>=15'
+      json5: '>=2'
+      smol-toml: ^1.x
+      yaml: ^2.x
+      zod: ^3.25.0 || ^4.0.0
+    peerDependenciesMeta:
+      dotenv:
+        optional: true
+      json5:
+        optional: true
+      smol-toml:
+        optional: true
+      yaml:
+        optional: true
 
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
@@ -10296,6 +10325,8 @@ snapshots:
   slick@1.12.2:
     optional: true
 
+  smol-toml@1.8.0: {}
+
   sort-keys-length@1.0.1:
     dependencies:
       sort-keys: 1.1.2
@@ -11057,5 +11088,14 @@ snapshots:
       archiver-utils: 5.0.2
       compress-commons: 6.0.2
       readable-stream: 4.7.0
+
+  zod-config@1.4.0(dotenv@17.4.2)(json5@2.2.3)(smol-toml@1.8.0)(yaml@2.9.0)(zod@4.4.3):
+    dependencies:
+      zod: 4.4.3
+    optionalDependencies:
+      dotenv: 17.4.2
+      json5: 2.2.3
+      smol-toml: 1.8.0
+      yaml: 2.9.0
 
   zod@4.4.3: {}

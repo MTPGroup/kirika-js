@@ -43,7 +43,9 @@
 		"pg": "^8.23.0",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.1",
-		"zod": "catalog:"
+		"smol-toml": "^1.8.0",
+		"zod": "catalog:",
+		"zod-config": "^1.4.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
