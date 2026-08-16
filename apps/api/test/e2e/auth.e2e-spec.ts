@@ -6,6 +6,11 @@ import { Pool } from 'pg'
 import request from 'supertest'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { AppModule } from '~/app.module'
+import { APP_CONFIGURATION } from '~/core/config/config.loader'
+import {
+	type Configuration,
+	configurationSchema,
+} from '~/core/config/config.schema'
 import {
 	AuthMailerService,
 	type VerificationOTPType,
@@ -15,6 +20,32 @@ interface SentOTP {
 	email: string
 	otp: string
 	type: VerificationOTPType
+}
+
+function createTestConfiguration(databaseUrl: string): Configuration {
+	return configurationSchema.parse({
+		app: {
+			name: 'Kirika Test',
+			port: 3000,
+		},
+		database: {
+			url: databaseUrl,
+			poolMax: 1,
+		},
+		auth: {
+			baseUrl: 'http://localhost:3000',
+			secret: 'test-secret-that-is-at-least-32-characters-long',
+			trustedOrigins: ['http://localhost:3000'],
+		},
+		mailer: {
+			host: 'localhost',
+			port: 1025,
+			secure: false,
+			user: 'test',
+			password: 'test',
+			from: 'Kirika <no-reply@kirika.test>',
+		},
+	})
 }
 
 describe('Auth E2E', () => {
@@ -38,9 +69,19 @@ describe('Auth E2E', () => {
 	}
 
 	beforeAll(async () => {
+		const databaseUrl = process.env.DATABASE_URL
+
+		if (!databaseUrl) {
+			throw new Error('DATABASE_URL was not provided by Vitest global setup')
+		}
+
+		const configuration = createTestConfiguration(databaseUrl)
+
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
+			.overrideProvider(APP_CONFIGURATION)
+			.useValue(configuration)
 			.overrideProvider(AuthMailerService)
 			.useValue(authMailerServiceMock)
 			.compile()
@@ -54,7 +95,7 @@ describe('Auth E2E', () => {
 		await app.init()
 
 		pool = new Pool({
-			connectionString: process.env.DATABASE_URL,
+			connectionString: configuration.database.url,
 		})
 	})
 
