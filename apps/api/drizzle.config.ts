@@ -1,17 +1,14 @@
 import 'dotenv/config'
 import { defineConfig } from 'drizzle-kit'
+import { loadConfiguration } from './src/core/config/config.loader'
 
-const databaseUrl = process.env.DATABASE_URL
-
-if (!databaseUrl) {
-	throw new Error('DATABASE_URL is required')
-}
+const configuration = loadConfiguration()
 
 export default defineConfig({
 	out: './drizzle',
-	schema: './src/database/schema/*.schema.ts',
+	schema: './src/core/drizzle/drizzle.schema.ts',
 	dialect: 'postgresql',
 	dbCredentials: {
-		url: databaseUrl,
+		url: configuration.database.url,
 	},
 })

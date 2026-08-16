@@ -4,7 +4,7 @@ import { APP_CONFIGURATION } from '~/core/config/config.loader'
 import { AppConfigModule } from '~/core/config/config.module'
 import type { Configuration } from '~/core/config/config.schema'
 import { CoreModule } from '~/core/core.module'
-import { DatabaseService } from '~/core/database/database.service'
+import { DrizzleService } from '~/core/drizzle/drizzle.service'
 import { AuthMailerService } from '~/core/mailer/auth-mailer.service'
 import { createAuth } from './auth.factory'
 
@@ -12,9 +12,9 @@ import { createAuth } from './auth.factory'
 	imports: [
 		BetterAuthModule.forRootAsync({
 			imports: [CoreModule, AppConfigModule],
-			inject: [DatabaseService, APP_CONFIGURATION, AuthMailerService],
+			inject: [DrizzleService, APP_CONFIGURATION, AuthMailerService],
 			useFactory: (
-				database: DatabaseService,
+				database: DrizzleService,
 				configuration: Configuration,
 				authMailerService: AuthMailerService,
 			) => ({

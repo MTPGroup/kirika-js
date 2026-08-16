@@ -1,13 +1,13 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2'
 import { betterAuth } from 'better-auth/minimal'
 import { emailOTP, openAPI } from 'better-auth/plugins'
-import type { DatabaseService } from '~/core/database/database.service'
-import * as schema from '~/core/database/schema'
+import * as schema from '~/core/drizzle/drizzle.schema'
+import type { DrizzleService } from '~/core/drizzle/drizzle.service'
 import type { AuthMailerService } from '~/core/mailer/auth-mailer.service'
 import type { AuthOptions } from './auth.types'
 
 export function createAuth(
-	database: DatabaseService['db'],
+	database: DrizzleService['db'],
 	options: AuthOptions,
 	authMailerService: Pick<AuthMailerService, 'sendVerificationOtp'>,
 ) {

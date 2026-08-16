@@ -3,7 +3,7 @@ name = "Kirika"
 port = 3000
 
 [database]
-url = "postgres://kirika:nC8HQiVnR74DTKZa75oP@localhost:5432/kirika"
+url = "postgres://kirika:kirika_dev@localhost:5432/kirika"
 poolMax = 10
 
 [auth]
