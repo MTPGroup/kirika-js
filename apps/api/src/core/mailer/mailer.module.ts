@@ -1,17 +1,18 @@
 import { Module } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
 import { MailerModule as MMailerModule } from '@nestjs-modules/mailer'
+import { APP_CONFIGURATION } from '../config/config.loader'
+import { AppConfigModule } from '../config/config.module'
+import type { Configuration } from '../config/config.schema'
 import { AuthMailerService } from './auth-mailer.service'
-import { type MailerConfig, mailerConfig } from './mailer.config'
 import { createMailerOptions } from './mailer.factory'
 
 @Module({
 	imports: [
 		MMailerModule.forRootAsync({
-			imports: [ConfigModule.forFeature(mailerConfig)],
-			inject: [mailerConfig.KEY],
-			useFactory: (config: MailerConfig) => {
-				return createMailerOptions(config)
+			imports: [AppConfigModule],
+			inject: [APP_CONFIGURATION],
+			useFactory: (config: Configuration) => {
+				return createMailerOptions(config.mailer)
 			},
 		}),
 	],

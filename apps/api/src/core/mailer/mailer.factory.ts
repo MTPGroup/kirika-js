@@ -4,8 +4,18 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
 import type { MailerConfig } from './mailer.config'
 
 export const createMailerOptions = (config: MailerConfig): MailerOptions => ({
-	transport: config.transport,
-	defaults: config.defaults,
+	transport: {
+		host: config.host,
+		port: config.port,
+		secure: config.secure,
+		auth: {
+			user: config.user,
+			pass: config.password,
+		},
+	},
+	defaults: {
+		from: config.from,
+	},
 	template: {
 		dir: join(__dirname, 'templates'),
 		adapter: new HandlebarsAdapter(undefined, {
