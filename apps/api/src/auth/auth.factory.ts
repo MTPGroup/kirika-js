@@ -1,7 +1,7 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2'
 import { betterAuth } from 'better-auth/minimal'
 import { emailOTP, openAPI } from 'better-auth/plugins'
-import * as schema from '~/core/drizzle/drizzle.schema'
+import * as schema from '~/core/drizzle/drizzle.drizzle-schema'
 import type { DrizzleService } from '~/core/drizzle/drizzle.service'
 import type { AuthMailerService } from '~/core/mailer/auth-mailer.service'
 import type { AuthOptions } from './auth.types'

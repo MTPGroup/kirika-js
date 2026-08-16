@@ -2,7 +2,7 @@ import { Inject, Injectable, type OnApplicationShutdown } from '@nestjs/common'
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { DRIZZLE_OPTIONS } from './drizzle.constant'
-import { authRelations } from './drizzle.schema'
+import { authRelations } from './drizzle.drizzle-schema'
 import type { DatabaseOptions } from './drizzle.types'
 
 @Injectable()
