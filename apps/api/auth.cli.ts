@@ -1,9 +1,9 @@
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { createAuth } from './src/auth/auth.factory.js'
-import { loadConfiguration } from './src/core/config/config.loader.js'
-import { authRelations } from './src/core/database/schema/index.js'
+import { createAuth } from './src/auth/auth.factory'
+import { loadConfiguration } from './src/core/config/config.loader'
+import { authRelations } from './src/core/database/schema'
 
 const config = loadConfiguration()
 
