@@ -6,6 +6,9 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"types": ["node", "express", "supertest", "pg"],
+		"paths": {
+			"~/*": ["./src/*"]
+		},
 		"resolvePackageJsonExports": true,
 		"isolatedModules": true,
 		"experimentalDecorators": true,

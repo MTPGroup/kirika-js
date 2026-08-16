@@ -1,5 +1,3 @@
-/// <reference path="../vitest.d.ts" />
-
 import { inject } from 'vitest'
 
 process.env.NODE_ENV = 'test'

@@ -1,0 +1,11 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"rootDir": "..",
+		"incremental": false,
+		"types": ["node", "vitest", "supertest", "pg"]
+	},
+	"include": ["../src/**/*.ts", "./**/*.ts", "./**/*.d.ts"],
+	"exclude": ["../node_modules", "../dist"]
+}

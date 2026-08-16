@@ -19,7 +19,7 @@ export default defineConfig({
 	],
 	resolve: {
 		alias: {
-			src: resolve(import.meta.dirname, './src'),
+			'~': resolve(import.meta.dirname, './src'),
 		},
 	},
 })

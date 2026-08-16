@@ -1,7 +1,7 @@
 import type { Provider } from '@nestjs/common'
 import type { ConfigType } from '@nestjs/config'
-import { DatabaseService } from '../core/database/database.service'
-import { AuthMailerService } from '../core/mailer/auth-mailer.service'
+import { DatabaseService } from '~/core/database/database.service'
+import { AuthMailerService } from '~/core/mailer/auth-mailer.service'
 import { authConfig } from './auth.config'
 import { createAuth } from './auth.factory'
 

@@ -1,5 +1,3 @@
-/// <reference path="./vitest.d.ts" />
-
 import { resolve } from 'node:path'
 import {
 	PostgreSqlContainer,

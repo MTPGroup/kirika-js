@@ -5,11 +5,11 @@ import { Test } from '@nestjs/testing'
 import { Pool } from 'pg'
 import request from 'supertest'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { AppModule } from '../../src/app.module'
+import { AppModule } from '~/app.module'
 import {
 	AuthMailerService,
 	type VerificationOTPType,
-} from '../../src/core/mailer/auth-mailer.service'
+} from '~/core/mailer/auth-mailer.service'
 
 interface SentOTP {
 	email: string
