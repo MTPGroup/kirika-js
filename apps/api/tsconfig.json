@@ -2,10 +2,10 @@
 	"compilerOptions": {
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
-		"target": "ES2025",
+		"target": "esnext",
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"types": ["node", "express", "supertest", "pg"],
+		"types": ["node", "supertest", "pg"],
 		"paths": {
 			"~/*": ["./src/*"]
 		},
