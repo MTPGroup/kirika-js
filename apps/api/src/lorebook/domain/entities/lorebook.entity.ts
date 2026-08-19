@@ -16,8 +16,9 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		private _name: string,
 		private _description: string,
 		readonly ownerId: UserId,
-		private _currentRevisionId: LorebookRevisionId | null = null,
+		private currentRevisionId: LorebookRevisionId | null = null,
 		revisions: LorebookRevision[] = [],
+		private _updatedAt: Date = new Date(),
 	) {
 		if (!_name.trim()) throw new Error('世界书名称不能为空')
 
@@ -35,12 +36,16 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		return this._description
 	}
 
-	get currentRevisionId(): LorebookRevisionId | null {
-		return this._currentRevisionId
-	}
-
 	get revisions(): readonly LorebookRevision[] {
 		return Array.from(this._revisions.values())
+	}
+
+	get activeRevision(): LorebookRevision {
+		return this.getRevision()
+	}
+
+	get updatedAt(): Date {
+		return this._updatedAt
 	}
 
 	static create(name: string, description: string, ownerId: UserId): Lorebook {
@@ -62,6 +67,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		ownerId: UserId,
 		currentRevisionId: LorebookRevisionId | null,
 		revisions: LorebookRevision[],
+		updatedAt: Date,
 	): Lorebook {
 		return new Lorebook(
 			id,
@@ -70,6 +76,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 			ownerId,
 			currentRevisionId,
 			revisions,
+			updatedAt,
 		)
 	}
 
@@ -94,15 +101,17 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		const revision = this.getRevision(revisionId)
 
 		revision.publish()
-		this._currentRevisionId = revisionId
+		this.currentRevisionId = revisionId
+		this.touch()
 	}
 
 	updateMetadata(name: string, description: string) {
 		this._name = name
 		this._description = description
+		this.touch()
 	}
 
-	getRevision(revisionId?: LorebookRevisionId): LorebookRevision {
+	private getRevision(revisionId?: LorebookRevisionId): LorebookRevision {
 		const targetId = revisionId || this.currentRevisionId
 		if (!targetId) {
 			throw new Error('世界书中没有可用的版本')
@@ -121,5 +130,9 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		}
 
 		return max + 1
+	}
+
+	private touch() {
+		this._updatedAt = new Date()
 	}
 }

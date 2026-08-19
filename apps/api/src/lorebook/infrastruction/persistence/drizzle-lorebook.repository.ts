@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { eq, sql } from 'drizzle-orm'
+import { eq, notInArray, sql } from 'drizzle-orm'
 import {
 	Lorebook,
 	LorebookId,
@@ -29,45 +29,66 @@ export class DrizzleLorebookRepository implements LorebookRepositoryPort {
 
 	async save(lorebook: Lorebook): Promise<void> {
 		const model = LorebookMapper.toPersistence(lorebook)
+		const lorebookModel = model.lorebook
+		const activeRevisionModel = model.activeRevision
 
 		await this.drizzleService.db.transaction(async (tx) => {
 			await tx
 				.insert(lorebooks)
-				.values(model.lorebook)
+				.values(lorebookModel)
 				.onConflictDoUpdate({
 					target: lorebooks.id,
 					set: {
-						name: model.lorebook.name,
-						description: model.lorebook.description,
-						currentRevisionId: model.lorebook.currentRevisionId,
+						name: lorebookModel.name,
+						description: lorebookModel.description,
+						currentRevisionId: lorebookModel.currentRevisionId,
+						updatedAt: lorebookModel.updatedAt,
+						extensions: lorebookModel.extensions,
 					},
 				})
-			for (const { revision, entries } of model.revisions) {
+
+			if (activeRevisionModel) {
+				const activeRevision = activeRevisionModel.revision
+				const entries = activeRevisionModel.entries
+
 				await tx
 					.insert(lorebookRevisions)
-					.values(revision)
+					.values(activeRevision)
 					.onConflictDoUpdate({
 						target: lorebookRevisions.id,
 						set: {
-							isDraft: revision.isDraft,
+							isDraft: activeRevision.isDraft,
 						},
+						setWhere: eq(lorebookRevisions.isDraft, true),
 					})
 
-				if (entries.length > 0) {
+				if (activeRevisionModel.entries.length > 0) {
 					await tx
 						.insert(lorebookEntries)
 						.values(entries)
 						.onConflictDoUpdate({
 							target: lorebookEntries.id,
 							set: {
-								keys: sql`excluded.keys`,
 								title: sql`excluded.title`,
 								content: sql`excluded.content`,
+								keys: sql`excluded.keys`,
+								enabled: sql`excluded.enabled`,
 								position: sql`excluded.position`,
 								priority: sql`excluded.priority`,
-								enabled: sql`excluded.enabled`,
 							},
 						})
+
+					const currentEntryIds = entries.map((e) => e.id)
+					await tx
+						.delete(lorebookEntries)
+						.where(
+							eq(lorebookEntries.revisionId, activeRevision.id) &&
+								notInArray(lorebookEntries.id, currentEntryIds),
+						)
+				} else {
+					await tx
+						.delete(lorebookEntries)
+						.where(eq(lorebookEntries.revisionId, activeRevision.id))
 				}
 			}
 		})

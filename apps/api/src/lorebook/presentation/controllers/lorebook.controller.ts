@@ -1,25 +1,83 @@
 import {
 	Body,
 	Controller,
+	Delete,
+	Get,
 	HttpCode,
 	HttpStatus,
+	NotImplementedException,
+	Param,
+	ParseUUIDPipe,
+	Patch,
 	Post,
+	Put,
 	Session,
 } from '@nestjs/common'
 import { type UserSession } from '@thallesp/nestjs-better-auth'
 import { CreateLorebookDto } from '~/lorebook/application/dtos/create-lorebook.dto'
 import { CreateLorebookUseCase } from '~/lorebook/application/use-cases/create-lorebook.use-case'
 
-@Controller('lorebook')
+@Controller({
+	path: 'lorebooks',
+	version: ['1'],
+})
 export class LorebookController {
 	constructor(private readonly createLorebookUseCase: CreateLorebookUseCase) {}
 
+	// 创建新世界书
 	@Post()
 	@HttpCode(HttpStatus.CREATED)
-	createLorebook(
+	async create(
 		@Body() dto: CreateLorebookDto,
 		@Session() session: UserSession,
 	) {
-		this.createLorebookUseCase.execute(dto, session.user.id)
+		await this.createLorebookUseCase.execute(dto, session.user.id)
+	}
+
+	// 获取当前用户的所以世界书列表
+	@Get()
+	async get() {
+		throw new NotImplementedException()
+	}
+
+	// 获取指定世界书
+	@Get(':id')
+	async getDetail(@Param('id', ParseUUIDPipe) id: string) {
+		throw new NotImplementedException()
+	}
+
+	// 更新主表数据
+	@Patch(':id')
+	async patch(@Param('id', ParseUUIDPipe) id: string) {
+		throw new NotImplementedException()
+	}
+
+	// 删除指定的世界书
+	@Delete(':id')
+	async delete(@Param('id', ParseUUIDPipe) id: string) {
+		throw new NotImplementedException()
+	}
+
+	// 基于当前版本新建一个Revision(draft)
+	@Post(':id/revision')
+	async createRevision(@Param('id', ParseUUIDPipe) id: string) {
+		throw new NotImplementedException()
+	}
+
+	// 发布 revision
+	@Post(':id/revisions/:revId/publish')
+	async publish(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Param('revId', ParseUUIDPipe) revId: string,
+	) {
+		throw new NotImplementedException()
+	}
+
+	@Put(':id/revisions/:revId/entries')
+	async syncEntries(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Param('revId', ParseUUIDPipe) revId: string,
+	) {
+		throw new NotImplementedException()
 	}
 }

@@ -26,11 +26,10 @@ export type DrizzleEntryInsert = typeof lorebookEntries.$inferInsert
 
 export interface LorebookPersistenceModel {
 	lorebook: DrizzleLorebookInsert
-
-	revisions: Array<{
+	activeRevision: {
 		revision: DrizzleRevisionInsert
 		entries: DrizzleEntryInsert[]
-	}>
+	}
 }
 
 export class LorebookMapper {
@@ -67,38 +66,40 @@ export class LorebookMapper {
 				? new LorebookRevisionId(raw.currentRevisionId)
 				: null,
 			revisions,
+			raw.updatedAt,
 		)
 	}
 
 	static toPersistence(lorebook: Lorebook): LorebookPersistenceModel {
+		const activeRevision = lorebook.activeRevision
+
 		return {
 			lorebook: {
 				id: lorebook.id.value,
 				ownerId: lorebook.ownerId.value,
 				name: lorebook.name,
 				description: lorebook.description,
-				currentRevisionId: lorebook.currentRevisionId?.value ?? null,
+				currentRevisionId: lorebook.activeRevision?.id.value,
+				updatedAt: lorebook.updatedAt,
 			},
-
-			revisions: lorebook.revisions.map((revision) => ({
+			activeRevision: {
 				revision: {
-					id: revision.id.value,
+					id: activeRevision.id.value,
 					lorebookId: lorebook.id.value,
-					revisionNumber: revision.revisionNumber,
-					isDraft: revision.isDraft,
+					revisionNumber: activeRevision.revisionNumber,
+					isDraft: activeRevision.isDraft,
 				},
-
-				entries: revision.entries.map((entry) => ({
+				entries: activeRevision.entries.map((entry) => ({
 					id: entry.id.value,
-					revisionId: revision.id.value,
-					keys: [...entry.keys],
+					revisionId: activeRevision.id.value,
 					title: entry.title,
-					enabled: entry.enabled,
 					content: entry.content,
+					keys: [...entry.keys],
+					enabled: entry.enabled,
 					position: entry.position.value,
 					priority: entry.priority,
 				})),
-			})),
+			},
 		}
 	}
 }
