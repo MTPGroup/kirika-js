@@ -5,7 +5,7 @@ import {
 	LOREBOOK_REPOSITORY_PORT,
 	type LorebookRepositoryPort,
 } from '~/lorebook/domain/ports/lorebook-repository.port'
-import { CreateLorebookDto } from '../dtos/create-lorebook.dto'
+import { CreateLorebookCommand } from '../dtos/create-lorebook.dto'
 
 @Injectable()
 export class CreateLorebookUseCase {
@@ -14,7 +14,7 @@ export class CreateLorebookUseCase {
 		private readonly lorebookRepository: LorebookRepositoryPort,
 	) {}
 
-	async execute(dto: CreateLorebookDto, ownerId: string) {
+	async execute(dto: CreateLorebookCommand, ownerId: string) {
 		const lorebook = Lorebook.create(
 			dto.name,
 			dto.description,
@@ -22,5 +22,6 @@ export class CreateLorebookUseCase {
 		)
 
 		await this.lorebookRepository.save(lorebook)
+		return lorebook
 	}
 }

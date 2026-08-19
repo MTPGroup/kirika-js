@@ -28,9 +28,7 @@ export class DrizzleLorebookRepository implements LorebookRepositoryPort {
 	}
 
 	async save(lorebook: Lorebook): Promise<void> {
-		const model = LorebookMapper.toPersistence(lorebook)
-		const lorebookModel = model.lorebook
-		const activeRevisionModel = model.activeRevision
+		const lorebookModel = LorebookMapper.toLorebookPersistence(lorebook)
 
 		await this.drizzleService.db.transaction(async (tx) => {
 			await tx
@@ -47,9 +45,13 @@ export class DrizzleLorebookRepository implements LorebookRepositoryPort {
 					},
 				})
 
-			if (activeRevisionModel) {
-				const activeRevision = activeRevisionModel.revision
-				const entries = activeRevisionModel.entries
+			if (lorebook.activeRevision) {
+				const model = LorebookMapper.toLorebookRevisionPersistence(
+					lorebook.id,
+					lorebook.activeRevision,
+				)
+				const activeRevision = model.revision
+				const entries = model.entries
 
 				await tx
 					.insert(lorebookRevisions)
@@ -62,7 +64,7 @@ export class DrizzleLorebookRepository implements LorebookRepositoryPort {
 						setWhere: eq(lorebookRevisions.isDraft, true),
 					})
 
-				if (activeRevisionModel.entries.length > 0) {
+				if (entries.length > 0) {
 					await tx
 						.insert(lorebookEntries)
 						.values(entries)

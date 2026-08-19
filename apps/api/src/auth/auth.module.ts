@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common'
 import { AuthModule as BetterAuthModule } from '@thallesp/nestjs-better-auth'
 import { APP_CONFIGURATION } from '~/shared/infrastructure/config/config.loader'
-import { AppConfigModule } from '~/shared/infrastructure/config/config.module'
 import { Configuration } from '~/shared/infrastructure/config/config.schema'
 import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
 import { AuthMailerService } from '~/shared/infrastructure/mailer/auth-mailer.service'
@@ -11,7 +10,7 @@ import { createAuth } from './auth.factory'
 @Module({
 	imports: [
 		BetterAuthModule.forRootAsync({
-			imports: [SharedModule, AppConfigModule],
+			imports: [SharedModule],
 			inject: [DrizzleService, APP_CONFIGURATION, AuthMailerService],
 			useFactory: (
 				database: DrizzleService,

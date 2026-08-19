@@ -15,6 +15,6 @@ import { MailerModule } from './infrastructure/mailer/mailer.module'
 		}),
 		MailerModule,
 	],
-	exports: [DrizzleModule, MailerModule],
+	exports: [DrizzleModule, MailerModule, AppConfigModule],
 })
 export class SharedModule {}

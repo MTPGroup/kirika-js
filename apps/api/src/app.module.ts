@@ -3,9 +3,10 @@ import { APP_PIPE } from '@nestjs/core'
 import { ZodValidationPipe } from 'nestjs-zod'
 import { AuthModule } from '~/auth/auth.module'
 import { LorebookModule } from './lorebook/lorebook.module'
+import { SharedModule } from './shared/shared.module'
 
 @Module({
-	imports: [AuthModule, LorebookModule],
+	imports: [SharedModule, AuthModule, LorebookModule],
 	controllers: [],
 	providers: [
 		{

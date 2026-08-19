@@ -18,6 +18,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		readonly ownerId: UserId,
 		private currentRevisionId: LorebookRevisionId | null = null,
 		revisions: LorebookRevision[] = [],
+		readonly createdAt: Date = new Date(),
 		private _updatedAt: Date = new Date(),
 	) {
 		if (!_name.trim()) throw new Error('世界书名称不能为空')
@@ -40,8 +41,12 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		return Array.from(this._revisions.values())
 	}
 
-	get activeRevision(): LorebookRevision {
-		return this.getRevision()
+	get activeRevision(): LorebookRevision | null {
+		try {
+			return this.getRevision()
+		} catch {
+			return null
+		}
 	}
 
 	get updatedAt(): Date {
@@ -67,6 +72,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		ownerId: UserId,
 		currentRevisionId: LorebookRevisionId | null,
 		revisions: LorebookRevision[],
+		createdAt: Date,
 		updatedAt: Date,
 	): Lorebook {
 		return new Lorebook(
@@ -76,6 +82,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 			ownerId,
 			currentRevisionId,
 			revisions,
+			createdAt,
 			updatedAt,
 		)
 	}

@@ -14,8 +14,10 @@ import {
 	Session,
 } from '@nestjs/common'
 import { type UserSession } from '@thallesp/nestjs-better-auth'
-import { CreateLorebookDto } from '~/lorebook/application/dtos/create-lorebook.dto'
+import { ZodResponse } from 'nestjs-zod'
 import { CreateLorebookUseCase } from '~/lorebook/application/use-cases/create-lorebook.use-case'
+import { CreateLorebookRequest } from '../dtos/create-lorebook.request'
+import { CreateLorebookResponse } from '../dtos/create-lorebook.response'
 
 @Controller({
 	path: 'lorebooks',
@@ -27,11 +29,18 @@ export class LorebookController {
 	// 创建新世界书
 	@Post()
 	@HttpCode(HttpStatus.CREATED)
+	@ZodResponse({
+		type: CreateLorebookResponse,
+	})
 	async create(
-		@Body() dto: CreateLorebookDto,
+		@Body() dto: CreateLorebookRequest,
 		@Session() session: UserSession,
 	) {
-		await this.createLorebookUseCase.execute(dto, session.user.id)
+		const result = await this.createLorebookUseCase.execute(
+			dto.toCommand(),
+			session.user.id,
+		)
+		return CreateLorebookResponse.fromDomain(result)
 	}
 
 	// 获取当前用户的所以世界书列表
