@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common'
 import { AuthModule as BetterAuthModule } from '@thallesp/nestjs-better-auth'
-import { APP_CONFIGURATION } from '~/core/config/config.loader'
-import { AppConfigModule } from '~/core/config/config.module'
-import type { Configuration } from '~/core/config/config.schema'
-import { CoreModule } from '~/core/core.module'
-import { DrizzleService } from '~/core/drizzle/drizzle.service'
-import { AuthMailerService } from '~/core/mailer/auth-mailer.service'
+import { APP_CONFIGURATION } from '~/shared/infrastructure/config/config.loader'
+import { AppConfigModule } from '~/shared/infrastructure/config/config.module'
+import { Configuration } from '~/shared/infrastructure/config/config.schema'
+import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
+import { AuthMailerService } from '~/shared/infrastructure/mailer/auth-mailer.service'
+import { SharedModule } from '~/shared/shared.module'
 import { createAuth } from './auth.factory'
 
 @Module({
 	imports: [
 		BetterAuthModule.forRootAsync({
-			imports: [CoreModule, AppConfigModule],
+			imports: [SharedModule, AppConfigModule],
 			inject: [DrizzleService, APP_CONFIGURATION, AuthMailerService],
 			useFactory: (
 				database: DrizzleService,

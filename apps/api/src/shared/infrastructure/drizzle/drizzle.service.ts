@@ -1,15 +1,27 @@
 import { Inject, Injectable, type OnApplicationShutdown } from '@nestjs/common'
-import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { DRIZZLE_OPTIONS } from './drizzle.constant'
-import { authRelations } from './drizzle.drizzle-schema'
+import { authRelations, lorebookRelations } from './drizzle.drizzle-schema'
 import type { DatabaseOptions } from './drizzle.types'
+
+function createDatabase(pool: Pool) {
+	return drizzle({
+		client: pool,
+		relations: {
+			...authRelations,
+			...lorebookRelations,
+		},
+	})
+}
+
+export type Database = ReturnType<typeof createDatabase>
 
 @Injectable()
 export class DrizzleService implements OnApplicationShutdown {
 	private readonly pool: Pool
 
-	readonly db: NodePgDatabase
+	readonly db: Database
 
 	constructor(@Inject(DRIZZLE_OPTIONS) options: DatabaseOptions) {
 		this.pool = new Pool({
@@ -17,12 +29,7 @@ export class DrizzleService implements OnApplicationShutdown {
 			max: options.poolMax,
 		})
 
-		this.db = drizzle({
-			client: this.pool,
-			relations: {
-				...authRelations,
-			},
-		})
+		this.db = createDatabase(this.pool)
 	}
 
 	async onApplicationShutdown() {

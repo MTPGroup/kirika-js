@@ -1,0 +1,1 @@
+ALTER TABLE "lorebook_revisions" ADD COLUMN "is_draft" boolean DEFAULT true NOT NULL;

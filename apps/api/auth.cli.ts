@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { createAuth } from './src/auth/auth.factory'
-import { loadConfiguration } from './src/core/config/config.loader'
+import { loadConfiguration } from './src/shared/infrastructure/config/config.loader'
 
 const config = loadConfiguration()
 
