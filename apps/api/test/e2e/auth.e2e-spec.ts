@@ -6,15 +6,15 @@ import { Pool } from 'pg'
 import request from 'supertest'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { AppModule } from '~/app.module'
-import { APP_CONFIGURATION } from '~/core/config/config.loader'
+import { APP_CONFIGURATION } from '~/shared/infrastructure/config/config.loader'
 import {
-	type Configuration,
+	Configuration,
 	configurationSchema,
-} from '~/core/config/config.schema'
+} from '~/shared/infrastructure/config/config.schema'
 import {
 	AuthMailerService,
-	type VerificationOTPType,
-} from '~/core/mailer/auth-mailer.service'
+	VerificationOTPType,
+} from '~/shared/infrastructure/mailer/auth-mailer.service'
 
 interface SentOTP {
 	email: string
