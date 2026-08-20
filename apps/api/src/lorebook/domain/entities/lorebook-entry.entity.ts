@@ -1,24 +1,8 @@
 import { Entity } from '~/shared/domain/base.entity'
 import { UuidId } from '~/shared/domain/uuid-id.vo'
 
-export type LoreEntryPositionValue = 'before_history' | 'after_history'
-
-export class LoreEntryPosition {
-	private constructor(readonly value: LoreEntryPositionValue) {}
-
-	static readonly BeforeHistory = new LoreEntryPosition('before_history')
-
-	static readonly AfterHistory = new LoreEntryPosition('after_history')
-
-	static from(value: LoreEntryPositionValue): LoreEntryPosition {
-		switch (value) {
-			case 'before_history':
-				return LoreEntryPosition.BeforeHistory
-			case 'after_history':
-				return LoreEntryPosition.AfterHistory
-		}
-	}
-}
+const LORE_ENTRY_POSITIONS = ['before_history', 'after_history'] as const
+export type LoreEntryPosition = (typeof LORE_ENTRY_POSITIONS)[number]
 
 export class LorebookEntryId extends UuidId {}
 

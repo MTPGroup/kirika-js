@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { ICommandHandler } from '@nestjs/cqrs'
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import { UserId } from '~/auth/user-id.vo'
 import { Lorebook } from '~/lorebook/domain/entities/lorebook.entity'
 import {
@@ -11,6 +11,7 @@ import {
 	CreateLorebookResult,
 } from './create-lorebook.command'
 
+@CommandHandler(CreateLorebookCommand)
 @Injectable()
 export class CreateLorebookHandler
 	implements ICommandHandler<CreateLorebookCommand>

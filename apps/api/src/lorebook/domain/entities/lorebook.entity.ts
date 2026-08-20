@@ -6,6 +6,10 @@ import {
 	LorebookRevisionId,
 } from './lorebook-revision.entity'
 
+const LOREBOOK_VISIBILITIES = ['private', 'unlisted', 'public'] as const
+
+export type LorebookVisibility = (typeof LOREBOOK_VISIBILITIES)[number]
+
 export class LorebookId extends UuidId {}
 
 export class Lorebook extends AggregateRoot<LorebookId> {
@@ -17,6 +21,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		private _description: string,
 		readonly ownerId: UserId,
 		private currentRevisionId: LorebookRevisionId | null = null,
+		private _visibility: LorebookVisibility = 'private',
 		revisions: LorebookRevision[] = [],
 		readonly createdAt: Date = new Date(),
 		private _updatedAt: Date = new Date(),
@@ -35,6 +40,10 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 
 	get description(): string {
 		return this._description
+	}
+
+	get visibility(): LorebookVisibility {
+		return this._visibility
 	}
 
 	get revisions(): readonly LorebookRevision[] {
@@ -81,6 +90,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		description: string,
 		ownerId: UserId,
 		currentRevisionId: LorebookRevisionId | null,
+		visibility: LorebookVisibility,
 		revisions: LorebookRevision[],
 		createdAt: Date,
 		updatedAt: Date,
@@ -91,10 +101,22 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 			description,
 			ownerId,
 			currentRevisionId,
+			visibility,
 			revisions,
 			createdAt,
 			updatedAt,
 		)
+	}
+
+	changeVisibility(visibility: LorebookVisibility) {
+		if (visibility !== 'private' && this.activeRevision === null) {
+			throw new Error('没有已发布版本的世界书不能对外可见')
+		}
+
+		if (this._visibility === visibility) return
+
+		this._visibility = visibility
+		this.touch()
 	}
 
 	createNewDraftRevision(): LorebookRevision {

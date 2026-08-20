@@ -13,24 +13,44 @@ import {
 } from 'drizzle-orm/pg-core'
 import { users } from '~/auth/auth.drizzle-schema'
 
-export const lorebooks = pgTable('lorebooks', {
-	id: uuid('id').primaryKey(),
-	ownerId: text('owner_id')
-		.notNull()
-		.references(() => users.id),
-	currentRevisionId: uuid('current_revision_id'),
-	name: text('name').notNull(),
-	description: text('description').notNull(),
-	extensions: jsonb('extensions')
-		.$type<Record<string, unknown>>()
-		.notNull()
-		.default({}),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.defaultNow()
-		.$onUpdate(() => new Date())
-		.notNull(),
-})
+export const lorebookVisibilityEnum = pgEnum('lorebook_visibility', [
+	'private',
+	'unlisted',
+	'public',
+])
+
+export const lorebooks = pgTable(
+	'lorebooks',
+	{
+		id: uuid('id').primaryKey(),
+		ownerId: text('owner_id')
+			.notNull()
+			.references(() => users.id),
+		currentRevisionId: uuid('current_revision_id'),
+		name: text('name').notNull(),
+		description: text('description').notNull(),
+		extensions: jsonb('extensions')
+			.$type<Record<string, unknown>>()
+			.notNull()
+			.default({}),
+		visibility: lorebookVisibilityEnum('visibility')
+			.notNull()
+			.default('private'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(t) => [
+		index('lorebooks_owner_updated_at_idx').on(t.ownerId, t.updatedAt, t.id),
+		index('lorebook_visibility_updated_at_idx').on(
+			t.visibility,
+			t.updatedAt,
+			t.id,
+		),
+	],
+)
 
 export const lorebookRevisions = pgTable(
 	'lorebook_revisions',

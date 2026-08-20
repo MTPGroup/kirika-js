@@ -13,19 +13,25 @@ import {
 	Put,
 	Session,
 } from '@nestjs/common'
-import { CommandBus } from '@nestjs/cqrs'
+import { CommandBus, QueryBus } from '@nestjs/cqrs'
 import { type UserSession } from '@thallesp/nestjs-better-auth'
 import { ZodResponse } from 'nestjs-zod'
 import { CreateLorebookCommand } from '~/lorebook/application/commands/create-lorebook.command'
+import { GetMyLorebooksQuery } from '~/lorebook/application/queries/get-my-lorebooks.query'
 import { CreateLorebookRequest } from '../dtos/create-lorebook.request'
 import { CreateLorebookResponse } from '../dtos/create-lorebook.response'
+import { GetMyLorebooksParams } from '../dtos/get-my-lorebooks.request'
+import { GetMyLorebooksResponse } from '../dtos/get-my-lorebooks.response'
 
 @Controller({
 	path: 'lorebooks',
 	version: ['1'],
 })
 export class LorebookController {
-	constructor(private readonly commandBus: CommandBus) {}
+	constructor(
+		private readonly commandBus: CommandBus,
+		private readonly queryBus: QueryBus,
+	) {}
 
 	// 创建新世界书
 	@Post()
@@ -46,8 +52,18 @@ export class LorebookController {
 
 	// 获取当前用户的所有世界书列表
 	@Get()
-	async getLorebookList() {
-		throw new NotImplementedException()
+	@ZodResponse({
+		type: GetMyLorebooksResponse,
+	})
+	async getMyLorebooks(
+		@Param() params: GetMyLorebooksParams,
+		@Session() session: UserSession,
+	) {
+		const result = await this.queryBus.execute(
+			new GetMyLorebooksQuery(session.user.id, params.page, params.pageSize),
+		)
+
+		return GetMyLorebooksResponse.fromResult(result)
 	}
 
 	// 获取指定世界书

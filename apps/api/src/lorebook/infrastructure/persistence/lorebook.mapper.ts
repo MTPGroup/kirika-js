@@ -7,7 +7,6 @@ import {
 import {
 	LorebookEntry,
 	LorebookEntryId,
-	LoreEntryPosition,
 } from '~/lorebook/domain/entities/lorebook-entry.entity'
 import {
 	LorebookRevision,
@@ -41,7 +40,7 @@ export class LorebookMapper {
 							entry.title,
 							entry.enabled,
 							entry.content,
-							LoreEntryPosition.from(entry.position),
+							entry.position,
 							entry.priority,
 						),
 					) ?? []
@@ -62,6 +61,7 @@ export class LorebookMapper {
 			raw.currentRevisionId
 				? new LorebookRevisionId(raw.currentRevisionId)
 				: null,
+			raw.visibility,
 			revisions,
 			raw.createdAt,
 			raw.updatedAt,
@@ -97,7 +97,7 @@ export class LorebookMapper {
 				content: entry.content,
 				keys: [...entry.keys],
 				enabled: entry.enabled,
-				position: entry.position.value,
+				position: entry.position,
 				priority: entry.priority,
 			})),
 		}

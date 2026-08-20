@@ -40,6 +40,7 @@ export class DrizzleLorebookRepository implements LorebookRepositoryPort {
 						name: lorebookModel.name,
 						description: lorebookModel.description,
 						currentRevisionId: lorebookModel.currentRevisionId,
+						visibility: lorebookModel.visibility,
 						updatedAt: lorebookModel.updatedAt,
 						extensions: lorebookModel.extensions,
 					},
