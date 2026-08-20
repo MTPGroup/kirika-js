@@ -1,6 +1,6 @@
 import { createZodDto } from 'nestjs-zod'
 import z from 'zod'
-import { Lorebook } from '~/lorebook/domain/entities/lorebook.entity'
+import { CreateLorebookResult } from '~/lorebook/application/commands/create-lorebook.command'
 import { apiResponseSchema } from '~/shared/presentation/api-response.interface'
 
 const _createLorebookResponseSchema = z.object({
@@ -20,21 +20,15 @@ const createLorebookResponseSchema = apiResponseSchema(
 export class CreateLorebookResponse extends createZodDto(
 	createLorebookResponseSchema,
 ) {
-	static fromDomain(domain: Lorebook): CreateLorebookResponse {
-		const data = {
-			id: domain.id.value,
-			ownerId: domain.ownerId.value,
-			name: domain.name,
-			description: domain.description,
-			currentRevisionId: domain.activeRevision?.id.value ?? null,
-			createdAt: domain.createdAt.toISOString(),
-			updatedAt: domain.updatedAt.toISOString(),
-		}
-
+	static fromResult(result: CreateLorebookResult): CreateLorebookResponse {
 		return {
 			code: 201,
 			message: 'success',
-			data,
+			data: {
+				...result,
+				createdAt: result.createdAt.toISOString(),
+				updatedAt: result.updatedAt.toISOString(),
+			},
 			timestamp: Date.now(),
 		}
 	}

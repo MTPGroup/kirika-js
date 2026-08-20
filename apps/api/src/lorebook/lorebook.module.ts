@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
 import { SharedModule } from '~/shared/shared.module'
-import { CreateLorebookUseCase } from './application/use-cases/create-lorebook.use-case'
+import { CreateLorebookHandler } from './application/commands/create-lorebook.handler'
 import { LOREBOOK_REPOSITORY_PORT } from './domain/ports/lorebook-repository.port'
 import { DrizzleLorebookRepository } from './infrastructure/persistence/drizzle-lorebook.repository'
 import { LorebookController } from './presentation/controllers/lorebook.controller'
@@ -12,7 +12,7 @@ import { LorebookController } from './presentation/controllers/lorebook.controll
 			provide: LOREBOOK_REPOSITORY_PORT,
 			useClass: DrizzleLorebookRepository,
 		},
-		CreateLorebookUseCase,
+		CreateLorebookHandler,
 	],
 	controllers: [LorebookController],
 })

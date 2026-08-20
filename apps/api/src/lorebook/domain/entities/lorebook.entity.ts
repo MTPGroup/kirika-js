@@ -49,6 +49,16 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		}
 	}
 
+	get draftRevision(): LorebookRevision | null {
+		for (const revision of this._revisions.values()) {
+			if (revision.isDraft) {
+				return revision
+			}
+		}
+
+		return null
+	}
+
 	get updatedAt(): Date {
 		return this._updatedAt
 	}
@@ -90,18 +100,9 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 	createNewDraftRevision(): LorebookRevision {
 		const draft = LorebookRevision.createDraft(this.nextRevisionNumber())
 		this._revisions.set(draft.id.value, draft)
+		this.touch()
 
 		return draft
-	}
-
-	getDraftRevision(): LorebookRevision | null {
-		for (const revision of this._revisions.values()) {
-			if (revision.isDraft) {
-				return revision
-			}
-		}
-
-		return null
 	}
 
 	publishRevision(revisionId: LorebookRevisionId) {

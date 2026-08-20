@@ -13,9 +13,10 @@ import {
 	Put,
 	Session,
 } from '@nestjs/common'
+import { CommandBus } from '@nestjs/cqrs'
 import { type UserSession } from '@thallesp/nestjs-better-auth'
 import { ZodResponse } from 'nestjs-zod'
-import { CreateLorebookUseCase } from '~/lorebook/application/use-cases/create-lorebook.use-case'
+import { CreateLorebookCommand } from '~/lorebook/application/commands/create-lorebook.command'
 import { CreateLorebookRequest } from '../dtos/create-lorebook.request'
 import { CreateLorebookResponse } from '../dtos/create-lorebook.response'
 
@@ -24,7 +25,7 @@ import { CreateLorebookResponse } from '../dtos/create-lorebook.response'
 	version: ['1'],
 })
 export class LorebookController {
-	constructor(private readonly createLorebookUseCase: CreateLorebookUseCase) {}
+	constructor(private readonly commandBus: CommandBus) {}
 
 	// 创建新世界书
 	@Post()
@@ -32,20 +33,20 @@ export class LorebookController {
 	@ZodResponse({
 		type: CreateLorebookResponse,
 	})
-	async create(
+	async createLorebook(
 		@Body() dto: CreateLorebookRequest,
 		@Session() session: UserSession,
 	) {
-		const result = await this.createLorebookUseCase.execute(
-			dto.toCommand(),
-			session.user.id,
+		const result = await this.commandBus.execute(
+			new CreateLorebookCommand(dto.name, dto.description, session.user.id),
 		)
-		return CreateLorebookResponse.fromDomain(result)
+
+		return CreateLorebookResponse.fromResult(result)
 	}
 
-	// 获取当前用户的所以世界书列表
+	// 获取当前用户的所有世界书列表
 	@Get()
-	async get() {
+	async getLorebookList() {
 		throw new NotImplementedException()
 	}
 
