@@ -6,6 +6,7 @@
 	"private": true,
 	"license": "UNLICENSED",
 	"scripts": {
+		"docs": "compodoc -p tsconfig.json -s",
 		"build": "nest build",
 		"start": "nest start",
 		"start:dev": "nest start --watch",
@@ -52,6 +53,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
+		"@compodoc/compodoc": "^2.0.0",
 		"@nestjs/cli": "^11.0.0",
 		"@nestjs/schematics": "^11.0.0",
 		"@nestjs/testing": "^11.0.1",
