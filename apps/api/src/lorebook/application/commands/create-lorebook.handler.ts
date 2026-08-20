@@ -40,7 +40,7 @@ export class CreateLorebookHandler
 			name: lorebook.name,
 			description: lorebook.description,
 			draftRevisionId: draftRevision.id.value,
-			currentRevisionId: lorebook.activeRevision?.id.value ?? null,
+			currentRevisionId: lorebook.currentRevision?.id.value ?? null,
 			createdAt: lorebook.createdAt,
 			updatedAt: lorebook.updatedAt,
 		}

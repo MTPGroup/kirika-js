@@ -46,7 +46,7 @@ export class DrizzleLorebookRepository implements LorebookRepositoryPort {
 					},
 				})
 
-			const revisionToSave = lorebook.draftRevision ?? lorebook.activeRevision
+			const revisionToSave = lorebook.draftRevision ?? lorebook.currentRevision
 
 			if (revisionToSave) {
 				const model = LorebookMapper.toLorebookRevisionPersistence(

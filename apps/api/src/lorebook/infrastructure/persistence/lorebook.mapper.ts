@@ -74,7 +74,7 @@ export class LorebookMapper {
 			ownerId: lorebook.ownerId.value,
 			name: lorebook.name,
 			description: lorebook.description,
-			currentRevisionId: lorebook.activeRevision?.id.value,
+			currentRevisionId: lorebook.currentRevision?.id.value,
 			updatedAt: lorebook.updatedAt,
 		}
 	}

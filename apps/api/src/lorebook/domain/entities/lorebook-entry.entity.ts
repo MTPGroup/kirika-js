@@ -95,4 +95,15 @@ export class LorebookEntry extends Entity<LorebookEntryId> {
 		if (!this.enabled) return false
 		return this.keys.some((key) => text.includes(key))
 	}
+
+	clone(): LorebookEntry {
+		return LorebookEntry.create(
+			[...this.keys],
+			this.title,
+			this.enabled,
+			this.content,
+			this.position,
+			this.priority,
+		)
+	}
 }

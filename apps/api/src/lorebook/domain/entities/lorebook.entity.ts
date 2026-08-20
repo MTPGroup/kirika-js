@@ -50,7 +50,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		return Array.from(this._revisions.values())
 	}
 
-	get activeRevision(): LorebookRevision | null {
+	get currentRevision(): LorebookRevision | null {
 		try {
 			return this.getRevision()
 		} catch {
@@ -109,7 +109,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 	}
 
 	changeVisibility(visibility: LorebookVisibility) {
-		if (visibility !== 'private' && this.activeRevision === null) {
+		if (visibility !== 'private' && this.currentRevision === null) {
 			throw new Error('没有已发布版本的世界书不能对外可见')
 		}
 
@@ -120,7 +120,17 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 	}
 
 	createNewDraftRevision(): LorebookRevision {
-		const draft = LorebookRevision.createDraft(this.nextRevisionNumber())
+		if (this.draftRevision) {
+			throw new Error('该世界书已存在草稿版本')
+		}
+		const sourceEntries =
+			this.currentRevision?.entries.map((entry) => entry.clone()) ?? []
+
+		const draft = LorebookRevision.createDraft(
+			this.nextRevisionNumber(),
+			sourceEntries,
+		)
+
 		this._revisions.set(draft.id.value, draft)
 		this.touch()
 
@@ -129,6 +139,10 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 
 	publishRevision(revisionId: LorebookRevisionId) {
 		const revision = this.getRevision(revisionId)
+
+		if (!revision.isDraft) {
+			throw new Error('只能发布草稿版本')
+		}
 
 		revision.publish()
 		this.currentRevisionId = revisionId

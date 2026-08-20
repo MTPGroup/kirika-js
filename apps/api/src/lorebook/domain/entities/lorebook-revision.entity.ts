@@ -27,11 +27,12 @@ export class LorebookRevision extends Entity<LorebookRevisionId> {
 		return Array.from(this._entries.values())
 	}
 
-	static createDraft(revisionNumber: number) {
+	static createDraft(revisionNumber: number, entries: LorebookEntry[]) {
 		return new LorebookRevision(
 			LorebookRevisionId.generate(),
 			revisionNumber,
 			true,
+			entries,
 		)
 	}
 
