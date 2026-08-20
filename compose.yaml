@@ -4,9 +4,9 @@ services:
   postgres:
     image: postgres:18.4-alpine
     environment:
-      POSTGRES_DB: ${PG_DB:-kirka}
+      POSTGRES_DB: ${PG_DB:-kirika}
       POSTGRES_USER: ${PG_USER:-kirika}
-      POSTGRES_PASSWORD: ${PG_PASSWORD:-nC8HQiVnR74DTKZa75oP}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-kirika_dev}
     ports:
       - "127.0.0.1:${PG_PORT:-5432}:5432"
     volumes:
