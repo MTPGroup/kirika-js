@@ -1,2 +1,0 @@
-ALTER TABLE "lorebooks" ADD COLUMN "owner_id" text NOT NULL;--> statement-breakpoint
-ALTER TABLE "lorebooks" ADD CONSTRAINT "lorebooks_owner_id_users_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "users"("id");

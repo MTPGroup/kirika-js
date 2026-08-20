@@ -23,7 +23,7 @@ export const lorebooks = pgTable(
 	'lorebooks',
 	{
 		id: uuid('id').primaryKey(),
-		ownerId: text('owner_id')
+		ownerId: uuid('owner_id')
 			.notNull()
 			.references(() => users.id),
 		currentRevisionId: uuid('current_revision_id'),

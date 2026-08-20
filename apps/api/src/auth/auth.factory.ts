@@ -26,6 +26,12 @@ export function createAuth(
 			joins: true,
 		},
 
+		advanced: {
+			database: {
+				generateId: 'uuid',
+			},
+		},
+
 		emailAndPassword: {
 			enabled: true,
 			requireEmailVerification: true,

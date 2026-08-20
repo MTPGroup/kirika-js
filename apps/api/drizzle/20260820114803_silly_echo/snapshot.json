@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "27c21e55-5ddb-43e7-8217-780690d45f2b",
+  "id": "372e4614-d016-41f0-b234-292ff2efcb1c",
   "prevIds": [
-    "cf94d99f-3728-4e91-9cc3-9e95ac197edc"
+    "444bccb7-9dc0-44be-83d3-17d202ad28e6"
   ],
   "ddl": [
     {
@@ -12,6 +12,16 @@
         "after_history"
       ],
       "name": "lorebook_entry_position",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "private",
+        "unlisted",
+        "public"
+      ],
+      "name": "lorebook_visibility",
       "entityType": "enums",
       "schema": "public"
     },
@@ -58,11 +68,11 @@
       "schema": "public"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "pg_catalog.gen_random_uuid()",
       "generated": null,
       "identity": null,
       "name": "id",
@@ -97,7 +107,7 @@
       "table": "accounts"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -227,11 +237,11 @@
       "table": "accounts"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "pg_catalog.gen_random_uuid()",
       "generated": null,
       "identity": null,
       "name": "id",
@@ -318,7 +328,7 @@
       "table": "sessions"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -331,11 +341,11 @@
       "table": "sessions"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "pg_catalog.gen_random_uuid()",
       "generated": null,
       "identity": null,
       "name": "id",
@@ -422,11 +432,11 @@
       "table": "users"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "pg_catalog.gen_random_uuid()",
       "generated": null,
       "identity": null,
       "name": "id",
@@ -695,7 +705,7 @@
       "table": "lorebooks"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -755,6 +765,19 @@
       "generated": null,
       "identity": null,
       "name": "extensions",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "lorebooks"
+    },
+    {
+      "type": "lorebook_visibility",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'private'",
+      "generated": null,
+      "identity": null,
+      "name": "visibility",
       "entityType": "columns",
       "schema": "public",
       "table": "lorebooks"
@@ -903,6 +926,76 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "lorebook_revisions"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "owner_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "updated_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "lorebooks_owner_updated_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "lorebooks"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "visibility",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "updated_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "lorebook_visibility_updated_at_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "lorebooks"
     },
     {
       "nameExplicit": false,

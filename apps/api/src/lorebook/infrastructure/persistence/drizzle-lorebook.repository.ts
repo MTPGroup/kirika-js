@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { eq, notInArray, sql } from 'drizzle-orm'
+import { and, eq, notInArray, sql } from 'drizzle-orm'
 import {
 	Lorebook,
 	LorebookId,
@@ -46,10 +46,12 @@ export class DrizzleLorebookRepository implements LorebookRepositoryPort {
 					},
 				})
 
-			if (lorebook.activeRevision) {
+			const revisionToSave = lorebook.draftRevision ?? lorebook.activeRevision
+
+			if (revisionToSave) {
 				const model = LorebookMapper.toLorebookRevisionPersistence(
 					lorebook.id,
-					lorebook.activeRevision,
+					revisionToSave,
 				)
 				const activeRevision = model.revision
 				const entries = model.entries
@@ -85,8 +87,10 @@ export class DrizzleLorebookRepository implements LorebookRepositoryPort {
 					await tx
 						.delete(lorebookEntries)
 						.where(
-							eq(lorebookEntries.revisionId, activeRevision.id) &&
+							and(
+								eq(lorebookEntries.revisionId, activeRevision.id),
 								notInArray(lorebookEntries.id, currentEntryIds),
+							),
 						)
 				} else {
 					await tx

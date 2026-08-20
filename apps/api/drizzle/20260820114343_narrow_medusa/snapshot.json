@@ -1,30 +1,11 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "082e015c-d408-421a-b48c-231613525ec3",
+  "id": "444bccb7-9dc0-44be-83d3-17d202ad28e6",
   "prevIds": [
-    "0d9b8dbb-3630-4656-a76f-b662b7690a8b"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
-    {
-      "values": [
-        "before_history",
-        "after_history"
-      ],
-      "name": "lorebook_entry_position",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": [
-        "private",
-        "unlisted",
-        "public"
-      ],
-      "name": "lorebook_visibility",
-      "entityType": "enums",
-      "schema": "public"
-    },
     {
       "isRlsEnabled": false,
       "name": "accounts",
@@ -50,29 +31,11 @@
       "schema": "public"
     },
     {
-      "isRlsEnabled": false,
-      "name": "lorebook_entries",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "lorebook_revisions",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "lorebooks",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "pg_catalog.gen_random_uuid()",
       "generated": null,
       "identity": null,
       "name": "id",
@@ -107,7 +70,7 @@
       "table": "accounts"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -237,11 +200,11 @@
       "table": "accounts"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "pg_catalog.gen_random_uuid()",
       "generated": null,
       "identity": null,
       "name": "id",
@@ -328,7 +291,7 @@
       "table": "sessions"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -341,11 +304,11 @@
       "table": "sessions"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "pg_catalog.gen_random_uuid()",
       "generated": null,
       "identity": null,
       "name": "id",
@@ -432,11 +395,11 @@
       "table": "users"
     },
     {
-      "type": "text",
+      "type": "uuid",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "pg_catalog.gen_random_uuid()",
       "generated": null,
       "identity": null,
       "name": "id",
@@ -510,305 +473,6 @@
       "table": "verifications"
     },
     {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "revision_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'[]'",
-      "generated": null,
-      "identity": null,
-      "name": "keys",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "title",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "true",
-      "generated": null,
-      "identity": null,
-      "name": "enabled",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "content",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "type": "lorebook_entry_position",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'after_history'",
-      "generated": null,
-      "identity": null,
-      "name": "position",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "priority",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_revisions"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "lorebook_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_revisions"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "revision_number",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_revisions"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "true",
-      "generated": null,
-      "identity": null,
-      "name": "is_draft",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_revisions"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "change_log",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_revisions"
-    },
-    {
-      "type": "timestamp",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebook_revisions"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "owner_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "current_revision_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "description",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{}'",
-      "generated": null,
-      "identity": null,
-      "name": "extensions",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
-      "type": "lorebook_visibility",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'private'",
-      "generated": null,
-      "identity": null,
-      "name": "visibility",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
-      "type": "timestamp",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
-      "type": "timestamp",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
       "nameExplicit": true,
       "columns": [
         {
@@ -872,132 +536,6 @@
       "table": "verifications"
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "revision_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "priority",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "lorebook_entries_revision_priority_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "lorebook_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "revision_number",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "lorebook_revision_number_uq",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "lorebook_revisions"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "owner_id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "updated_at",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "lorebooks_owner_updated_at_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "visibility",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "updated_at",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "id",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "lorebook_visibility_updated_at_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "lorebooks"
-    },
-    {
       "nameExplicit": false,
       "columns": [
         "user_id"
@@ -1030,57 +568,6 @@
       "entityType": "fks",
       "schema": "public",
       "table": "sessions"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "revision_id"
-      ],
-      "schemaTo": "public",
-      "tableTo": "lorebook_revisions",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "lorebook_entries_revision_id_lorebook_revisions_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "lorebook_entries"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "lorebook_id"
-      ],
-      "schemaTo": "public",
-      "tableTo": "lorebooks",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "CASCADE",
-      "name": "lorebook_revisions_lorebook_id_lorebooks_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "lorebook_revisions"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "owner_id"
-      ],
-      "schemaTo": "public",
-      "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "NO ACTION",
-      "name": "lorebooks_owner_id_users_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "lorebooks"
     },
     {
       "columns": [
@@ -1120,36 +607,6 @@
       "name": "verifications_pkey",
       "schema": "public",
       "table": "verifications",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "lorebook_entries_pkey",
-      "schema": "public",
-      "table": "lorebook_entries",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "lorebook_revisions_pkey",
-      "schema": "public",
-      "table": "lorebook_revisions",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "lorebooks_pkey",
-      "schema": "public",
-      "table": "lorebooks",
       "entityType": "pks"
     },
     {

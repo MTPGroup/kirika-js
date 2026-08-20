@@ -1,8 +1,8 @@
 CREATE TABLE "accounts" (
-	"id" text PRIMARY KEY,
+	"id" uuid PRIMARY KEY DEFAULT pg_catalog.gen_random_uuid(),
 	"account_id" text NOT NULL,
 	"provider_id" text NOT NULL,
-	"user_id" text NOT NULL,
+	"user_id" uuid NOT NULL,
 	"access_token" text,
 	"refresh_token" text,
 	"id_token" text,
@@ -15,18 +15,18 @@ CREATE TABLE "accounts" (
 );
 --> statement-breakpoint
 CREATE TABLE "sessions" (
-	"id" text PRIMARY KEY,
+	"id" uuid PRIMARY KEY DEFAULT pg_catalog.gen_random_uuid(),
 	"expires_at" timestamp NOT NULL,
 	"token" text NOT NULL UNIQUE,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp NOT NULL,
 	"ip_address" text,
 	"user_agent" text,
-	"user_id" text NOT NULL
+	"user_id" uuid NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" text PRIMARY KEY,
+	"id" uuid PRIMARY KEY DEFAULT pg_catalog.gen_random_uuid(),
 	"name" text NOT NULL,
 	"email" text NOT NULL UNIQUE,
 	"email_verified" boolean DEFAULT false NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 CREATE TABLE "verifications" (
-	"id" text PRIMARY KEY,
+	"id" uuid PRIMARY KEY DEFAULT pg_catalog.gen_random_uuid(),
 	"identifier" text NOT NULL,
 	"value" text NOT NULL,
 	"expires_at" timestamp NOT NULL,
