@@ -6,7 +6,10 @@ const configuration = loadConfiguration()
 
 export default defineConfig({
 	out: './drizzle',
-	schema: './src/shared/infrastructure/drizzle/drizzle.drizzle-schema.ts',
+	schema: [
+		'./src/auth/auth.drizzle-schema.ts',
+		'./src/*/infrastructure/persistence/*.drizzle-schema.ts',
+	],
 	dialect: 'postgresql',
 	dbCredentials: {
 		url: configuration.database.url,
