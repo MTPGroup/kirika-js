@@ -1,5 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common'
-import { IQueryHandler } from '@nestjs/cqrs'
+import { Inject } from '@nestjs/common'
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs'
 import {
 	LOREBOOK_LIST_READ_PORT,
 	type LorebookListReadPort,
@@ -9,7 +9,7 @@ import {
 	type LorebookPageResult,
 } from './get-my-lorebooks.query'
 
-@Injectable()
+@QueryHandler(GetMyLorebooksQuery)
 export class GetMyLorebooksHandler
 	implements IQueryHandler<GetMyLorebooksQuery>
 {

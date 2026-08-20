@@ -11,6 +11,7 @@ import {
 	Patch,
 	Post,
 	Put,
+	Query,
 	Session,
 } from '@nestjs/common'
 import { CommandBus, QueryBus } from '@nestjs/cqrs'
@@ -56,7 +57,7 @@ export class LorebookController {
 		type: GetMyLorebooksResponse,
 	})
 	async getMyLorebooks(
-		@Param() params: GetMyLorebooksParams,
+		@Query() params: GetMyLorebooksParams,
 		@Session() session: UserSession,
 	) {
 		const result = await this.queryBus.execute(
