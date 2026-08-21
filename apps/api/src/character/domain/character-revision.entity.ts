@@ -208,6 +208,34 @@ export class CharacterRevision extends Entity<CharacterRevisionId> {
 		this.touch()
 	}
 
+	replaceContent(content: CharacterRevisionContent): void {
+		this.ensureDraft()
+		if (!content.name.trim()) throw new Error('角色名称不能为空')
+
+		const greetings = CharacterRevision.normalizeTextList(
+			content.greetings ?? [],
+		)
+		const examples = CharacterRevision.normalizeTextList(content.examples ?? [])
+		const extensions = structuredClone(content.extensions ?? {})
+		const assets = CharacterRevision.validateAssets(content.assets ?? [])
+		const lorebooks = CharacterRevision.validateLorebooks(
+			content.lorebooks ?? [],
+		)
+
+		this._name = content.name.trim()
+		this._description = content.description ?? ''
+		this._personality = content.personality ?? ''
+		this._scenario = content.scenario ?? ''
+		this._systemPrompt = content.systemPrompt ?? ''
+		this._postHistoryInstructions = content.postHistoryInstructions ?? ''
+		this._greetings = greetings
+		this._examples = examples
+		this._extensions = extensions
+		this._assets = assets
+		this._lorebooks = lorebooks
+		this.touch()
+	}
+
 	replaceGreetings(greetings: readonly string[]): void {
 		this.ensureDraft()
 		this._greetings = CharacterRevision.normalizeTextList(greetings)

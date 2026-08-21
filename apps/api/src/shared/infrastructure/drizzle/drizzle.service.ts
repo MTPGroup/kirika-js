@@ -2,7 +2,11 @@ import { Inject, Injectable, type OnApplicationShutdown } from '@nestjs/common'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { DRIZZLE_OPTIONS } from './drizzle.constant'
-import { authRelations, lorebookRelations } from './drizzle.drizzle-schema'
+import {
+	authRelations,
+	characterRelations,
+	lorebookRelations,
+} from './drizzle.drizzle-schema'
 import type { DatabaseOptions } from './drizzle.types'
 
 function createDatabase(pool: Pool) {
@@ -11,6 +15,7 @@ function createDatabase(pool: Pool) {
 		relations: {
 			...authRelations,
 			...lorebookRelations,
+			...characterRelations,
 		},
 	})
 }

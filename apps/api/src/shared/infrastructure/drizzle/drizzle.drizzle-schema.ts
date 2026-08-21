@@ -5,6 +5,14 @@ import {
 	verifications,
 } from '~/auth/auth.drizzle-schema'
 import {
+	assetKindEnum,
+	assets,
+	characterRevisionAssets,
+	characterRevisionLorebooks,
+	characterRevisions,
+	characters,
+} from '~/character/infrastructure/persistence/character.drizzle-schema'
+import {
 	lorebookEntries,
 	lorebookEntryPositionEnum,
 	lorebookRevisions,
@@ -13,6 +21,7 @@ import {
 } from '~/lorebook/infrastructure/persistence/lorebook.drizzle-schema'
 
 export { authRelations } from '~/auth/auth.drizzle-schema'
+export { characterRelations } from '~/character/infrastructure/persistence/character.drizzle-schema'
 export { lorebookRelations } from '~/lorebook/infrastructure/persistence/lorebook.drizzle-schema'
 
 export const schema = {
@@ -25,4 +34,10 @@ export const schema = {
 	lorebookRevisions,
 	lorebookEntryPositionEnum,
 	lorebookEntries,
+	characters,
+	characterRevisions,
+	assets,
+	assetKindEnum,
+	characterRevisionAssets,
+	characterRevisionLorebooks,
 }

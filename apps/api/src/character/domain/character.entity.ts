@@ -140,6 +140,14 @@ export class Character extends AggregateRoot<CharacterId> {
 		this.touch()
 	}
 
+	replaceDraftRevision(
+		revisionId: CharacterRevisionId,
+		content: CharacterRevisionContent,
+	): void {
+		this.getRevision(revisionId).replaceContent(content)
+		this.touch()
+	}
+
 	replaceDraftGreetings(
 		revisionId: CharacterRevisionId,
 		greetings: readonly string[],
