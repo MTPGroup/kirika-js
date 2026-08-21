@@ -1,8 +1,8 @@
 import type {
 	AssetMessageContentPart,
 	MessageContentPart,
-	TokenUsageProps,
 } from '@kirika-js/domain/conversation'
+import type { TokenUsage } from './token-usage'
 
 export const CHAT_MODEL_ROLES = ['system', 'user', 'assistant'] as const
 export type ChatModelRole = (typeof CHAT_MODEL_ROLES)[number]
@@ -46,5 +46,5 @@ export type ChatModelStreamEvent =
 	| {
 			readonly type: 'finish'
 			readonly finishReason: ChatModelFinishReason
-			readonly tokenUsage?: TokenUsageProps
+			readonly tokenUsage?: TokenUsage
 	  }
