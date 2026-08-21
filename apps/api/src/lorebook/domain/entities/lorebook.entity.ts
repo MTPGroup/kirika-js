@@ -30,6 +30,7 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		if (!_name.trim()) throw new Error('世界书名称不能为空')
 
 		super(id)
+		this.assertValidRevisionState(revisions)
 		this._revisions = new Map(
 			revisions.map((revision) => [revision.id.value, revision]),
 		)
@@ -190,6 +191,45 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		}
 
 		return max + 1
+	}
+
+	private assertValidRevisionState(
+		revisions: readonly LorebookRevision[],
+	): void {
+		const revisionIds = new Set<string>()
+		const revisionNumbers = new Set<number>()
+		let draftCount = 0
+
+		for (const revision of revisions) {
+			if (revisionIds.has(revision.id.value)) {
+				throw new Error(`世界书版本 ID 重复: ${revision.id.value}`)
+			}
+			if (revisionNumbers.has(revision.revisionNumber)) {
+				throw new Error(`世界书版本号重复: ${revision.revisionNumber}`)
+			}
+
+			revisionIds.add(revision.id.value)
+			revisionNumbers.add(revision.revisionNumber)
+			if (revision.isDraft) draftCount += 1
+		}
+
+		if (draftCount > 1) throw new Error('世界书最多只能存在一个草稿版本')
+
+		if (this.currentRevisionId) {
+			const currentRevision = revisions.find((revision) =>
+				revision.id.equals(this.currentRevisionId),
+			)
+			if (!currentRevision) {
+				throw new Error('当前世界书版本不属于该世界书')
+			}
+			if (currentRevision.isDraft) {
+				throw new Error('当前世界书版本不能指向草稿')
+			}
+		}
+
+		if (this._visibility !== 'private' && !this.currentRevisionId) {
+			throw new Error('没有已发布版本的世界书不能对外可见')
+		}
 	}
 
 	private touch() {

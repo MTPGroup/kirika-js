@@ -252,6 +252,44 @@ describe('Conversation', () => {
 		expect(retried.status).toBe('pending')
 	})
 
+	it('取消生成后释放会话生成锁并允许重试', () => {
+		const { conversation, owner, kirika } = createDirectConversation()
+		const userMessage = conversation.createHumanMessage(
+			owner.id,
+			text('你好'),
+			null,
+		)
+		const generated = conversation.createGeneratedMessage(
+			kirika.id,
+			'model-v1',
+			userMessage,
+		)
+
+		conversation.cancelGeneratedMessage(generated)
+
+		expect(generated).toMatchObject({
+			status: 'cancelled',
+			finishReason: 'cancelled',
+			errorReason: null,
+		})
+		expect(conversation.activeGenerationMessageId).toBeNull()
+		expect(() =>
+			conversation.createGeneratedMessage(kirika.id, 'model-v2', userMessage),
+		).not.toThrow()
+	})
+
+	it('拒绝空白人工消息且不改变活跃分支', () => {
+		const { conversation, owner } = createDirectConversation()
+
+		expect(() =>
+			conversation.createHumanMessage(owner.id, MessageContent.empty(), null),
+		).toThrow('消息内容不能为空')
+		expect(() =>
+			conversation.createHumanMessage(owner.id, text('   '), null),
+		).toThrow('消息内容不能为空')
+		expect(conversation.activeLeafMessageId).toBeNull()
+	})
+
 	it('参与者退出后不能发言且所有者不能退出', () => {
 		const { conversation, owner } = createDirectConversation()
 		const secondHuman = ConversationParticipant.createHuman({
@@ -553,5 +591,50 @@ describe('Conversation reconstitution', () => {
 				archivedAt: null,
 			}),
 		).toThrow('生成中的消息必须是当前活跃消息')
+	})
+
+	it('拒绝时间和归档状态不一致的会话', () => {
+		const owner = createOwnerParticipant()
+		const kirika = createKirikaParticipant()
+		const id = new ConversationId('77777777-7777-4777-8777-777777777777')
+		const createdAt = new Date('2026-08-21T09:00:00.000Z')
+		const earlier = new Date('2026-08-21T08:00:00.000Z')
+		const archivedAt = new Date('2026-08-21T10:00:00.000Z')
+		const base = {
+			id,
+			ownerId,
+			mode: 'direct' as const,
+			participants: [owner, kirika],
+			title: null,
+			turnPolicy: 'manual' as const,
+			activeLeafMessageId: null,
+			activeGenerationMessageId: null,
+			createdAt,
+		}
+
+		expect(() =>
+			Conversation.reconstitute({
+				...base,
+				status: 'active',
+				updatedAt: earlier,
+				archivedAt: null,
+			}),
+		).toThrow('会话更新时间不能早于创建时间')
+		expect(() =>
+			Conversation.reconstitute({
+				...base,
+				status: 'archived',
+				updatedAt: createdAt,
+				archivedAt: null,
+			}),
+		).toThrow('已归档会话必须记录归档时间')
+		expect(() =>
+			Conversation.reconstitute({
+				...base,
+				status: 'active',
+				updatedAt: archivedAt,
+				archivedAt,
+			}),
+		).toThrow('活跃会话不能包含归档时间')
 	})
 })

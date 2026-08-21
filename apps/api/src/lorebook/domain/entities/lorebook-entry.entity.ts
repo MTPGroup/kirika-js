@@ -30,7 +30,7 @@ export class LorebookEntry extends Entity<LorebookEntryId> {
 	}
 
 	get keys(): readonly string[] {
-		return this._keys
+		return [...this._keys]
 	}
 
 	get title(): string {

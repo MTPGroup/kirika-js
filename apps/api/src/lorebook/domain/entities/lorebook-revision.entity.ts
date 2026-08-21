@@ -13,9 +13,16 @@ export class LorebookRevision extends Entity<LorebookRevisionId> {
 		private _isDraft: boolean = true,
 		entries: LorebookEntry[] = [],
 	) {
-		if (revisionNumber < 1) throw new Error('非法的版本号，需要 >= 1')
+		if (!Number.isInteger(revisionNumber) || revisionNumber < 1) {
+			throw new Error('非法的版本号，需要 >= 1')
+		}
 
 		super(id)
+		if (
+			new Set(entries.map((entry) => entry.id.value)).size !== entries.length
+		) {
+			throw new Error('世界书条目 ID 重复')
+		}
 		this._entries = new Map(entries.map((entry) => [entry.id.value, entry]))
 	}
 
