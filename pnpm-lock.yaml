@@ -169,7 +169,7 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(vite@8.2.0(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
-  packages/adapter-model-openai:
+  packages/adapter-model-openai-compatible:
     dependencies:
       '@kirika-js/chat-engine':
         specifier: workspace:*
@@ -177,6 +177,9 @@ importers:
       '@kirika-js/domain':
         specifier: workspace:*
         version: link:../domain
+      openai:
+        specifier: ^7.5.0
+        version: 7.5.0(zod@4.4.3)
     devDependencies:
       '@biomejs/biome':
         specifier: 'catalog:'
@@ -4502,6 +4505,27 @@ packages:
   open@7.4.2:
     resolution: {integrity: sha512-MVHddDVweXZF3awtlAS+6pgKLlm/JgxZ90+/NBurBoQctVOOB/zDdVjcyPzQ+0laDGbsWgrRkflI65sQeOgT9Q==}
     engines: {node: '>=8'}
+
+  openai@7.5.0:
+    resolution: {integrity: sha512-ZbDBz8FSB8Mv8fFYIUvzTFMdV5vl93/octp1MdtK2lfYepSpfv/ewmeugpKz/cwGtFSx+YuUM4NwpZ2P55YiPA==}
+    engines: {node: '>=22.0.0'}
+    peerDependencies:
+      '@aws-sdk/credential-provider-node': '>=3.972.0 <4'
+      '@smithy/hash-node': '>=4.3.0 <5'
+      '@smithy/signature-v4': '>=5.4.0 <6'
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-node':
+        optional: true
+      '@smithy/hash-node':
+        optional: true
+      '@smithy/signature-v4':
+        optional: true
+      ws:
+        optional: true
+      zod:
+        optional: true
 
   ora@5.4.1:
     resolution: {integrity: sha512-5b6Y85tPxZZ7QytO+BQzysW31HJku27cRIlkbAXaNx+BdcVi+LlRFmVXzeF6a7JCwJpyw5c4b+YSVImQIrBpuQ==}
@@ -10325,6 +10349,10 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
     optional: true
+
+  openai@7.5.0(zod@4.4.3):
+    optionalDependencies:
+      zod: 4.4.3
 
   ora@5.4.1:
     dependencies:

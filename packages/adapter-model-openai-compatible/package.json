@@ -1,5 +1,5 @@
 {
-	"name": "@kirika-js/adapter-model-openai",
+	"name": "@kirika-js/adapter-model-openai-compatible",
 	"version": "0.1.0",
 	"private": true,
 	"license": "MIT",
@@ -28,13 +28,14 @@
 	},
 	"dependencies": {
 		"@kirika-js/chat-engine": "workspace:*",
-		"@kirika-js/domain": "workspace:*"
+		"@kirika-js/domain": "workspace:*",
+		"openai": "^7.5.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
 		"@typescript/native": "npm:typescript@^7.0.2",
-		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"tsdown": "catalog:",
+		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"vitest": "catalog:"
 	}
 }
