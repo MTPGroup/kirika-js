@@ -19,10 +19,12 @@ import { OptionalAuth, type UserSession } from '@thallesp/nestjs-better-auth'
 import { ZodResponse } from 'nestjs-zod'
 import { CreateLorebookCommand } from '~/lorebook/application/commands/create-lorebook.command'
 import { GetPublicLorebookQuery } from '~/lorebook/application/queries/get-available-lorebooks.query'
+import { GetLorebookQuery } from '~/lorebook/application/queries/get-lorebook.query'
 import { GetMyLorebooksQuery } from '~/lorebook/application/queries/get-my-lorebooks.query'
 import { PagedRequestParams } from '~/shared/presentation/api-request.interface'
 import { CreateLorebookRequest } from '../dtos/create-lorebook.request'
 import { CreateLorebookResponse } from '../dtos/create-lorebook.response'
+import { GetLorebookResponse } from '../dtos/get-lorebook.response'
 import { GetLorebooksResponse } from '../dtos/get-lorebooks.response'
 
 @Controller({
@@ -90,8 +92,18 @@ export class LorebookController {
 
 	// 获取指定世界书
 	@Get(':id')
-	async getDetail(@Param('id', ParseUUIDPipe) id: string) {
-		throw new NotImplementedException()
+	@ZodResponse({
+		type: GetLorebookResponse,
+	})
+	async getDetail(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Session() session: UserSession,
+	) {
+		const result = await this.queryBus.execute(
+			new GetLorebookQuery(id, session.user.id),
+		)
+
+		return GetLorebookResponse.fromResult(result)
 	}
 
 	// 更新主表数据

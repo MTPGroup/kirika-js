@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { SharedModule } from '~/shared/shared.module'
 import { CreateLorebookHandler } from './application/commands/create-lorebook.handler'
 import { LOREBOOK_LIST_READ_PORT } from './application/ports/lorebook-list-read.port'
+import { GetLorebookHandler } from './application/queries/get-lorebook.handler'
 import { GetMyLorebooksHandler } from './application/queries/get-my-lorebooks.handler'
 import { LOREBOOK_REPOSITORY_PORT } from './domain/ports/lorebook-repository.port'
 import { DrizzleLorebookRepository } from './infrastructure/persistence/drizzle-lorebook.repository'
@@ -20,6 +21,7 @@ import { LorebookController } from './presentation/controllers/lorebook.controll
 			useClass: DrizzleLorebookListReadAdapter,
 		},
 		CreateLorebookHandler,
+		GetLorebookHandler,
 		GetMyLorebooksHandler,
 	],
 	controllers: [LorebookController],

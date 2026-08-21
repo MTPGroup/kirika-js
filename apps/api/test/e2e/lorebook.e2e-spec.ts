@@ -235,6 +235,102 @@ describe('Lorebook E2E', () => {
 		})
 	})
 
+	it('获取指定世界书及其草稿条目', async () => {
+		const { agent, userId } = await createAuthenticatedAgent(
+			'alice@kirika.test',
+			'Alice',
+		)
+		const lorebook = await createLorebook(agent, '艾尔登世界', '交界地设定')
+		const entryId = crypto.randomUUID()
+
+		await pool.query(
+			`
+				INSERT INTO lorebook_entries (
+					id,
+					revision_id,
+					keys,
+					title,
+					enabled,
+					content,
+					position,
+					priority
+				) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			`,
+			[
+				entryId,
+				lorebook.draftRevisionId,
+				JSON.stringify(['黄金树', '褪色者']),
+				'黄金树',
+				true,
+				'黄金树是交界地秩序的象征。',
+				'before_history',
+				10,
+			],
+		)
+
+		const response = await agent
+			.get(`/api/v1/lorebooks/${lorebook.id}`)
+			.expect(200)
+
+		expect(response.body).toMatchObject({
+			code: 200,
+			message: 'success',
+			data: {
+				id: lorebook.id,
+				ownerId: userId,
+				name: '艾尔登世界',
+				description: '交界地设定',
+				visibility: 'private',
+				currentRevisionId: null,
+				draftRevisionId: lorebook.draftRevisionId,
+				revisions: [
+					{
+						id: lorebook.draftRevisionId,
+						revisionNumber: 1,
+						isDraft: true,
+						entries: [
+							{
+								id: entryId,
+								keys: ['黄金树', '褪色者'],
+								title: '黄金树',
+								enabled: true,
+								content: '黄金树是交界地秩序的象征。',
+								position: 'before_history',
+								priority: 10,
+							},
+						],
+					},
+				],
+			},
+		})
+		expect(response.body.data.createdAt).toEqual(expect.any(String))
+		expect(response.body.data.updatedAt).toEqual(expect.any(String))
+		expect(response.body.timestamp).toEqual(expect.any(Number))
+	})
+
+	it('隐藏其他用户的私有世界书', async () => {
+		const alice = await createAuthenticatedAgent('alice@kirika.test', 'Alice')
+		const bob = await createAuthenticatedAgent('bob@kirika.test', 'Bob')
+		const lorebook = await createLorebook(alice.agent, 'Private Lorebook')
+
+		await bob.agent.get(`/api/v1/lorebooks/${lorebook.id}`).expect(404)
+	})
+
+	it('获取指定世界书时校验登录状态和 UUID', async () => {
+		const { agent } = await createAuthenticatedAgent(
+			'alice@kirika.test',
+			'Alice',
+		)
+		const lorebook = await createLorebook(agent, 'Private Lorebook')
+
+		await request(app.getHttpServer())
+			.get(`/api/v1/lorebooks/${lorebook.id}`)
+			.expect(401)
+
+		await agent.get('/api/v1/lorebooks/not-a-uuid').expect(400)
+		await agent.get(`/api/v1/lorebooks/${crypto.randomUUID()}`).expect(404)
+	})
+
 	it('分页查询当前用户的世界书，并隔离其他用户数据', async () => {
 		const alice = await createAuthenticatedAgent('alice@kirika.test', 'Alice')
 		const bob = await createAuthenticatedAgent('bob@kirika.test', 'Bob')
