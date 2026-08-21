@@ -6,6 +6,7 @@ import { AuthModule } from '~/auth/auth.module'
 import { CharacterModule } from './character/character.module'
 import { LorebookModule } from './lorebook/lorebook.module'
 import { SharedModule } from './shared/shared.module'
+import { ConversationModule } from './conversation/conversation.module';
 
 @Module({
 	imports: [
@@ -14,6 +15,7 @@ import { SharedModule } from './shared/shared.module'
 		AuthModule,
 		LorebookModule,
 		CharacterModule,
+		ConversationModule,
 	],
 	controllers: [],
 	providers: [
