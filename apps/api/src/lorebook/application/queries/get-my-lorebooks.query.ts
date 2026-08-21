@@ -1,16 +1,9 @@
 import { Query } from '@nestjs/cqrs'
 import { LorebookVisibility } from '~/lorebook/domain/entities/lorebook.entity'
+import { PageResult } from '~/shared/application/page-result.interface'
 import { LorebookListItem } from '../ports/lorebook-list-read.port'
 
-export interface LorebookPageResult {
-	items: LorebookListItem[]
-	pagination: {
-		page: number
-		pageSize: number
-		total: number
-		totalPages: number
-	}
-}
+export type LorebookPageResult = PageResult<LorebookListItem>
 
 export class GetMyLorebooksQuery extends Query<LorebookPageResult> {
 	constructor(

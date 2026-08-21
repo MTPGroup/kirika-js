@@ -14,14 +14,14 @@ const lorebookListItemSchema = z.object({
 	updatedAt: z.iso.datetime(),
 })
 
-const getMyLorebooksResponseSchema = apiPaginationResponseSchema(
+const getLorebooksResponseSchema = apiPaginationResponseSchema(
 	lorebookListItemSchema,
 )
 
-export class GetMyLorebooksResponse extends createZodDto(
-	getMyLorebooksResponseSchema,
+export class GetLorebooksResponse extends createZodDto(
+	getLorebooksResponseSchema,
 ) {
-	static fromResult(result: LorebookPageResult): GetMyLorebooksResponse {
+	static fromResult(result: LorebookPageResult): GetLorebooksResponse {
 		return {
 			code: 200,
 			message: 'success',

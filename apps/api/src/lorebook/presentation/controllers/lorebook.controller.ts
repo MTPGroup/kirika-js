@@ -15,14 +15,15 @@ import {
 	Session,
 } from '@nestjs/common'
 import { CommandBus, QueryBus } from '@nestjs/cqrs'
-import { type UserSession } from '@thallesp/nestjs-better-auth'
+import { OptionalAuth, type UserSession } from '@thallesp/nestjs-better-auth'
 import { ZodResponse } from 'nestjs-zod'
 import { CreateLorebookCommand } from '~/lorebook/application/commands/create-lorebook.command'
+import { GetPublicLorebookQuery } from '~/lorebook/application/queries/get-available-lorebooks.query'
 import { GetMyLorebooksQuery } from '~/lorebook/application/queries/get-my-lorebooks.query'
+import { PagedRequestParams } from '~/shared/presentation/api-request.interface'
 import { CreateLorebookRequest } from '../dtos/create-lorebook.request'
 import { CreateLorebookResponse } from '../dtos/create-lorebook.response'
-import { GetMyLorebooksParams } from '../dtos/get-my-lorebooks.request'
-import { GetMyLorebooksResponse } from '../dtos/get-my-lorebooks.response'
+import { GetLorebooksResponse } from '../dtos/get-lorebooks.response'
 
 @Controller({
 	path: 'lorebooks',
@@ -54,17 +55,37 @@ export class LorebookController {
 	// 获取当前用户的所有世界书列表
 	@Get()
 	@ZodResponse({
-		type: GetMyLorebooksResponse,
+		type: GetLorebooksResponse,
 	})
 	async getMyLorebooks(
-		@Query() params: GetMyLorebooksParams,
+		@Query() params: PagedRequestParams,
 		@Session() session: UserSession,
 	) {
 		const result = await this.queryBus.execute(
 			new GetMyLorebooksQuery(session.user.id, params.page, params.pageSize),
 		)
 
-		return GetMyLorebooksResponse.fromResult(result)
+		return GetLorebooksResponse.fromResult(result)
+	}
+
+	@Get('avilable')
+	@ZodResponse({
+		type: GetLorebooksResponse,
+	})
+	@OptionalAuth()
+	async getAvilableLorebooks(
+		@Query() params: PagedRequestParams,
+		@Session() session?: UserSession,
+	) {
+		const result = await this.queryBus.execute(
+			new GetPublicLorebookQuery(
+				params.page,
+				params.pageSize,
+				session?.user.id,
+			),
+		)
+
+		return GetLorebooksResponse.fromResult(result)
 	}
 
 	// 获取指定世界书

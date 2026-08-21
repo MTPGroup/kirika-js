@@ -20,8 +20,19 @@ export interface FindMyLorebooksInput {
 	visibility?: LorebookVisibility
 }
 
+export interface FindAvailableLorebooksInput {
+	ownerId: string | null
+	offset: number
+	limit: number
+}
+
 export interface LorebookListReadPort {
 	findMyLorebooks(input: FindMyLorebooksInput): Promise<{
+		items: LorebookListItem[]
+		total: number
+	}>
+
+	findAvailableLorebooks(input: FindAvailableLorebooksInput): Promise<{
 		items: LorebookListItem[]
 		total: number
 	}>
