@@ -1,3 +1,5 @@
+import type { CharacterRepositoryPort } from '@kirika-js/domain/character'
+import { Character, CharacterId } from '@kirika-js/domain/character'
 import {
 	BadRequestException,
 	ConflictException,
@@ -6,8 +8,6 @@ import {
 } from '@nestjs/common'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '~/auth/user-id.vo'
-import { Character, CharacterId } from '../../domain/character.entity'
-import type { CharacterRepositoryPort } from '../../domain/ports/character-repository.port'
 import type { CharacterRevisionInput } from '../character-revision.input'
 import { CreateCharacterRevisionCommand } from './create-character-revision.command'
 import { CreateCharacterRevisionHandler } from './create-character-revision.handler'

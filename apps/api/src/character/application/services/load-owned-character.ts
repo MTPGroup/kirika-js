@@ -1,7 +1,9 @@
+import type {
+	Character,
+	CharacterRepositoryPort,
+} from '@kirika-js/domain/character'
+import { CharacterId } from '@kirika-js/domain/character'
 import { ForbiddenException, NotFoundException } from '@nestjs/common'
-import type { Character } from '../../domain/character.entity'
-import { CharacterId } from '../../domain/character.entity'
-import type { CharacterRepositoryPort } from '../../domain/ports/character-repository.port'
 
 export async function loadOwnedCharacter(
 	repository: CharacterRepositoryPort,

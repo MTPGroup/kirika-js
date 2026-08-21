@@ -1,17 +1,14 @@
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: 实例类允许只有静态方法 */
-import { UserId } from '~/auth/user-id.vo'
+
 import {
 	Lorebook,
-	LorebookId,
-} from '~/lorebook/domain/entities/lorebook.entity'
-import {
 	LorebookEntry,
 	LorebookEntryId,
-} from '~/lorebook/domain/entities/lorebook-entry.entity'
-import {
+	LorebookId,
 	LorebookRevision,
 	LorebookRevisionId,
-} from '~/lorebook/domain/entities/lorebook-revision.entity'
+} from '@kirika-js/domain/lorebook'
+import { UserId } from '~/auth/user-id.vo'
 import {
 	lorebookEntries,
 	lorebookRevisions,

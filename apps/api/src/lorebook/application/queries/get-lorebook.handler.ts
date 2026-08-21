@@ -1,10 +1,10 @@
-import { Inject, NotFoundException } from '@nestjs/common'
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs'
-import { LorebookId } from '~/lorebook/domain/entities/lorebook.entity'
 import {
 	LOREBOOK_REPOSITORY_PORT,
+	LorebookId,
 	type LorebookRepositoryPort,
-} from '~/lorebook/domain/ports/lorebook-repository.port'
+} from '@kirika-js/domain/lorebook'
+import { Inject, NotFoundException } from '@nestjs/common'
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs'
 import { GetLorebookQuery, type GetLorebookResult } from './get-lorebook.query'
 
 @QueryHandler(GetLorebookQuery)

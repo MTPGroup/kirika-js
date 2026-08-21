@@ -1,3 +1,5 @@
+import type { LorebookRepositoryPort } from '@kirika-js/domain/lorebook'
+import { Lorebook, LorebookId } from '@kirika-js/domain/lorebook'
 import {
 	BadRequestException,
 	ConflictException,
@@ -6,11 +8,6 @@ import {
 } from '@nestjs/common'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UserId } from '~/auth/user-id.vo'
-import {
-	Lorebook,
-	LorebookId,
-} from '~/lorebook/domain/entities/lorebook.entity'
-import type { LorebookRepositoryPort } from '~/lorebook/domain/ports/lorebook-repository.port'
 import { CreateLorebookRevisionCommand } from './create-lorebook-revision.command'
 import { CreateLorebookRevisionHandler } from './create-lorebook-revision.handler'
 import { DeleteLorebookCommand } from './delete-lorebook.command'

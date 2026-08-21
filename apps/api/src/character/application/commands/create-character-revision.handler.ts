@@ -1,9 +1,9 @@
-import { ConflictException, Inject } from '@nestjs/common'
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import {
 	CHARACTER_REPOSITORY_PORT,
 	type CharacterRepositoryPort,
-} from '../../domain/ports/character-repository.port'
+} from '@kirika-js/domain/character'
+import { ConflictException, Inject } from '@nestjs/common'
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import { type CharacterResult, toCharacterResult } from '../character.result'
 import { loadOwnedCharacter } from '../services/load-owned-character'
 import { CreateCharacterRevisionCommand } from './create-character-revision.command'

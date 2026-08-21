@@ -1,15 +1,15 @@
 import {
+	LOREBOOK_REPOSITORY_PORT,
+	LorebookId,
+	type LorebookRepositoryPort,
+} from '@kirika-js/domain/lorebook'
+import {
 	BadRequestException,
 	ForbiddenException,
 	Inject,
 	NotFoundException,
 } from '@nestjs/common'
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
-import { LorebookId } from '~/lorebook/domain/entities/lorebook.entity'
-import {
-	LOREBOOK_REPOSITORY_PORT,
-	type LorebookRepositoryPort,
-} from '~/lorebook/domain/ports/lorebook-repository.port'
 import {
 	UpdateLorebookCommand,
 	type UpdateLorebookResult,

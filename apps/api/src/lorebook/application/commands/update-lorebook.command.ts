@@ -1,5 +1,5 @@
+import type { LorebookVisibility } from '@kirika-js/domain/lorebook'
 import { Command } from '@nestjs/cqrs'
-import type { LorebookVisibility } from '~/lorebook/domain/entities/lorebook.entity'
 
 export interface UpdateLorebookResult {
 	id: string

@@ -1,6 +1,8 @@
+import type {
+	LorebookVisibility,
+	LoreEntryPosition,
+} from '@kirika-js/domain/lorebook'
 import { Query } from '@nestjs/cqrs'
-import type { LorebookVisibility } from '~/lorebook/domain/entities/lorebook.entity'
-import type { LoreEntryPosition } from '~/lorebook/domain/entities/lorebook-entry.entity'
 
 export interface LorebookEntryResult {
 	id: string

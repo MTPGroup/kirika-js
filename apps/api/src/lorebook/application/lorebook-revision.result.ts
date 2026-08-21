@@ -1,6 +1,8 @@
-import type { Lorebook } from '~/lorebook/domain/entities/lorebook.entity'
-import type { LoreEntryPosition } from '~/lorebook/domain/entities/lorebook-entry.entity'
-import type { LorebookRevision } from '~/lorebook/domain/entities/lorebook-revision.entity'
+import type {
+	Lorebook,
+	LorebookRevision,
+	LoreEntryPosition,
+} from '@kirika-js/domain/lorebook'
 
 export interface LorebookRevisionEntryResult {
 	id: string

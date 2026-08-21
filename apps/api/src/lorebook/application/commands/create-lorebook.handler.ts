@@ -1,11 +1,11 @@
+import {
+	LOREBOOK_REPOSITORY_PORT,
+	Lorebook,
+	type LorebookRepositoryPort,
+} from '@kirika-js/domain/lorebook'
 import { Inject } from '@nestjs/common'
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import { UserId } from '~/auth/user-id.vo'
-import { Lorebook } from '~/lorebook/domain/entities/lorebook.entity'
-import {
-	LOREBOOK_REPOSITORY_PORT,
-	type LorebookRepositoryPort,
-} from '~/lorebook/domain/ports/lorebook-repository.port'
 import {
 	CreateLorebookCommand,
 	CreateLorebookResult,

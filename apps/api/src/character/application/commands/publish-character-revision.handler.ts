@@ -1,15 +1,15 @@
 import {
+	CHARACTER_REPOSITORY_PORT,
+	type CharacterRepositoryPort,
+	CharacterRevisionId,
+} from '@kirika-js/domain/character'
+import {
 	BadRequestException,
 	ConflictException,
 	Inject,
 	NotFoundException,
 } from '@nestjs/common'
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
-import { CharacterRevisionId } from '../../domain/character-revision.entity'
-import {
-	CHARACTER_REPOSITORY_PORT,
-	type CharacterRepositoryPort,
-} from '../../domain/ports/character-repository.port'
 import { type CharacterResult, toCharacterResult } from '../character.result'
 import { loadOwnedCharacter } from '../services/load-owned-character'
 import { PublishCharacterRevisionCommand } from './publish-character-revision.command'

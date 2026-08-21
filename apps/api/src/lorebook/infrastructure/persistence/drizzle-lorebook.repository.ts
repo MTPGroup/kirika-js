@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common'
-import { and, eq, notInArray, sql } from 'drizzle-orm'
 import {
 	Lorebook,
 	LorebookId,
-} from '~/lorebook/domain/entities/lorebook.entity'
-import { LorebookRepositoryPort } from '~/lorebook/domain/ports/lorebook-repository.port'
+	LorebookRepositoryPort,
+} from '@kirika-js/domain/lorebook'
+import { Injectable } from '@nestjs/common'
+import { and, eq, notInArray, sql } from 'drizzle-orm'
 import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
 import {
 	lorebookEntries,

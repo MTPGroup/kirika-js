@@ -1,6 +1,8 @@
-import type { CharacterRevisionAsset } from '../domain/assets.entity'
-import type { Character } from '../domain/character.entity'
-import type { CharacterRevision } from '../domain/character-revision.entity'
+import type {
+	Character,
+	CharacterRevision,
+	CharacterRevisionAsset,
+} from '@kirika-js/domain/character'
 
 export interface CharacterRevisionAssetResult {
 	assetId: string

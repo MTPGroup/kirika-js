@@ -1,9 +1,9 @@
-import { ConflictException, Inject } from '@nestjs/common'
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import {
 	LOREBOOK_REPOSITORY_PORT,
 	type LorebookRepositoryPort,
-} from '~/lorebook/domain/ports/lorebook-repository.port'
+} from '@kirika-js/domain/lorebook'
+import { ConflictException, Inject } from '@nestjs/common'
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import {
 	type LorebookRevisionResult,
 	toLorebookRevisionResult,

@@ -1,13 +1,16 @@
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: 实例类允许只有静态方法 */
-import { UserId } from '~/auth/user-id.vo'
-import { LorebookRevisionId } from '~/lorebook/domain/entities/lorebook-revision.entity'
-import { AssetId, CharacterRevisionAsset } from '../../domain/assets.entity'
-import { Character, CharacterId } from '../../domain/character.entity'
-import { CharacterLorebookReference } from '../../domain/character-lorebook-reference.vo'
+
 import {
+	AssetId,
+	Character,
+	CharacterId,
+	CharacterLorebookReference,
 	CharacterRevision,
+	CharacterRevisionAsset,
 	CharacterRevisionId,
-} from '../../domain/character-revision.entity'
+} from '@kirika-js/domain/character'
+import { LorebookRevisionId } from '@kirika-js/domain/lorebook'
+import { UserId } from '~/auth/user-id.vo'
 import {
 	characterRevisionAssets,
 	characterRevisionLorebooks,

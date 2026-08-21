@@ -1,9 +1,6 @@
+import type { LorebookRepositoryPort } from '@kirika-js/domain/lorebook'
+import { Lorebook, LorebookId } from '@kirika-js/domain/lorebook'
 import { ForbiddenException, NotFoundException } from '@nestjs/common'
-import {
-	Lorebook,
-	LorebookId,
-} from '~/lorebook/domain/entities/lorebook.entity'
-import type { LorebookRepositoryPort } from '~/lorebook/domain/ports/lorebook-repository.port'
 
 export async function loadOwnedLorebook(
 	repository: LorebookRepositoryPort,

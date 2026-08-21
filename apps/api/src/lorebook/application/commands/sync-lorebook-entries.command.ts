@@ -1,5 +1,5 @@
+import type { LoreEntryPosition } from '@kirika-js/domain/lorebook'
 import { Command } from '@nestjs/cqrs'
-import type { LoreEntryPosition } from '~/lorebook/domain/entities/lorebook-entry.entity'
 import type { LorebookRevisionResult } from '../lorebook-revision.result'
 
 export interface SyncLorebookEntryInput {

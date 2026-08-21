@@ -1,8 +1,13 @@
-import { LorebookRevisionId } from '~/lorebook/domain/entities/lorebook-revision.entity'
-import type { AssetKind } from '../domain/assets.entity'
-import { AssetId, CharacterRevisionAsset } from '../domain/assets.entity'
-import { CharacterLorebookReference } from '../domain/character-lorebook-reference.vo'
-import type { CharacterRevisionContent } from '../domain/character-revision.entity'
+import type {
+	AssetKind,
+	CharacterRevisionContent,
+} from '@kirika-js/domain/character'
+import {
+	AssetId,
+	CharacterLorebookReference,
+	CharacterRevisionAsset,
+} from '@kirika-js/domain/character'
+import { LorebookRevisionId } from '@kirika-js/domain/lorebook'
 
 export interface CharacterRevisionAssetInput {
 	assetId: string

@@ -1,9 +1,9 @@
-import { Inject } from '@nestjs/common'
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import {
 	LOREBOOK_REPOSITORY_PORT,
 	type LorebookRepositoryPort,
-} from '~/lorebook/domain/ports/lorebook-repository.port'
+} from '@kirika-js/domain/lorebook'
+import { Inject } from '@nestjs/common'
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs'
 import { loadOwnedLorebook } from '../services/load-owned-lorebook'
 import { DeleteLorebookCommand } from './delete-lorebook.command'
 

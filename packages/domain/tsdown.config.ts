@@ -9,8 +9,6 @@ export default defineConfig({
 		'shared/index': 'src/shared/index.ts',
 	},
 	clean: true,
-	dts: {
-		cjsReexport: true,
-	},
+	dts: true,
 	format: ['esm', 'cjs'],
 })

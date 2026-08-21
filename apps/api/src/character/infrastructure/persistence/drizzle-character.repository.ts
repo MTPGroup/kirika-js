@@ -1,8 +1,11 @@
+import {
+	Character,
+	CharacterId,
+	CharacterRepositoryPort,
+} from '@kirika-js/domain/character'
 import { Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
-import { Character, CharacterId } from '../../domain/character.entity'
-import { CharacterRepositoryPort } from '../../domain/ports/character-repository.port'
 import {
 	characterRevisionAssets,
 	characterRevisionLorebooks,

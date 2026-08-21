@@ -1,3 +1,4 @@
+import { ASSET_KINDS } from '@kirika-js/domain/character'
 import { defineRelationsPart, sql } from 'drizzle-orm'
 import {
 	bigint,
@@ -16,7 +17,6 @@ import {
 } from 'drizzle-orm/pg-core'
 import { users } from '~/auth/auth.drizzle-schema'
 import { lorebookRevisions } from '~/lorebook/infrastructure/persistence/lorebook.drizzle-schema'
-import { ASSET_KINDS } from '../../domain/assets.entity'
 
 export const assetKindEnum = pgEnum('asset_kind', ASSET_KINDS)
 
