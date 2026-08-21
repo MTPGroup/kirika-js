@@ -16,3 +16,11 @@ export class ChatGenerationAbortedError extends ChatEngineError {
 		super('聊天生成在开始前已取消')
 	}
 }
+
+export class ChatModelRateLimitError extends ChatEngineError {}
+
+export class ChatModelAuthError extends ChatEngineError {}
+
+export class ChatModelConnectionError extends ChatEngineError {}
+
+export class ChatModelAbortError extends ChatEngineError {}
