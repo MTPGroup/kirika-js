@@ -50,6 +50,15 @@ export class LorebookRevision extends Entity<LorebookRevisionId> {
 		this._entries.set(entry.id.value, entry)
 	}
 
+	replaceEntries(entries: LorebookEntry[]) {
+		this.ensureDraft()
+		this._entries.clear()
+
+		for (const entry of entries) {
+			this._entries.set(entry.id.value, entry)
+		}
+	}
+
 	publish() {
 		if (!this._isDraft) throw new Error('该版本已经发布')
 

@@ -331,6 +331,311 @@ describe('Lorebook E2E', () => {
 		await agent.get(`/api/v1/lorebooks/${crypto.randomUUID()}`).expect(404)
 	})
 
+	it('部分更新世界书元数据并持久化', async () => {
+		const { agent, userId } = await createAuthenticatedAgent(
+			'alice@kirika.test',
+			'Alice',
+		)
+		const lorebook = await createLorebook(agent, '旧名称', '保留的描述')
+
+		const response = await agent
+			.patch(`/api/v1/lorebooks/${lorebook.id}`)
+			.send({
+				name: '新名称',
+			})
+			.expect(200)
+
+		expect(response.body).toMatchObject({
+			code: 200,
+			message: 'success',
+			data: {
+				id: lorebook.id,
+				ownerId: userId,
+				name: '新名称',
+				description: '保留的描述',
+				visibility: 'private',
+				currentRevisionId: null,
+			},
+		})
+		expect(response.body.data.createdAt).toEqual(expect.any(String))
+		expect(response.body.data.updatedAt).toEqual(expect.any(String))
+		expect(response.body.timestamp).toEqual(expect.any(Number))
+
+		const persistenceResult = await pool.query(
+			`
+				SELECT name, description, visibility
+				FROM lorebooks
+				WHERE id = $1
+			`,
+			[lorebook.id],
+		)
+
+		expect(persistenceResult.rows[0]).toMatchObject({
+			name: '新名称',
+			description: '保留的描述',
+			visibility: 'private',
+		})
+	})
+
+	it('仅允许所有者更新世界书并校验请求参数', async () => {
+		const alice = await createAuthenticatedAgent('alice@kirika.test', 'Alice')
+		const bob = await createAuthenticatedAgent('bob@kirika.test', 'Bob')
+		const lorebook = await createLorebook(alice.agent, 'Private Lorebook')
+
+		await request(app.getHttpServer())
+			.patch(`/api/v1/lorebooks/${lorebook.id}`)
+			.send({ name: 'Unauthorized' })
+			.expect(401)
+
+		await bob.agent
+			.patch(`/api/v1/lorebooks/${lorebook.id}`)
+			.send({ name: 'Forbidden' })
+			.expect(403)
+
+		await alice.agent
+			.patch(`/api/v1/lorebooks/${lorebook.id}`)
+			.send({})
+			.expect(400)
+
+		await alice.agent
+			.patch(`/api/v1/lorebooks/${lorebook.id}`)
+			.send({ name: '   ' })
+			.expect(400)
+
+		await alice.agent
+			.patch(`/api/v1/lorebooks/${lorebook.id}`)
+			.send({ visibility: 'invalid' })
+			.expect(400)
+
+		await alice.agent
+			.patch(`/api/v1/lorebooks/${crypto.randomUUID()}`)
+			.send({ name: 'Missing' })
+			.expect(404)
+	})
+
+	it('仅允许存在已发布版本的世界书对外可见', async () => {
+		const { agent } = await createAuthenticatedAgent(
+			'alice@kirika.test',
+			'Alice',
+		)
+		const lorebook = await createLorebook(agent, 'Visibility Lorebook')
+
+		await agent
+			.patch(`/api/v1/lorebooks/${lorebook.id}`)
+			.send({ visibility: 'public' })
+			.expect(400)
+
+		await pool.query(
+			`
+				UPDATE lorebook_revisions
+				SET is_draft = false
+				WHERE id = $1
+			`,
+			[lorebook.draftRevisionId],
+		)
+		await pool.query(
+			`
+				UPDATE lorebooks
+				SET current_revision_id = $1
+				WHERE id = $2
+			`,
+			[lorebook.draftRevisionId, lorebook.id],
+		)
+
+		const response = await agent
+			.patch(`/api/v1/lorebooks/${lorebook.id}`)
+			.send({ visibility: 'public' })
+			.expect(200)
+
+		expect(response.body.data).toMatchObject({
+			id: lorebook.id,
+			visibility: 'public',
+			currentRevisionId: lorebook.draftRevisionId,
+		})
+
+		const persistenceResult = await pool.query(
+			`
+				SELECT visibility
+				FROM lorebooks
+				WHERE id = $1
+			`,
+			[lorebook.id],
+		)
+		expect(persistenceResult.rows[0]?.visibility).toBe('public')
+	})
+
+	it('同步、发布世界书版本并基于已发布版本创建新草稿', async () => {
+		const { agent } = await createAuthenticatedAgent(
+			'alice@kirika.test',
+			'Alice',
+		)
+		const lorebook = await createLorebook(agent, 'Lifecycle Lorebook')
+
+		const synced = await agent
+			.put(
+				`/api/v1/lorebooks/${lorebook.id}/revisions/${lorebook.draftRevisionId}/entries`,
+			)
+			.send({
+				entries: [
+					{
+						keys: ['黄金树', '褪色者'],
+						title: '黄金树',
+						content: '黄金树是交界地秩序的象征。',
+						priority: 10,
+					},
+				],
+			})
+			.expect(200)
+
+		expect(synced.body.data).toMatchObject({
+			lorebookId: lorebook.id,
+			id: lorebook.draftRevisionId,
+			revisionNumber: 1,
+			isDraft: true,
+			currentRevisionId: null,
+			entries: [
+				{
+					keys: ['黄金树', '褪色者'],
+					title: '黄金树',
+					enabled: true,
+					content: '黄金树是交界地秩序的象征。',
+					position: 'after_history',
+					priority: 10,
+				},
+			],
+		})
+		const initialEntryId = synced.body.data.entries[0].id as string
+
+		const published = await agent
+			.post(
+				`/api/v1/lorebooks/${lorebook.id}/revisions/${lorebook.draftRevisionId}/publish`,
+			)
+			.expect(200)
+
+		expect(published.body.data).toMatchObject({
+			id: lorebook.draftRevisionId,
+			isDraft: false,
+			currentRevisionId: lorebook.draftRevisionId,
+		})
+
+		await agent
+			.put(
+				`/api/v1/lorebooks/${lorebook.id}/revisions/${lorebook.draftRevisionId}/entries`,
+			)
+			.send({ entries: [] })
+			.expect(409)
+
+		const createdDraft = await agent
+			.post(`/api/v1/lorebooks/${lorebook.id}/revision`)
+			.expect(201)
+
+		expect(createdDraft.body.data).toMatchObject({
+			lorebookId: lorebook.id,
+			revisionNumber: 2,
+			isDraft: true,
+			currentRevisionId: lorebook.draftRevisionId,
+		})
+		expect(createdDraft.body.data.entries).toHaveLength(1)
+		expect(createdDraft.body.data.entries[0].id).not.toBe(initialEntryId)
+		const secondDraftId = createdDraft.body.data.id as string
+
+		await agent.post(`/api/v1/lorebooks/${lorebook.id}/revision`).expect(409)
+
+		const updatedDraft = await agent
+			.put(
+				`/api/v1/lorebooks/${lorebook.id}/revisions/${secondDraftId}/entries`,
+			)
+			.send({
+				entries: [
+					{
+						id: createdDraft.body.data.entries[0].id,
+						keys: ['黄金律法'],
+						title: '黄金律法',
+						enabled: false,
+						content: '更新后的条目内容。',
+						position: 'before_history',
+						priority: 20,
+					},
+				],
+			})
+			.expect(200)
+
+		expect(updatedDraft.body.data.entries).toEqual([
+			expect.objectContaining({
+				keys: ['黄金律法'],
+				title: '黄金律法',
+				enabled: false,
+				position: 'before_history',
+				priority: 20,
+			}),
+		])
+
+		await agent
+			.post(
+				`/api/v1/lorebooks/${lorebook.id}/revisions/${secondDraftId}/publish`,
+			)
+			.expect(200)
+
+		const persistenceResult = await pool.query(
+			`
+				SELECT
+					(SELECT COUNT(*)::int FROM lorebook_revisions WHERE lorebook_id = $1) AS revisions,
+					(SELECT COUNT(*)::int FROM lorebook_entries e
+						JOIN lorebook_revisions r ON r.id = e.revision_id
+						WHERE r.lorebook_id = $1) AS entries,
+					(SELECT current_revision_id FROM lorebooks WHERE id = $1) AS "currentRevisionId"
+			`,
+			[lorebook.id],
+		)
+
+		expect(persistenceResult.rows[0]).toMatchObject({
+			revisions: 2,
+			entries: 2,
+			currentRevisionId: secondDraftId,
+		})
+	})
+
+	it('仅允许所有者操作版本并删除世界书及其关联数据', async () => {
+		const alice = await createAuthenticatedAgent('alice@kirika.test', 'Alice')
+		const bob = await createAuthenticatedAgent('bob@kirika.test', 'Bob')
+		const lorebook = await createLorebook(alice.agent, 'Delete Lorebook')
+
+		await bob.agent
+			.put(
+				`/api/v1/lorebooks/${lorebook.id}/revisions/${lorebook.draftRevisionId}/entries`,
+			)
+			.send({ entries: [] })
+			.expect(403)
+
+		await bob.agent
+			.post(`/api/v1/lorebooks/${lorebook.id}/revision`)
+			.expect(403)
+
+		await bob.agent
+			.post(
+				`/api/v1/lorebooks/${lorebook.id}/revisions/${lorebook.draftRevisionId}/publish`,
+			)
+			.expect(403)
+
+		await bob.agent.delete(`/api/v1/lorebooks/${lorebook.id}`).expect(403)
+		await alice.agent.delete(`/api/v1/lorebooks/${lorebook.id}`).expect(204)
+		await alice.agent.get(`/api/v1/lorebooks/${lorebook.id}`).expect(404)
+
+		const persistenceResult = await pool.query(
+			`
+				SELECT
+					(SELECT COUNT(*)::int FROM lorebooks WHERE id = $1) AS lorebooks,
+					(SELECT COUNT(*)::int FROM lorebook_revisions WHERE lorebook_id = $1) AS revisions
+			`,
+			[lorebook.id],
+		)
+
+		expect(persistenceResult.rows[0]).toEqual({
+			lorebooks: 0,
+			revisions: 0,
+		})
+	})
+
 	it('分页查询当前用户的世界书，并隔离其他用户数据', async () => {
 		const alice = await createAuthenticatedAgent('alice@kirika.test', 'Alice')
 		const bob = await createAuthenticatedAgent('bob@kirika.test', 'Bob')

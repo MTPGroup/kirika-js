@@ -1,6 +1,7 @@
 import { UserId } from '~/auth/user-id.vo'
 import { AggregateRoot } from '~/shared/domain/aggregate-root.entity'
 import { UuidId } from '~/shared/domain/uuid-id.vo'
+import { LorebookEntry } from './lorebook-entry.entity'
 import {
 	LorebookRevision,
 	LorebookRevisionId,
@@ -66,6 +67,10 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		}
 
 		return null
+	}
+
+	findRevision(revisionId: LorebookRevisionId): LorebookRevision | null {
+		return this._revisions.get(revisionId.value) ?? null
 	}
 
 	get updatedAt(): Date {
@@ -149,7 +154,18 @@ export class Lorebook extends AggregateRoot<LorebookId> {
 		this.touch()
 	}
 
+	replaceRevisionEntries(
+		revisionId: LorebookRevisionId,
+		entries: LorebookEntry[],
+	) {
+		const revision = this.getRevision(revisionId)
+		revision.replaceEntries(entries)
+		this.touch()
+	}
+
 	updateMetadata(name: string, description: string) {
+		if (!name.trim()) throw new Error('世界书名称不能为空')
+
 		this._name = name
 		this._description = description
 		this.touch()

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { and, count, desc, eq } from 'drizzle-orm'
+import { and, count, desc, eq, or } from 'drizzle-orm'
 import {
 	FindAvailableLorebooksInput,
 	FindMyLorebooksInput,
@@ -60,10 +60,12 @@ export class DrizzleLorebookListReadAdapter implements LorebookListReadPort {
 	): Promise<{ items: LorebookListItem[]; total: number }> {
 		const db = this.service.db
 
-		const where = and(
-			eq(lorebooks.visibility, 'public'),
-			input.ownerId ? eq(lorebooks.ownerId, input.ownerId) : undefined,
-		)
+		const where = input.ownerId
+			? or(
+					eq(lorebooks.visibility, 'public'),
+					eq(lorebooks.ownerId, input.ownerId),
+				)
+			: eq(lorebooks.visibility, 'public')
 
 		const [items, totalRows] = await Promise.all([
 			db

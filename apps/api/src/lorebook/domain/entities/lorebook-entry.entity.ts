@@ -25,6 +25,7 @@ export class LorebookEntry extends Entity<LorebookEntryId> {
 		if (!_title.trim()) throw new Error('世界书条目标题不能为空')
 		if (!_content.trim()) throw new Error('世界书条目内容不能为空')
 
+		this._keys = keys
 		this._title = _title.trim()
 	}
 

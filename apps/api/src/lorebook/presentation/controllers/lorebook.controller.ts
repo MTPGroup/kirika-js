@@ -5,7 +5,6 @@ import {
 	Get,
 	HttpCode,
 	HttpStatus,
-	NotImplementedException,
 	Param,
 	ParseUUIDPipe,
 	Patch,
@@ -18,6 +17,11 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs'
 import { OptionalAuth, type UserSession } from '@thallesp/nestjs-better-auth'
 import { ZodResponse } from 'nestjs-zod'
 import { CreateLorebookCommand } from '~/lorebook/application/commands/create-lorebook.command'
+import { CreateLorebookRevisionCommand } from '~/lorebook/application/commands/create-lorebook-revision.command'
+import { DeleteLorebookCommand } from '~/lorebook/application/commands/delete-lorebook.command'
+import { PublishLorebookRevisionCommand } from '~/lorebook/application/commands/publish-lorebook-revision.command'
+import { SyncLorebookEntriesCommand } from '~/lorebook/application/commands/sync-lorebook-entries.command'
+import { UpdateLorebookCommand } from '~/lorebook/application/commands/update-lorebook.command'
 import { GetPublicLorebookQuery } from '~/lorebook/application/queries/get-available-lorebooks.query'
 import { GetLorebookQuery } from '~/lorebook/application/queries/get-lorebook.query'
 import { GetMyLorebooksQuery } from '~/lorebook/application/queries/get-my-lorebooks.query'
@@ -26,6 +30,10 @@ import { CreateLorebookRequest } from '../dtos/create-lorebook.request'
 import { CreateLorebookResponse } from '../dtos/create-lorebook.response'
 import { GetLorebookResponse } from '../dtos/get-lorebook.response'
 import { GetLorebooksResponse } from '../dtos/get-lorebooks.response'
+import { LorebookRevisionResponse } from '../dtos/lorebook-revision.response'
+import { SyncLorebookEntriesRequest } from '../dtos/sync-lorebook-entries.request'
+import { UpdateLorebookRequest } from '../dtos/update-lorebook.request'
+import { UpdateLorebookResponse } from '../dtos/update-lorebook.response'
 
 @Controller({
 	path: 'lorebooks',
@@ -70,12 +78,12 @@ export class LorebookController {
 		return GetLorebooksResponse.fromResult(result)
 	}
 
-	@Get('avilable')
+	@Get(['available', 'avilable'])
 	@ZodResponse({
 		type: GetLorebooksResponse,
 	})
 	@OptionalAuth()
-	async getAvilableLorebooks(
+	async getAvailableLorebooks(
 		@Query() params: PagedRequestParams,
 		@Session() session?: UserSession,
 	) {
@@ -108,36 +116,88 @@ export class LorebookController {
 
 	// 更新主表数据
 	@Patch(':id')
-	async patch(@Param('id', ParseUUIDPipe) id: string) {
-		throw new NotImplementedException()
+	@ZodResponse({
+		type: UpdateLorebookResponse,
+	})
+	async patch(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Body() dto: UpdateLorebookRequest,
+		@Session() session: UserSession,
+	) {
+		const result = await this.commandBus.execute(
+			new UpdateLorebookCommand(
+				id,
+				session.user.id,
+				dto.name,
+				dto.description,
+				dto.visibility,
+			),
+		)
+
+		return UpdateLorebookResponse.fromResult(result)
 	}
 
 	// 删除指定的世界书
 	@Delete(':id')
-	async delete(@Param('id', ParseUUIDPipe) id: string) {
-		throw new NotImplementedException()
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async delete(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Session() session: UserSession,
+	) {
+		await this.commandBus.execute(
+			new DeleteLorebookCommand(id, session.user.id),
+		)
 	}
 
 	// 基于当前版本新建一个Revision(draft)
 	@Post(':id/revision')
-	async createRevision(@Param('id', ParseUUIDPipe) id: string) {
-		throw new NotImplementedException()
+	@HttpCode(HttpStatus.CREATED)
+	@ZodResponse({
+		type: LorebookRevisionResponse,
+	})
+	async createRevision(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Session() session: UserSession,
+	) {
+		const result = await this.commandBus.execute(
+			new CreateLorebookRevisionCommand(id, session.user.id),
+		)
+
+		return LorebookRevisionResponse.fromResult(result, 201)
 	}
 
 	// 发布 revision
 	@Post(':id/revisions/:revId/publish')
+	@HttpCode(HttpStatus.OK)
+	@ZodResponse({
+		type: LorebookRevisionResponse,
+	})
 	async publish(
 		@Param('id', ParseUUIDPipe) id: string,
 		@Param('revId', ParseUUIDPipe) revId: string,
+		@Session() session: UserSession,
 	) {
-		throw new NotImplementedException()
+		const result = await this.commandBus.execute(
+			new PublishLorebookRevisionCommand(id, revId, session.user.id),
+		)
+
+		return LorebookRevisionResponse.fromResult(result)
 	}
 
 	@Put(':id/revisions/:revId/entries')
+	@ZodResponse({
+		type: LorebookRevisionResponse,
+	})
 	async syncEntries(
 		@Param('id', ParseUUIDPipe) id: string,
 		@Param('revId', ParseUUIDPipe) revId: string,
+		@Body() dto: SyncLorebookEntriesRequest,
+		@Session() session: UserSession,
 	) {
-		throw new NotImplementedException()
+		const result = await this.commandBus.execute(
+			new SyncLorebookEntriesCommand(id, revId, session.user.id, dto.entries),
+		)
+
+		return LorebookRevisionResponse.fromResult(result)
 	}
 }
