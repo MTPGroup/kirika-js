@@ -1,6 +1,5 @@
 import type {
 	AssetMessageContentPart,
-	GenerationFinishReason,
 	MessageContentPart,
 	TokenUsageProps,
 } from '@kirika-js/domain/conversation'
@@ -28,10 +27,12 @@ export interface ChatModelRequest extends ChatGenerationConfig {
 	readonly messages: readonly ChatModelMessage[]
 }
 
-export type SuccessfulGenerationFinishReason = Exclude<
-	GenerationFinishReason,
-	'error' | 'cancelled'
->
+export type ChatModelFinishReason =
+	| 'stop'
+	| 'length'
+	| 'tool_call'
+	| 'content_filter'
+	| 'unknown'
 
 export type ChatModelStreamEvent =
 	| {
@@ -44,6 +45,6 @@ export type ChatModelStreamEvent =
 	  }
 	| {
 			readonly type: 'finish'
-			readonly finishReason: SuccessfulGenerationFinishReason
+			readonly finishReason: ChatModelFinishReason
 			readonly tokenUsage?: TokenUsageProps
 	  }

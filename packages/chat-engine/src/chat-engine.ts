@@ -14,8 +14,8 @@ import {
 import { validateChatHistory } from './history-validator'
 import type {
 	ChatGenerationConfig,
+	ChatModelFinishReason,
 	ChatModelRequest,
-	SuccessfulGenerationFinishReason,
 } from './model/chat-model'
 import type { ChatCharacterContextResolverPort } from './ports/character-context-resolver.port'
 import type { ChatModelPort } from './ports/chat-model.port'
@@ -57,7 +57,7 @@ export interface ChatContentPartEvent {
 export interface ChatGenerationCompletedEvent {
 	readonly type: 'completed'
 	readonly message: ConversationMessage
-	readonly finishReason: SuccessfulGenerationFinishReason
+	readonly finishReason: ChatModelFinishReason
 	readonly tokenUsage: DomainTokenUsage | null
 }
 
@@ -181,22 +181,47 @@ export class ChatEngine {
 						}
 						break
 					case 'finish': {
-						const tokenUsage = event.tokenUsage
-							? new TokenUsage(event.tokenUsage)
-							: null
-						input.conversation.completeGeneratedMessage(
-							generated,
-							event.finishReason,
-							tokenUsage,
-						)
-						terminalEvent = {
-							type: 'completed',
-							message: generated,
-							finishReason: event.finishReason,
-							tokenUsage,
+						switch (event.finishReason) {
+							case 'stop':
+							case 'length': {
+								const tokenUsage = event.tokenUsage
+									? new TokenUsage(event.tokenUsage)
+									: null
+								input.conversation.completeGeneratedMessage(
+									generated,
+									event.finishReason,
+									tokenUsage,
+								)
+								terminalEvent = {
+									type: 'completed',
+									message: generated,
+									finishReason: event.finishReason,
+									tokenUsage,
+								}
+								yield terminalEvent
+								return terminalEvent
+							}
+							case 'content_filter': {
+								input.conversation.failGeneratedMessage(
+									generated,
+									'内容过滤导致生成终止',
+								)
+								terminalEvent = {
+									type: 'failed',
+									message: generated,
+									reason: 'content_filter',
+									error: null,
+								}
+								yield terminalEvent
+								return terminalEvent
+							}
+							case 'tool_call': {
+								throw new Error('暂时未实现工具调用功能')
+							}
+							case 'unknown': {
+								throw new Error('未知的结束理由')
+							}
 						}
-						yield terminalEvent
-						return terminalEvent
 					}
 				}
 			}
