@@ -1,1 +1,0 @@
-# `@kirika-js/chat-core`
