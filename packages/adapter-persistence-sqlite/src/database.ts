@@ -1,8 +1,8 @@
 import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/libsql'
 
-export function createSqliteDatabase(path: string) {
-  const db = drizzle(path)
+export function createSqliteDatabase(url: string) {
+  const db = drizzle(url)
 
   db.run(sql`pragma foreign_keys = on`)
 
