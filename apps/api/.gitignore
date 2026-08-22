@@ -10,3 +10,4 @@ config/local-*.toml
 !config/local.example.toml
 
 documentation/
+schema.*

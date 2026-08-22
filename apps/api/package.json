@@ -17,6 +17,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
+    "db:sql": "drizzle-kit export > schema.sql",
+    "db:dbml": "drizzle-kit export > schema.sql && sql2dbml schema.sql --postgres -o schema.dbml",
     "test": "vitest run",
     "test:watch": "vitest -w",
     "test:cov": "vitest run --coverage",
@@ -25,8 +27,8 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.0-beta.10",
-    "@kirika-js/domain": "workspace:*",
     "@fastify/static": "^10.1.3",
+    "@kirika-js/domain": "workspace:*",
     "@nestjs-modules/mailer": "^2.3.7",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
@@ -51,6 +53,7 @@
   },
   "devDependencies": {
     "@compodoc/compodoc": "^2.0.0",
+    "@dbml/cli": "^10.1.1",
     "@kirika-js/typescript-config": "workspace:*",
     "@kirika-js/vitest-config": "workspace:*",
     "@nestjs/cli": "^11.0.0",
