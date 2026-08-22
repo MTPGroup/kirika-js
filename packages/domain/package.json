@@ -72,8 +72,8 @@
     "uuid": "^14.0.1"
   },
   "devDependencies": {
-    "@typescript/native": "npm:typescript@^7.0.2",
-    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "@kirika-js/typescript-config": "workspace:*",
+    "typescript": "^6.0.3",
     "tsdown": "catalog:",
     "vitest": "catalog:"
   }

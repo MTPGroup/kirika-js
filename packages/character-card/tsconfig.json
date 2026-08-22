@@ -1,7 +1,7 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@kirika-js/typescript-config/bundler.json",
   "compilerOptions": {
-    "types": ["vitest/globals"]
+    "rootDir": "./src"
   },
   "include": ["src"]
 }

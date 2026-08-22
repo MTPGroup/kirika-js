@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
-    "typescript": "catalog:",
+    "@kirika-js/typescript-config": "workspace:*",
     "turbo": "^2.10.8"
   },
   "packageManager": "pnpm@11.20.0",

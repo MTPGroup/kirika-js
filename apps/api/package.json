@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@compodoc/compodoc": "^2.0.0",
+    "@kirika-js/typescript-config": "workspace:*",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
