@@ -15,5 +15,6 @@ allowBuilds:
   "@swc/core": true
   cpu-features: true
   esbuild: true
+  oracledb: true
   protobufjs: true
   ssh2: true
