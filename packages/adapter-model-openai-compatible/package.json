@@ -23,7 +23,8 @@
     "build": "tsdown",
     "check-types": "tsc --noEmit",
     "dev": "tsdown --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest -w"
   },
   "dependencies": {
     "@kirika-js/chat-engine": "workspace:*",
@@ -32,7 +33,8 @@
   },
   "devDependencies": {
     "@kirika-js/typescript-config": "workspace:*",
-    "typescript": "^6.0.3",
+    "@kirika-js/vitest-config": "workspace:*",
+    "typescript": "catalog:",
     "tsdown": "catalog:",
     "vitest": "catalog:"
   }

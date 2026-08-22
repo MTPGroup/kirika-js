@@ -6,6 +6,11 @@
     "incremental": false,
     "types": ["node", "vitest", "supertest", "pg"]
   },
-  "include": ["../src/**/*.ts", "./**/*.ts", "./**/*.d.ts"],
+  "include": [
+    "../src/**/*.ts",
+    "./**/*.ts",
+    "./**/*.d.ts",
+    "vitest.config.mts"
+  ],
   "exclude": ["../node_modules", "../dist"]
 }

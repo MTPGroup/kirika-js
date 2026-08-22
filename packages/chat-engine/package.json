@@ -40,7 +40,8 @@
   },
   "devDependencies": {
     "@kirika-js/typescript-config": "workspace:*",
-    "typescript": "^6.0.3",
+    "@kirika-js/vitest-config": "workspace:*",
+    "typescript": "catalog:",
     "tsdown": "catalog:",
     "vitest": "catalog:"
   }

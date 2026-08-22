@@ -7,32 +7,22 @@ export default mergeConfig(
   baseConfig,
   defineConfig({
     test: {
-      include: ['test/**/*.e2e-spec.ts'],
-      environment: 'node',
-
-      fileParallelism: false,
-
-      testTimeout: 30_000,
-      hookTimeout: 60_000,
-      teardownTimeout: 30_000,
-
-      clearMocks: true,
-      restoreMocks: true,
-
-      globalSetup: ['./test/global-setup.ts'],
-      setupFiles: ['./test/helpers/setup-env.ts'],
+      globals: true,
+      root: './',
+      include: ['src/**/*.spec.ts'],
+      exclude: ['dist/**'],
     },
     plugins: [
       swc.vite({
+        module: { type: 'es6' },
         jsc: {
           target: 'es2022',
         },
       }),
     ],
-
     resolve: {
       alias: {
-        '~': resolve(import.meta.dirname, '../src'),
+        '~': resolve(import.meta.dirname, './src'),
       },
     },
   }),

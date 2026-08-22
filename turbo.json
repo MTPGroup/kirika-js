@@ -12,8 +12,15 @@
       "persistent": true
     },
     "test": {
-      "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "vitest.config.ts"]
+      "dependsOn": ["transit", "@kirika-js/vitest-config#build"],
+      "outputs": ["coverage/blob/**"]
+    },
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
     },
     "//#format-and-lint": {},
     "//#format-and-lint:fix": {

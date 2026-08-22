@@ -1,7 +1,4 @@
 {
   "name": "@kirika-js/typescript-config",
-  "private": true,
-  "files": [
-    "*.json"
-  ]
+  "private": true
 }

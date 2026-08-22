@@ -1,0 +1,27 @@
+{
+  "name": "@kirika-js/vitest-config",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./base": "./dist/configs/base-config.js",
+    "./ui": "./dist/configs/ui-config.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "merge-blob-reports": "node dist/scripts/merge-blob-reports.js",
+    "report": "vitest --merge-reports coverage/merged-blob --passWithNoTests --coverage --coverage.provider=istanbul --coverage.reporter=html --coverage.reporter=text --coverage.reportsDirectory=coverage/report",
+    "view-report": "open coverage/report/index.html"
+  },
+  "dependencies": {
+    "vitest": "catalog:"
+  },
+  "devDependencies": {
+    "@kirika-js/typescript-config": "workspace:*",
+    "@types/node": "^24.13.3",
+    "@vitest/coverage-istanbul": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -18,7 +18,7 @@
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
-    "test:watch": "vitest",
+    "test:watch": "vitest -w",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --inspect --logHeapUsage --threads=false",
     "test:e2e": "vitest run --config ./test/vitest.config.mts"
@@ -52,6 +52,7 @@
   "devDependencies": {
     "@compodoc/compodoc": "^2.0.0",
     "@kirika-js/typescript-config": "workspace:*",
+    "@kirika-js/vitest-config": "workspace:*",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
@@ -66,7 +67,7 @@
     "drizzle-kit": "1.0.0-rc.4",
     "supertest": "^7.0.0",
     "tsx": "^4.23.12",
-    "typescript": "^6.0.3",
+    "typescript": "catalog:",
     "unplugin-swc": "^1.5.11",
     "vitest": "^4.1.10"
   }

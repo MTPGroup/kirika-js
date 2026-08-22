@@ -1,0 +1,14 @@
+{
+  "extends": "@kirika-js/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"],
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "strictNullChecks": true
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
+}

@@ -8,6 +8,7 @@ catalog:
   tsdown: ^0.22.14
   typescript: ^6.0.3
   vitest: ^4.1.10
+  "@vitest/coverage-istanbul": ^4.1.10
   zod: ^4.4.3
 
 allowBuilds:
