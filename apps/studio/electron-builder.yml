@@ -1,0 +1,57 @@
+appId: cn.kirika.studio
+productName: Kirika Studio
+
+directories:
+  buildResources: build
+  output: dist
+
+files:
+  - out/**
+  - package.json
+
+extraResources:
+  - from: ../../packages/adapter-persistence-sqlite/drizzle
+    to: migrations/sqlite
+    filter:
+      - "**/*"
+
+win:
+  executableName: kirika-studio
+  target:
+    - nsis
+
+nsis:
+  artifactName: kirika-studio-${version}-${arch}-setup.${ext}
+  shortcutName: Kirika Studio
+  uninstallDisplayName: Kirika Studio
+  createDesktopShortcut: always
+
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.developer-tools
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false
+
+dmg:
+  artifactName: kirika-studio-${version}-${arch}.${ext}
+
+linux:
+  executableName: kirika-studio
+  target:
+    - AppImage
+    - deb
+  category: Development
+  maintainer: MTPGroup
+
+appImage:
+  artifactName: kirika-studio-${version}-${arch}.${ext}
+
+deb:
+  artifactName: kirika-studio-${version}-${arch}.${ext}
+
+npmRebuild: false
+
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/

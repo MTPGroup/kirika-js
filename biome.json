@@ -15,8 +15,14 @@
   },
   "linter": {
     "enabled": true,
+    "domains": {
+      "vue": "recommended"
+    },
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "style": {
+        "useVueMultiWordComponentNames": "off"
+      }
     }
   },
   "javascript": {
@@ -26,6 +32,12 @@
     },
     "parser": {
       "unsafeParameterDecoratorsEnabled": true
+    }
+  },
+  "html": {
+    "experimentalFullSupportEnabled": true,
+    "formatter": {
+      "enabled": true
     }
   },
   "assist": {
