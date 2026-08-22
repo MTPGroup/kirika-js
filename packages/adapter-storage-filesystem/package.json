@@ -1,0 +1,23 @@
+{
+  "name": "@kirika-js/adapter-storage-filesystem",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsdown"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1115.0",
+    "@kirika-js/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@kirika-js/typescript-config": "workspace:*",
+    "@types/node": "^26.2.0",
+    "typescript": "catalog:"
+  },
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  }
+}
