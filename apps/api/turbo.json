@@ -1,10 +1,10 @@
 {
-  "$schema": "https://turborepo.com/schema.json",
   "extends": ["//"],
   "tasks": {
     "dev": {
       "dependsOn": ["^build"],
-      "with": ["@kirika-js/domain#dev"]
+      "cache": false,
+      "persistent": true
     }
   }
 }
