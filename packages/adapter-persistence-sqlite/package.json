@@ -23,5 +23,9 @@
     "tsx": "^4.23.12",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
   }
 }

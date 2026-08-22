@@ -6,6 +6,7 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
+  exports: true,
   outDir: './dist',
   copy: [
     {
