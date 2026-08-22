@@ -1,0 +1,16 @@
+{
+  "name": "@kirika-js/adapter-persistence-sqlite",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@kirika-js/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@kirika-js/typescript-config": "workspace:*",
+    "@kirika-js/vitest-config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

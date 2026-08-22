@@ -1,0 +1,7 @@
+{
+  "extends": "@kirika-js/typescript-config/bundler.json",
+  "compilerOptions": {
+    "rootDir": "./src"
+  },
+  "include": ["src"]
+}
