@@ -7,7 +7,7 @@ import type {
 import { eq } from 'drizzle-orm'
 import type { SqliteDatabase } from '../database'
 import { ConversationMapper } from '../mappers/conversation.mapper'
-import { conversationMessages } from '../schema/conversations.schema'
+import { conversationMessages } from '../schema/conversation.schema'
 
 export class SqliteConversationMessageRepository
   implements ConversationMessageRepositoryPort

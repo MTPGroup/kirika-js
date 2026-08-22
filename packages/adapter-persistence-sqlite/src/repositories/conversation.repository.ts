@@ -9,7 +9,7 @@ import { ConversationMapper } from '../mappers/conversation.mapper'
 import {
   conversationParticipants,
   conversations,
-} from '../schema/conversations.schema'
+} from '../schema/conversation.schema'
 
 export class SqliteConversationRepository
   implements ConversationRepositoryPort

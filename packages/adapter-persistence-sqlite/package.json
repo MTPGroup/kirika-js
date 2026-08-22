@@ -5,6 +5,9 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest -w",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
