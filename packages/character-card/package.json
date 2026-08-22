@@ -7,14 +7,6 @@
   "files": [
     "dist"
   ],
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      }
-    }
-  },
   "scripts": {
     "build": "tsdown",
     "check-types": "tsc --noEmit",
@@ -28,5 +20,9 @@
     "@kirika-js/vitest-config": "workspace:*",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
   }
 }
