@@ -22,10 +22,6 @@
       "import": {
         "types": "./dist/testing/index.d.mts",
         "default": "./dist/testing/index.mjs"
-      },
-      "require": {
-        "types": "./dist/testing/index.d.cts",
-        "default": "./dist/testing/index.cjs"
       }
     }
   },
@@ -42,7 +38,6 @@
     "@kirika-js/typescript-config": "workspace:*",
     "@kirika-js/vitest-config": "workspace:*",
     "typescript": "catalog:",
-    "tsdown": "catalog:",
     "vitest": "catalog:"
   }
 }

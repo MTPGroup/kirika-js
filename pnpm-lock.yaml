@@ -9,9 +9,6 @@ catalogs:
     '@vitest/coverage-istanbul':
       specifier: ^4.1.10
       version: 4.1.11
-    tsdown:
-      specifier: ^0.22.14
-      version: 0.22.14
     typescript:
       specifier: ^6.0.3
       version: 6.0.3
@@ -29,9 +26,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.5.8
         version: 2.5.8
-      '@kirika-js/typescript-config':
-        specifier: workspace:*
-        version: link:packages/typescript-config
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.12)(typescript@6.0.3)
       turbo:
         specifier: ^2.10.8
         version: 2.10.8
@@ -190,9 +187,6 @@ importers:
       '@kirika-js/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
-      tsdown:
-        specifier: 'catalog:'
-        version: 0.22.14(tsx@4.23.12)(typescript@6.0.3)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -200,7 +194,20 @@ importers:
         specifier: 'catalog:'
         version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
-  packages/adapter-persistence-postgresql: {}
+  packages/adapter-persistence-postgresql:
+    devDependencies:
+      '@kirika-js/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@kirika-js/vitest-config':
+        specifier: workspace:*
+        version: link:../vitest-config
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.10(@types/node@26.1.2)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/character-card:
     dependencies:
@@ -214,9 +221,6 @@ importers:
       '@kirika-js/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
-      tsdown:
-        specifier: 'catalog:'
-        version: 0.22.14(tsx@4.23.12)(typescript@6.0.3)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -236,9 +240,6 @@ importers:
       '@kirika-js/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
-      tsdown:
-        specifier: 'catalog:'
-        version: 0.22.14(tsx@4.23.12)(typescript@6.0.3)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -258,9 +259,6 @@ importers:
       '@kirika-js/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
-      tsdown:
-        specifier: 'catalog:'
-        version: 0.22.14(tsx@4.23.12)(typescript@6.0.3)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

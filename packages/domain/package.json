@@ -75,7 +75,6 @@
     "@kirika-js/typescript-config": "workspace:*",
     "@kirika-js/vitest-config": "workspace:*",
     "typescript": "catalog:",
-    "tsdown": "catalog:",
     "vitest": "catalog:"
   }
 }
