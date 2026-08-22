@@ -15,25 +15,25 @@ import { DrizzleCharacterListReadAdapter } from './infrastructure/persistence/dr
 import { CharacterController } from './presentation/controllers/character.controller'
 
 @Module({
-	imports: [SharedModule],
-	providers: [
-		{
-			provide: CHARACTER_REPOSITORY_PORT,
-			useClass: DrizzleCharacterRepository,
-		},
-		{
-			provide: CHARACTER_LIST_READ_PORT,
-			useClass: DrizzleCharacterListReadAdapter,
-		},
-		GetCharacterHandler,
-		GetMyCharactersHandler,
-		CreateCharacterHandler,
-		CreateCharacterRevisionHandler,
-		DeleteCharacterHandler,
-		PublishCharacterRevisionHandler,
-		SyncCharacterRevisionHandler,
-		UpdateCharacterHandler,
-	],
-	controllers: [CharacterController],
+  imports: [SharedModule],
+  providers: [
+    {
+      provide: CHARACTER_REPOSITORY_PORT,
+      useClass: DrizzleCharacterRepository,
+    },
+    {
+      provide: CHARACTER_LIST_READ_PORT,
+      useClass: DrizzleCharacterListReadAdapter,
+    },
+    GetCharacterHandler,
+    GetMyCharactersHandler,
+    CreateCharacterHandler,
+    CreateCharacterRevisionHandler,
+    DeleteCharacterHandler,
+    PublishCharacterRevisionHandler,
+    SyncCharacterRevisionHandler,
+    UpdateCharacterHandler,
+  ],
+  controllers: [CharacterController],
 })
 export class CharacterModule {}

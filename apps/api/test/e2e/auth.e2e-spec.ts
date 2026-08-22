@@ -8,70 +8,70 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { AppModule } from '~/app.module'
 import { APP_CONFIGURATION } from '~/shared/infrastructure/config/config.loader'
 import {
-	AuthMailerService,
-	VerificationOTPType,
+  AuthMailerService,
+  type VerificationOTPType,
 } from '~/shared/infrastructure/mailer/auth-mailer.service'
 import { createTestConfiguration } from '../helpers/test-config'
 
 interface SentOTP {
-	email: string
-	otp: string
-	type: VerificationOTPType
+  email: string
+  otp: string
+  type: VerificationOTPType
 }
 
 describe('Auth E2E', () => {
-	let app: INestApplication
-	let agent: ReturnType<typeof request.agent>
-	let pool: Pool
-	let sentOTP: SentOTP | undefined
+  let app: INestApplication
+  let agent: ReturnType<typeof request.agent>
+  let pool: Pool
+  let sentOTP: SentOTP | undefined
 
-	const authMailerServiceMock = {
-		async sendVerificationOtp(
-			email: string,
-			otp: string,
-			type: VerificationOTPType,
-		) {
-			sentOTP = {
-				email,
-				otp,
-				type,
-			}
-		},
-	}
+  const authMailerServiceMock = {
+    async sendVerificationOtp(
+      email: string,
+      otp: string,
+      type: VerificationOTPType,
+    ) {
+      sentOTP = {
+        email,
+        otp,
+        type,
+      }
+    },
+  }
 
-	beforeAll(async () => {
-		const databaseUrl = process.env.DATABASE_URL
+  beforeAll(async () => {
+    const databaseUrl = process.env.DATABASE_URL
 
-		if (!databaseUrl) {
-			throw new Error('DATABASE_URL was not provided by Vitest global setup')
-		}
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL was not provided by Vitest global setup')
+    }
 
-		const configuration = createTestConfiguration(databaseUrl)
+    const configuration = createTestConfiguration(databaseUrl)
 
-		const moduleRef = await Test.createTestingModule({
-			imports: [AppModule],
-		})
-			.overrideProvider(APP_CONFIGURATION)
-			.useValue(configuration)
-			.overrideProvider(AuthMailerService)
-			.useValue(authMailerServiceMock)
-			.compile()
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(APP_CONFIGURATION)
+      .useValue(configuration)
+      .overrideProvider(AuthMailerService)
+      .useValue(authMailerServiceMock)
+      .compile()
 
-		app = moduleRef.createNestApplication({
-			bodyParser: false,
-		})
+    app = moduleRef.createNestApplication({
+      bodyParser: false,
+    })
 
-		app.setGlobalPrefix('api')
+    app.setGlobalPrefix('api')
 
-		await app.init()
+    await app.init()
 
-		pool = new Pool({
-			connectionString: configuration.database.url,
-		})
-	})
+    pool = new Pool({
+      connectionString: configuration.database.url,
+    })
+  })
 
-	beforeEach(async () => {
-		await pool.query(`
+  beforeEach(async () => {
+    await pool.query(`
       TRUNCATE TABLE
         "verifications",
         "sessions",
@@ -80,82 +80,82 @@ describe('Auth E2E', () => {
       CASCADE
     `)
 
-		sentOTP = undefined
+    sentOTP = undefined
 
-		agent = request.agent(app.getHttpServer())
-	})
+    agent = request.agent(app.getHttpServer())
+  })
 
-	afterAll(async () => {
-		await pool.end()
-		await app.close()
-	})
+  afterAll(async () => {
+    await pool.end()
+    await app.close()
+  })
 
-	it('完成注册 -> 验证邮箱 -> 登录 -> 读取Session -> 登出流程', async () => {
-		const email = 'alice@kirika.test'
-		const password = 'StrongPass123!'
+  it('完成注册 -> 验证邮箱 -> 登录 -> 读取Session -> 登出流程', async () => {
+    const email = 'alice@kirika.test'
+    const password = 'StrongPass123!'
 
-		const signUpResponse = await agent.post('/api/auth/sign-up/email').send({
-			name: 'Alice',
-			email,
-			password,
-		})
+    const signUpResponse = await agent.post('/api/auth/sign-up/email').send({
+      name: 'Alice',
+      email,
+      password,
+    })
 
-		expect(signUpResponse.status).toBe(200)
-		expect(signUpResponse.body.token).toBeNull()
+    expect(signUpResponse.status).toBe(200)
+    expect(signUpResponse.body.token).toBeNull()
 
-		expect(sentOTP).toMatchObject({
-			email,
-			type: 'email-verification',
-		})
+    expect(sentOTP).toMatchObject({
+      email,
+      type: 'email-verification',
+    })
 
-		if (!sentOTP) {
-			throw new Error('Verification OTP was not sent')
-		}
+    if (!sentOTP) {
+      throw new Error('Verification OTP was not sent')
+    }
 
-		const unverfiedSignInResponse = await agent
-			.post('/api/auth/sign-in/email')
-			.send({
-				email,
-				password,
-			})
+    const unverfiedSignInResponse = await agent
+      .post('/api/auth/sign-in/email')
+      .send({
+        email,
+        password,
+      })
 
-		expect(unverfiedSignInResponse.status).toBe(403)
+    expect(unverfiedSignInResponse.status).toBe(403)
 
-		const verificationResponse = await agent
-			.post('/api/auth/email-otp/verify-email')
-			.send({
-				email,
-				otp: sentOTP.otp,
-			})
+    const verificationResponse = await agent
+      .post('/api/auth/email-otp/verify-email')
+      .send({
+        email,
+        otp: sentOTP.otp,
+      })
 
-		expect(verificationResponse.status).toBe(200)
-		expect(verificationResponse.body.status).toBe(true)
-		expect(verificationResponse.body.user.emailVerified).toBe(true)
+    expect(verificationResponse.status).toBe(200)
+    expect(verificationResponse.body.status).toBe(true)
+    expect(verificationResponse.body.user.emailVerified).toBe(true)
 
-		const signInResponse = await agent.post('/api/auth/sign-in/email').send({
-			email,
-			password,
-			rememberMe: true,
-		})
+    const signInResponse = await agent.post('/api/auth/sign-in/email').send({
+      email,
+      password,
+      rememberMe: true,
+    })
 
-		expect(signInResponse.status).toBe(200)
-		expect(signInResponse.headers['set-cookie']).toBeDefined()
+    expect(signInResponse.status).toBe(200)
+    expect(signInResponse.headers['set-cookie']).toBeDefined()
 
-		const sessionResponse = await agent.get('/api/auth/get-session')
+    const sessionResponse = await agent.get('/api/auth/get-session')
 
-		expect(sessionResponse.status).toBe(200)
-		expect(sessionResponse.body.user).toMatchObject({
-			email,
-			emailVerified: true,
-		})
+    expect(sessionResponse.status).toBe(200)
+    expect(sessionResponse.body.user).toMatchObject({
+      email,
+      emailVerified: true,
+    })
 
-		const signOutResponse = await agent.post('/api/auth/sign-out')
+    const signOutResponse = await agent.post('/api/auth/sign-out')
 
-		expect(signOutResponse.status).toBe(200)
+    expect(signOutResponse.status).toBe(200)
 
-		const expiredSessionResponse = await agent.get('/api/auth/get-session')
+    const expiredSessionResponse = await agent.get('/api/auth/get-session')
 
-		expect(expiredSessionResponse.status).toBe(200)
-		expect(expiredSessionResponse.body).toBeNull()
-	})
+    expect(expiredSessionResponse.status).toBe(200)
+    expect(expiredSessionResponse.body).toBeNull()
+  })
 })

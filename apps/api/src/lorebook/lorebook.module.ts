@@ -16,26 +16,26 @@ import { DrizzleLorebookListReadAdapter } from './infrastructure/persistence/dri
 import { LorebookController } from './presentation/controllers/lorebook.controller'
 
 @Module({
-	imports: [SharedModule],
-	providers: [
-		{
-			provide: LOREBOOK_REPOSITORY_PORT,
-			useClass: DrizzleLorebookRepository,
-		},
-		{
-			provide: LOREBOOK_LIST_READ_PORT,
-			useClass: DrizzleLorebookListReadAdapter,
-		},
-		CreateLorebookHandler,
-		CreateLorebookRevisionHandler,
-		DeleteLorebookHandler,
-		PublishLorebookRevisionHandler,
-		SyncLorebookEntriesHandler,
-		UpdateLorebookHandler,
-		GetPublicLorebookHandler,
-		GetLorebookHandler,
-		GetMyLorebooksHandler,
-	],
-	controllers: [LorebookController],
+  imports: [SharedModule],
+  providers: [
+    {
+      provide: LOREBOOK_REPOSITORY_PORT,
+      useClass: DrizzleLorebookRepository,
+    },
+    {
+      provide: LOREBOOK_LIST_READ_PORT,
+      useClass: DrizzleLorebookListReadAdapter,
+    },
+    CreateLorebookHandler,
+    CreateLorebookRevisionHandler,
+    DeleteLorebookHandler,
+    PublishLorebookRevisionHandler,
+    SyncLorebookEntriesHandler,
+    UpdateLorebookHandler,
+    GetPublicLorebookHandler,
+    GetLorebookHandler,
+    GetMyLorebooksHandler,
+  ],
+  controllers: [LorebookController],
 })
 export class LorebookModule {}

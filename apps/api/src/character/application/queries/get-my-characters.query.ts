@@ -5,11 +5,11 @@ import type { CharacterListItem } from '../ports/character-list-read.port'
 export type CharacterPageResult = PageResult<CharacterListItem>
 
 export class GetMyCharactersQuery extends Query<CharacterPageResult> {
-	constructor(
-		readonly ownerId: string,
-		readonly page: number,
-		readonly pageSize: number,
-	) {
-		super()
-	}
+  constructor(
+    readonly ownerId: string,
+    readonly page: number,
+    readonly pageSize: number,
+  ) {
+    super()
+  }
 }

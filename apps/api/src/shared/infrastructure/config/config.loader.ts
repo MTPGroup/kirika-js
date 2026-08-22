@@ -8,33 +8,33 @@ export const APP_CONFIGURATION = Symbol('APP_CONFIGURATION')
 let cachedConfiguration: Configuration | undefined
 
 export function loadConfiguration(): Configuration {
-	if (cachedConfiguration) {
-		return cachedConfiguration
-	}
+  if (cachedConfiguration) {
+    return cachedConfiguration
+  }
 
-	const configDirectory = resolve(process.cwd(), 'config')
-	const deployment = process.env.NODE_ENV ?? 'development'
+  const configDirectory = resolve(process.cwd(), 'config')
+  const deployment = process.env.NODE_ENV ?? 'development'
 
-	cachedConfiguration = loadConfigSync({
-		schema: configurationSchema,
-		adapters: [
-			tomlAdapter({
-				path: resolve(configDirectory, 'default.toml'),
-			}),
-			tomlAdapter({
-				path: resolve(configDirectory, `${deployment}.toml`),
-				silent: true,
-			}),
-			tomlAdapter({
-				path: resolve(configDirectory, 'local.toml'),
-				silent: true,
-			}),
-			tomlAdapter({
-				path: resolve(configDirectory, `local-${deployment}.toml`),
-				silent: true,
-			}),
-		],
-	})
+  cachedConfiguration = loadConfigSync({
+    schema: configurationSchema,
+    adapters: [
+      tomlAdapter({
+        path: resolve(configDirectory, 'default.toml'),
+      }),
+      tomlAdapter({
+        path: resolve(configDirectory, `${deployment}.toml`),
+        silent: true,
+      }),
+      tomlAdapter({
+        path: resolve(configDirectory, 'local.toml'),
+        silent: true,
+      }),
+      tomlAdapter({
+        path: resolve(configDirectory, `local-${deployment}.toml`),
+        silent: true,
+      }),
+    ],
+  })
 
-	return cachedConfiguration
+  return cachedConfiguration
 }

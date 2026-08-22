@@ -2,9 +2,7 @@
   "version": "8",
   "dialect": "postgres",
   "id": "043485e5-0fca-4b91-adb2-b34dccc9dc94",
-  "prevIds": [
-    "372e4614-d016-41f0-b234-292ff2efcb1c"
-  ],
+  "prevIds": ["372e4614-d016-41f0-b234-292ff2efcb1c"],
   "ddl": [
     {
       "values": [
@@ -21,20 +19,13 @@
       "schema": "public"
     },
     {
-      "values": [
-        "before_history",
-        "after_history"
-      ],
+      "values": ["before_history", "after_history"],
       "name": "lorebook_entry_position",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "private",
-        "unlisted",
-        "public"
-      ],
+      "values": ["private", "unlisted", "public"],
       "name": "lorebook_visibility",
       "entityType": "enums",
       "schema": "public"
@@ -1699,14 +1690,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "accounts_user_id_users_id_fkey",
@@ -1716,14 +1703,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "sessions_user_id_users_id_fkey",
@@ -1733,14 +1716,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "revision_id"
-      ],
+      "columns": ["revision_id"],
       "schemaTo": "public",
       "tableTo": "character_revisions",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "character_revision_assets_L8hRBjWXyWGi_fkey",
@@ -1750,14 +1729,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "asset_id"
-      ],
+      "columns": ["asset_id"],
       "schemaTo": "public",
       "tableTo": "assets",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "character_revision_assets_asset_id_assets_id_fkey",
@@ -1767,14 +1742,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "character_revision_id"
-      ],
+      "columns": ["character_revision_id"],
       "schemaTo": "public",
       "tableTo": "character_revisions",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "character_revision_lorebooks_sSNWk5AL1RCv_fkey",
@@ -1784,14 +1755,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "lorebook_revision_id"
-      ],
+      "columns": ["lorebook_revision_id"],
       "schemaTo": "public",
       "tableTo": "lorebook_revisions",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "character_revision_lorebooks_sZ5gZ1Bx0ikL_fkey",
@@ -1801,14 +1768,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "character_id"
-      ],
+      "columns": ["character_id"],
       "schemaTo": "public",
       "tableTo": "characters",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "character_revisions_character_id_characters_id_fkey",
@@ -1818,14 +1781,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "owner_id"
-      ],
+      "columns": ["owner_id"],
       "schemaTo": "public",
       "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "characters_owner_id_users_id_fkey",
@@ -1835,14 +1794,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "revision_id"
-      ],
+      "columns": ["revision_id"],
       "schemaTo": "public",
       "tableTo": "lorebook_revisions",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "lorebook_entries_revision_id_lorebook_revisions_id_fkey",
@@ -1852,14 +1807,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "lorebook_id"
-      ],
+      "columns": ["lorebook_id"],
       "schemaTo": "public",
       "tableTo": "lorebooks",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "lorebook_revisions_lorebook_id_lorebooks_id_fkey",
@@ -1869,14 +1820,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "owner_id"
-      ],
+      "columns": ["owner_id"],
       "schemaTo": "public",
       "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "lorebooks_owner_id_users_id_fkey",
@@ -1885,11 +1832,7 @@
       "table": "lorebooks"
     },
     {
-      "columns": [
-        "revision_id",
-        "kind",
-        "ordinal"
-      ],
+      "columns": ["revision_id", "kind", "ordinal"],
       "nameExplicit": false,
       "name": "character_revision_assets_pkey",
       "entityType": "pks",
@@ -1897,10 +1840,7 @@
       "table": "character_revision_assets"
     },
     {
-      "columns": [
-        "character_revision_id",
-        "lorebook_revision_id"
-      ],
+      "columns": ["character_revision_id", "lorebook_revision_id"],
       "nameExplicit": false,
       "name": "character_revision_lorebooks_pkey",
       "entityType": "pks",
@@ -1908,9 +1848,7 @@
       "table": "character_revision_lorebooks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "accounts_pkey",
       "schema": "public",
@@ -1918,9 +1856,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "sessions_pkey",
       "schema": "public",
@@ -1928,9 +1864,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "users_pkey",
       "schema": "public",
@@ -1938,9 +1872,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "verifications_pkey",
       "schema": "public",
@@ -1948,9 +1880,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "assets_pkey",
       "schema": "public",
@@ -1958,9 +1888,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "character_revisions_pkey",
       "schema": "public",
@@ -1968,9 +1896,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "characters_pkey",
       "schema": "public",
@@ -1978,9 +1904,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "lorebook_entries_pkey",
       "schema": "public",
@@ -1988,9 +1912,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "lorebook_revisions_pkey",
       "schema": "public",
@@ -1998,9 +1920,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "lorebooks_pkey",
       "schema": "public",
@@ -2009,9 +1929,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nullsNotDistinct": false,
       "name": "sessions_token_key",
       "schema": "public",
@@ -2020,9 +1938,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nullsNotDistinct": false,
       "name": "users_email_key",
       "schema": "public",

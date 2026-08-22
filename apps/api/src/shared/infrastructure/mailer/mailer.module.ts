@@ -7,16 +7,16 @@ import { AuthMailerService } from './auth-mailer.service'
 import { createMailerOptions } from './mailer.factory'
 
 @Module({
-	imports: [
-		MMailerModule.forRootAsync({
-			imports: [AppConfigModule],
-			inject: [APP_CONFIGURATION],
-			useFactory: (config: Configuration) => {
-				return createMailerOptions(config.mailer)
-			},
-		}),
-	],
-	providers: [AuthMailerService],
-	exports: [AuthMailerService],
+  imports: [
+    MMailerModule.forRootAsync({
+      imports: [AppConfigModule],
+      inject: [APP_CONFIGURATION],
+      useFactory: (config: Configuration) => {
+        return createMailerOptions(config.mailer)
+      },
+    }),
+  ],
+  providers: [AuthMailerService],
+  exports: [AuthMailerService],
 })
 export class MailerModule {}

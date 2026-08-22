@@ -1,18 +1,18 @@
 import type {
-	CharacterId,
-	CharacterRevision,
-	CharacterRevisionId,
+  CharacterId,
+  CharacterRevision,
+  CharacterRevisionId,
 } from '@kirika-js/domain/character'
 import type { LorebookRevision } from '@kirika-js/domain/lorebook'
 
 export interface ResolvedChatCharacterContext {
-	readonly revision: CharacterRevision
-	readonly lorebooks: readonly LorebookRevision[]
+  readonly revision: CharacterRevision
+  readonly lorebooks: readonly LorebookRevision[]
 }
 
 export interface ChatCharacterContextResolverPort {
-	resolve(
-		characterId: CharacterId,
-		characterRevisionId: CharacterRevisionId,
-	): Promise<ResolvedChatCharacterContext | null>
+  resolve(
+    characterId: CharacterId,
+    characterRevisionId: CharacterRevisionId,
+  ): Promise<ResolvedChatCharacterContext | null>
 }

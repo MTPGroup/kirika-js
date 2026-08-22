@@ -1,4 +1,4 @@
 export interface DatabaseOptions {
-	url: string
-	poolMax: number
+  url: string
+  poolMax: number
 }

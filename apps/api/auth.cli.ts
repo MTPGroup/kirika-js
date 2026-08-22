@@ -7,16 +7,16 @@ import { loadConfiguration } from './src/shared/infrastructure/config/config.loa
 const config = loadConfiguration()
 
 const pool = new Pool({
-	connectionString: config.database.url,
-	max: config.database.poolMax,
+  connectionString: config.database.url,
+  max: config.database.poolMax,
 })
 
 const database = drizzle({
-	client: pool,
+  client: pool,
 })
 
 const cliMailer = {
-	async sendVerificationOtp() {},
+  async sendVerificationOtp() {},
 }
 
 export const auth = createAuth(database, config.auth, cliMailer)

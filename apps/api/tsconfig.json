@@ -1,31 +1,31 @@
 {
-	"compilerOptions": {
-		"module": "nodenext",
-		"moduleResolution": "nodenext",
-		"target": "esnext",
-		"rootDir": "./src",
-		"outDir": "./dist",
-		"types": ["node", "supertest", "pg"],
-		"paths": {
-			"~/*": ["./src/*"]
-		},
-		"resolvePackageJsonExports": true,
-		"isolatedModules": true,
-		"experimentalDecorators": true,
-		"emitDecoratorMetadata": true,
-		"declaration": true,
-		"sourceMap": true,
-		"removeComments": true,
-		"incremental": true,
-		"skipLibCheck": true,
-		"strict": true,
-		"forceConsistentCasingInFileNames": true,
-		"noFallthroughCasesInSwitch": false,
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"strictNullChecks": true,
-		"noImplicitAny": false,
-		"strictBindCallApply": false
-	},
-	"include": ["src/**/*.ts"]
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "esnext",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "types": ["node", "supertest", "pg"],
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "resolvePackageJsonExports": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declaration": true,
+    "sourceMap": true,
+    "removeComments": true,
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strictNullChecks": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false
+  },
+  "include": ["src/**/*.ts"]
 }

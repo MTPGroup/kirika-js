@@ -4,25 +4,25 @@ import { CqrsModule } from '@nestjs/cqrs'
 import { ZodValidationPipe } from 'nestjs-zod'
 import { AuthModule } from '~/auth/auth.module'
 import { CharacterModule } from './character/character.module'
+import { ConversationModule } from './conversation/conversation.module'
 import { LorebookModule } from './lorebook/lorebook.module'
 import { SharedModule } from './shared/shared.module'
-import { ConversationModule } from './conversation/conversation.module';
 
 @Module({
-	imports: [
-		CqrsModule.forRoot(),
-		SharedModule,
-		AuthModule,
-		LorebookModule,
-		CharacterModule,
-		ConversationModule,
-	],
-	controllers: [],
-	providers: [
-		{
-			provide: APP_PIPE,
-			useClass: ZodValidationPipe,
-		},
-	],
+  imports: [
+    CqrsModule.forRoot(),
+    SharedModule,
+    AuthModule,
+    LorebookModule,
+    CharacterModule,
+    ConversationModule,
+  ],
+  controllers: [],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useClass: ZodValidationPipe,
+    },
+  ],
 })
 export class AppModule {}

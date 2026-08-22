@@ -5,14 +5,13 @@ packages:
 disallowWorkspaceCycles: true
 
 catalog:
-  "@biomejs/biome": 2.5.8
   tsdown: ^0.22.14
   typescript: ^7.0.2
   vitest: ^4.1.10
   zod: ^4.4.3
 
 allowBuilds:
-  '@scarf/scarf': true
+  "@scarf/scarf": true
   "@swc/core": true
   cpu-features: true
   esbuild: true

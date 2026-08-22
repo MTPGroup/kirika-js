@@ -3,41 +3,41 @@ import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import { DRIZZLE_OPTIONS } from './drizzle.constant'
 import {
-	authRelations,
-	characterRelations,
-	lorebookRelations,
+  authRelations,
+  characterRelations,
+  lorebookRelations,
 } from './drizzle.drizzle-schema'
 import type { DatabaseOptions } from './drizzle.types'
 
 function createDatabase(pool: Pool) {
-	return drizzle({
-		client: pool,
-		relations: {
-			...authRelations,
-			...lorebookRelations,
-			...characterRelations,
-		},
-	})
+  return drizzle({
+    client: pool,
+    relations: {
+      ...authRelations,
+      ...lorebookRelations,
+      ...characterRelations,
+    },
+  })
 }
 
 export type Database = ReturnType<typeof createDatabase>
 
 @Injectable()
 export class DrizzleService implements OnApplicationShutdown {
-	private readonly pool: Pool
+  private readonly pool: Pool
 
-	readonly db: Database
+  readonly db: Database
 
-	constructor(@Inject(DRIZZLE_OPTIONS) options: DatabaseOptions) {
-		this.pool = new Pool({
-			connectionString: options.url,
-			max: options.poolMax,
-		})
+  constructor(@Inject(DRIZZLE_OPTIONS) options: DatabaseOptions) {
+    this.pool = new Pool({
+      connectionString: options.url,
+      max: options.poolMax,
+    })
 
-		this.db = createDatabase(this.pool)
-	}
+    this.db = createDatabase(this.pool)
+  }
 
-	async onApplicationShutdown() {
-		await this.pool.end()
-	}
+  async onApplicationShutdown() {
+    await this.pool.end()
+  }
 }
