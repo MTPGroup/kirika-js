@@ -223,15 +223,6 @@ importers:
       drizzle-orm:
         specifier: 1.0.0-rc.4
         version: 1.0.0-rc.4(@libsql/client@0.17.4)(@types/pg@8.21.0)(mssql@11.0.1(supports-color@8.1.1))(mysql2@3.23.4(@types/node@26.2.0))(pg@8.23.0)(zod@4.4.3)
-      smol-toml:
-        specifier: ^1.8.0
-        version: 1.8.0
-      zod:
-        specifier: 'catalog:'
-        version: 4.4.3
-      zod-config:
-        specifier: ^1.4.0
-        version: 1.4.0(dotenv@17.4.2)(json5@2.2.3)(smol-toml@1.8.0)(yaml@2.9.0)(zod@4.4.3)
     devDependencies:
       '@kirika-js/typescript-config':
         specifier: workspace:*

@@ -5,18 +5,12 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@kirika-js/domain": "workspace:*",
     "@libsql/client": "^0.17.4",
-    "drizzle-orm": "1.0.0-rc.4",
-    "smol-toml": "^1.8.0",
-    "zod": "catalog:",
-    "zod-config": "^1.4.0"
+    "drizzle-orm": "1.0.0-rc.4"
   },
   "devDependencies": {
     "@kirika-js/typescript-config": "workspace:*",
