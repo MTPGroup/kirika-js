@@ -5,7 +5,7 @@ import type {
 } from '@kirika-js/domain/character'
 import { Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
-import type { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
+import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
 import {
   characterRevisionAssets,
   characterRevisionLorebooks,

@@ -13,7 +13,7 @@ import {
   Query,
   Session,
 } from '@nestjs/common'
-import type { CommandBus, QueryBus } from '@nestjs/cqrs'
+import { CommandBus, QueryBus } from '@nestjs/cqrs'
 import { OptionalAuth, type UserSession } from '@thallesp/nestjs-better-auth'
 import { ZodResponse } from 'nestjs-zod'
 import { CreateLorebookCommand } from '~/lorebook/application/commands/create-lorebook.command'

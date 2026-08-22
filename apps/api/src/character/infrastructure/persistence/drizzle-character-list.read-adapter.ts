@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { and, count, desc, eq, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
-import type { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
+import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
 import type {
   CharacterListItem,
   CharacterListReadPort,

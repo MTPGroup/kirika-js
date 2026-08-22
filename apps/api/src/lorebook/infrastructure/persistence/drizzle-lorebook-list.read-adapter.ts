@@ -6,7 +6,7 @@ import type {
   LorebookListItem,
   LorebookListReadPort,
 } from '~/lorebook/application/ports/lorebook-list-read.port'
-import type { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
+import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
 import { lorebooks } from './lorebook.drizzle-schema'
 
 @Injectable()

@@ -5,7 +5,7 @@ import type {
 } from '@kirika-js/domain/lorebook'
 import { Injectable } from '@nestjs/common'
 import { and, eq, notInArray, sql } from 'drizzle-orm'
-import type { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
+import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'
 import {
   lorebookEntries,
   lorebookRevisions,

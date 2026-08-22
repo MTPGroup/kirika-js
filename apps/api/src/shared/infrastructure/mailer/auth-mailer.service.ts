@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import type { MailerService } from '@nestjs-modules/mailer'
+import { MailerService } from '@nestjs-modules/mailer'
 
 export type VerificationOTPType =
   | 'sign-in'
