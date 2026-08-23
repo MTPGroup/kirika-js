@@ -5,6 +5,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "dev:api": "turbo run dev --filter=@kirika-js/api",
+    "dev:studio": "turbo run dev --filter=@kirika-js/studio",
     "test": "turbo run test",
     "report": "turbo run test && turbo run report",
     "format-and-lint": "biome check .",

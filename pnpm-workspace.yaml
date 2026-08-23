@@ -20,3 +20,6 @@ allowBuilds:
   oracledb: true
   protobufjs: true
   ssh2: true
+  vue-demi: true
+
+storeDir: .pnpm-store

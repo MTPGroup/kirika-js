@@ -1,28 +1,23 @@
 <script setup lang="ts">
-import Versions from './components/Versions.vue'
-
-const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+import SideNav from '@renderer/components/layout/SideNav.vue'
+import TitleBar from '@renderer/components/layout/TitleBar.vue'
+import { SidebarProvider } from '@renderer/components/ui/sidebar'
 </script>
 
 <template>
-  <img alt="logo" class="logo" src="./assets/electron.svg">
-  <div class="creator">Powered by electron-vite</div>
-  <div class="text">
-    Build an Electron app with
-    <span class="vue">Vue</span>
-    and
-    <span class="ts">TypeScript</span>
+  <div class="flex h-screen flex-col overflow-hidden bg-background">
+    <TitleBar />
+
+    <SidebarProvider
+      class="min-h-0 flex-1"
+      :default-open="true"
+      storage-key="studio-sidebar"
+    >
+      <SideNav />
+
+      <main class="min-w-0 flex-1 overflow-hidden">
+        <RouterView />
+      </main>
+    </SidebarProvider>
   </div>
-  <p class="tip">Please try pressing <code>F12</code> to open the devTool</p>
-  <div class="actions">
-    <div class="action">
-      <a href="https://electron-vite.org/" target="_blank" rel="noreferrer"
-        >Documentation</a
-      >
-    </div>
-    <div class="action">
-      <a target="_blank" rel="noreferrer" @click="ipcHandle">Send IPC</a>
-    </div>
-  </div>
-  <Versions />
 </template>
