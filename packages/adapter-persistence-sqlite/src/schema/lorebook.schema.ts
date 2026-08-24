@@ -13,6 +13,7 @@ import { users } from '~/schema/user.schema'
 export const LOREBOOK_ENTRY_POSITIONS = [
   'before_history',
   'after_history',
+  'at_depth',
 ] as const
 
 export type LorebookEntryPosition = (typeof LOREBOOK_ENTRY_POSITIONS)[number]
@@ -98,6 +99,10 @@ export const lorebookRevisions = sqliteTable(
 
     changeLog: text('change_log'),
 
+    scanDepth: integer('scan_depth').notNull().default(20),
+
+    tokenBudget: integer('token_budget').notNull().default(2048),
+
     createdAt: integer('created_at', {
       mode: 'timestamp_ms',
     })
@@ -130,6 +135,29 @@ export const lorebookEntries = sqliteTable(
       .notNull()
       .default(sql`'[]'`),
 
+    secondaryKeys: text('secondary_keys', { mode: 'json' })
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'`),
+
+    matchMode: text('match_mode', { enum: ['any', 'all'] })
+      .notNull()
+      .default('any'),
+
+    constant: integer('constant', { mode: 'boolean' }).notNull().default(false),
+
+    caseSensitive: integer('case_sensitive', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+
+    matchWholeWords: integer('match_whole_words', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+
+    probability: integer('probability').notNull().default(100),
+
+    insertionDepth: integer('insertion_depth').notNull().default(0),
+
     title: text('title').notNull(),
 
     enabled: integer('enabled', {
@@ -156,7 +184,7 @@ export const lorebookEntries = sqliteTable(
 
     check(
       'lorebook_entries_position_check',
-      sql`${t.position} in ('before_history', 'after_history')`,
+      sql`${t.position} in ('before_history', 'after_history', 'at_depth')`,
     ),
   ],
 )

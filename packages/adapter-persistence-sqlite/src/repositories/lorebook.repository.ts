@@ -96,6 +96,8 @@ export class SqliteLorebookRepository implements LorebookRepositoryPort {
 
           set: {
             isDraft: model.revision.isDraft,
+            scanDepth: model.revision.scanDepth,
+            tokenBudget: model.revision.tokenBudget,
           },
 
           setWhere: eq(lorebookRevisions.isDraft, true),
@@ -119,6 +121,13 @@ export class SqliteLorebookRepository implements LorebookRepositoryPort {
 
           set: {
             keys: sql`excluded.keys`,
+            secondaryKeys: sql`excluded.secondary_keys`,
+            matchMode: sql`excluded.match_mode`,
+            constant: sql`excluded.constant`,
+            caseSensitive: sql`excluded.case_sensitive`,
+            matchWholeWords: sql`excluded.match_whole_words`,
+            probability: sql`excluded.probability`,
+            insertionDepth: sql`excluded.insertion_depth`,
             title: sql`excluded.title`,
             enabled: sql`excluded.enabled`,
             content: sql`excluded.content`,
