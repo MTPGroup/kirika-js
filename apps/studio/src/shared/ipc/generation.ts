@@ -19,6 +19,7 @@ export interface GenerationRequestDto extends ChatGenerationConfigDto {
 }
 
 export interface StartGenerationInput {
+  readonly requestId: string
   readonly conversationId: string
   readonly providerId: string
   readonly model?: string

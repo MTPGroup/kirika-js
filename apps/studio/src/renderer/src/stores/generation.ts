@@ -33,13 +33,13 @@ export const useGenerationStore = defineStore('generation', () => {
     const studio = useStudioStore()
     error.value = null
     output.value = ''
+    if (requestId.value) throw new Error('已有生成任务正在进行')
     try {
       const character = await api.getCharacter({
         characterId: input.characterId,
       })
-      const revision =
-        character?.currentRevisionId ?? character?.draftRevisionId
-      if (!character || !revision) throw new Error('所选角色没有可用版本')
+      const revision = character?.currentRevisionId
+      if (!character || !revision) throw new Error('所选角色还没有已发布版本')
       const conversation = await api.createConversation({
         ownerDisplayName: localStorage.getItem('kirika-profile-name') || '我',
         characters: [
@@ -57,7 +57,10 @@ export const useGenerationStore = defineStore('generation', () => {
         conversationId: conversation.id,
         content: input.text,
       })
+      const nextRequestId = crypto.randomUUID()
+      requestId.value = nextRequestId
       const result = await api.startGeneration({
+        requestId: nextRequestId,
         conversationId: conversation.id,
         providerId: input.providerId,
         model: input.model,
@@ -66,8 +69,9 @@ export const useGenerationStore = defineStore('generation', () => {
           maxOutputTokens: input.maxOutputTokens,
         },
       })
-      requestId.value = result.requestId
-      await studio.refreshResources()
+      if (result.requestId !== nextRequestId)
+        throw new Error('生成请求 ID 不一致')
+      void studio.refreshResources().catch(() => undefined)
     } catch (cause) {
       error.value = toIpcError(cause)
       requestId.value = null
@@ -80,7 +84,7 @@ export const useGenerationStore = defineStore('generation', () => {
   }
 
   function handleEvent(event: GenerationEvent) {
-    if (requestId.value && event.requestId !== requestId.value) return
+    if (!requestId.value || event.requestId !== requestId.value) return
     lastEvent.value = event
     if (event.type === 'text_delta') output.value += event.delta
     if (event.type === 'failed')

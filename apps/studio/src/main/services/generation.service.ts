@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import { OpenAICompatibleChatModel } from '@kirika-js/adapter-model-openai-compatible'
 import { ChatEngine } from '@kirika-js/chat-engine'
 import {
@@ -58,7 +57,8 @@ class GenerationService {
           conversation.activeLeafMessageId,
         )
       : []
-    const requestId = randomUUID()
+    const requestId = input.requestId
+    if (this.tasks.has(requestId)) throw new Error('生成请求 ID 已存在')
     const controller = new AbortController()
     const engine = new ChatEngine({
       model: new OpenAICompatibleChatModel({
