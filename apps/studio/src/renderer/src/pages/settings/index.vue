@@ -12,14 +12,26 @@ import {
   Sun,
 } from '@lucide/vue'
 import PageHeader from '@renderer/components/layout/PageHeader.vue'
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@renderer/components/ui/avatar'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@renderer/components/ui/radio-group'
 import { workspaceState } from '@renderer/lib/demo'
 import { type Theme, useThemeStore } from '@renderer/stores/theme'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const theme = useThemeStore()
+const profileName = ref(localStorage.getItem('kirika-profile-name') || '我')
+const profileAvatar = ref(localStorage.getItem('kirika-profile-avatar') || '')
+function saveProfile() {
+  localStorage.setItem('kirika-profile-name', profileName.value.trim() || '我')
+  localStorage.setItem('kirika-profile-avatar', profileAvatar.value.trim())
+}
 const themePreference = computed({
   get: () => theme.preference,
   set: (value: Theme) => theme.setTheme(value),
@@ -47,6 +59,49 @@ const storageRows = [
     />
 
     <div class="mt-6 space-y-5">
+      <!-- Profile -->
+      <section class="rounded-2xl border border-border bg-card p-5">
+        <div class="flex items-center gap-3">
+          <Avatar class="size-12"
+            ><AvatarImage
+              v-if="profileAvatar"
+              :src="profileAvatar"
+              :alt="profileName"
+            /><AvatarFallback
+              >{{ profileName.slice(0, 1) }}</AvatarFallback
+            ></Avatar
+          >
+          <div>
+            <h2 class="text-sm font-semibold">本地用户资料</h2>
+            <p class="text-muted-foreground text-xs">
+              用于连续对话中的用户头像和名称。
+            </p>
+          </div>
+        </div>
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+          <div class="space-y-1.5">
+            <label for="profile-name" class="text-sm font-medium">名称</label>
+            <Input
+              id="profile-name"
+              v-model="profileName"
+              placeholder="你的名称"
+            />
+          </div>
+          <div class="space-y-1.5">
+            <label for="profile-avatar" class="text-sm font-medium"
+              >头像地址</label
+            ><Input
+              id="profile-avatar"
+              v-model="profileAvatar"
+              placeholder="本地或网络图片地址"
+            />
+          </div>
+        </div>
+        <Button class="mt-4" size="sm" @click="saveProfile"
+          >保存用户资料</Button
+        >
+      </section>
+
       <!-- Appearance -->
       <section class="rounded-2xl border border-border bg-card p-5">
         <div class="flex items-center gap-2">

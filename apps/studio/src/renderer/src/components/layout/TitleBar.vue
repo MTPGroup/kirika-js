@@ -3,12 +3,6 @@ import { HelpCircle, Search } from '@lucide/vue'
 import ThemeButton from '@renderer/components/shared/ThemeButton.vue'
 import { Avatar, AvatarFallback } from '@renderer/components/ui/avatar'
 import { Button } from '@renderer/components/ui/button'
-
-const { settings } = {
-  settings: {
-    model: 'Deepseek v4',
-  },
-}
 </script>
 
 <template>
@@ -26,42 +20,6 @@ const { settings } = {
       <span class="shrink-0 text-sm font-semibold text-foreground">
         Kirika Studio
       </span>
-    </div>
-
-    <!-- center -->
-    <div
-      class="
-        app-no-drag absolute left-1/2
-        flex -translate-x-1/2 items-center gap-3
-      "
-    >
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        class="h-7 rounded-lg px-3 text-xs font-semibold"
-      >
-        {{ settings.model }}
-      </Button>
-
-      <div
-        class="
-          flex h-7 items-center gap-2
-          rounded-lg border border-border
-          bg-secondary px-3
-          text-xs font-semibold
-        "
-      >
-        <span
-          class="
-            size-2 rounded-full
-            bg-success
-            shadow-[0_0_6px_var(--success)]
-          "
-        />
-
-        <span class="text-success"> Connected </span>
-      </div>
     </div>
 
     <!-- right -->
