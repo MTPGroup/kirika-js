@@ -1,5 +1,6 @@
 export * from './database'
 export * from './migrate'
+export * from './schema'
 
 export * from './repositories/asset.repository'
 export * from './repositories/character.repository'

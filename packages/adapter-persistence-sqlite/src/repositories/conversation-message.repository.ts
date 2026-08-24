@@ -60,6 +60,22 @@ export class SqliteConversationMessageRepository
     return path
   }
 
+  async findAllByConversation(
+    conversationId: ConversationId,
+  ): Promise<ConversationMessage[]> {
+    const rows = await this.db
+      .select()
+      .from(conversationMessages)
+      .where(eq(conversationMessages.conversationId, conversationId.value))
+      .orderBy(conversationMessages.createdAt, conversationMessages.id)
+    return rows.map(ConversationMapper.messageToDomain)
+  }
+
+  async countByConversation(conversationId: ConversationId): Promise<number> {
+    const rows = await this.findAllByConversation(conversationId)
+    return rows.length
+  }
+
   async hasChildren(id: ConversationMessageId): Promise<boolean> {
     const [child] = await this.db
       .select({

@@ -1,7 +1,7 @@
-import type {
-  Conversation,
+import {
+  type Conversation,
   ConversationId,
-  ConversationRepositoryPort,
+  type ConversationRepositoryPort,
 } from '@kirika-js/domain/conversation'
 import { eq } from 'drizzle-orm'
 import type { SqliteDatabase } from '../database'
@@ -32,6 +32,14 @@ export class SqliteConversationRepository
       .orderBy(conversationParticipants.joinedAt, conversationParticipants.id)
 
     return ConversationMapper.toDomain(conversation, participants)
+  }
+
+  async findAll(): Promise<Conversation[]> {
+    const rows = await this.db.select({ id: conversations.id }).from(conversations)
+    const results = await Promise.all(
+      rows.map((row) => this.findById(new ConversationId(row.id))),
+    )
+    return results.filter((value): value is Conversation => value !== null)
   }
 
   async save(conversation: Conversation): Promise<void> {

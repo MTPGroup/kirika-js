@@ -1,7 +1,7 @@
-import type {
-  Character,
+import {
+  type Character,
   CharacterId,
-  CharacterRepositoryPort,
+  type CharacterRepositoryPort,
 } from '@kirika-js/domain/character'
 import { eq, inArray } from 'drizzle-orm'
 import type { SqliteDatabase } from '../database'
@@ -69,6 +69,14 @@ export class SqliteCharacterRepository implements CharacterRepositoryPort {
         ),
       })),
     })
+  }
+
+  async findAll(): Promise<Character[]> {
+    const rows = await this.db.select({ id: characters.id }).from(characters)
+    const results = await Promise.all(
+      rows.map((row) => this.findById(new CharacterId(row.id))),
+    )
+    return results.filter((value): value is Character => value !== null)
   }
 
   async save(character: Character): Promise<void> {

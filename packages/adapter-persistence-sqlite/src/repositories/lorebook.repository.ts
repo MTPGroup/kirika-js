@@ -1,7 +1,7 @@
-import type {
-  Lorebook,
+import {
+  type Lorebook,
   LorebookId,
-  LorebookRepositoryPort,
+  type LorebookRepositoryPort,
 } from '@kirika-js/domain/lorebook'
 import { and, eq, inArray, notInArray, sql } from 'drizzle-orm'
 import type { SqliteDatabase } from '../database'
@@ -51,6 +51,14 @@ export class SqliteLorebookRepository implements LorebookRepositoryPort {
           .sort((a, b) => b.priority - a.priority),
       })),
     })
+  }
+
+  async findAll(): Promise<Lorebook[]> {
+    const rows = await this.db.select({ id: lorebooks.id }).from(lorebooks)
+    const results = await Promise.all(
+      rows.map((row) => this.findById(new LorebookId(row.id))),
+    )
+    return results.filter((value): value is Lorebook => value !== null)
   }
 
   async save(lorebook: Lorebook): Promise<void> {
