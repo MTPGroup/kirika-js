@@ -3,17 +3,30 @@ import {
   BookMarked,
   Check,
   Clock,
+  CopyPlus,
   Download,
   Loader2,
   MoreVertical,
   Plus,
   Search,
+  Send,
   Trash2,
   Upload,
   User,
+  X,
 } from '@lucide/vue'
 import EmptyState from '@renderer/components/layout/EmptyState.vue'
 import PageHeader from '@renderer/components/layout/PageHeader.vue'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@renderer/components/ui/alert-dialog'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import {
@@ -33,6 +46,21 @@ import {
   DropdownMenuTrigger,
 } from '@renderer/components/ui/dropdown-menu'
 import { Input } from '@renderer/components/ui/input'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@renderer/components/ui/sheet'
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@renderer/components/ui/tabs'
+import { Textarea } from '@renderer/components/ui/textarea'
 import { initials, timeAgo } from '@renderer/lib/format'
 import {
   api,
@@ -41,7 +69,8 @@ import {
   toIpcError,
 } from '@renderer/services/api'
 import { useStudioStore } from '@renderer/stores/studio'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref, toRaw } from 'vue'
+import { toast } from 'vue-sonner'
 
 const studio = useStudioStore()
 
@@ -56,6 +85,40 @@ const lorebookError = ref('')
 const editingCharacter = ref<CharacterDto | null>(null)
 const availableLorebooks = ref<LorebookDto[]>([])
 const selectedLorebookRevisions = ref<string[]>([])
+const lorebookQuery = ref('')
+const editorOpen = ref(false)
+const deleteDialogOpen = ref(false)
+const deleting = ref(false)
+const pendingDelete = ref<{ id: string; name: string } | null>(null)
+const editorLoading = ref(false)
+const editorSaving = ref(false)
+const editorPublishing = ref(false)
+const editorError = ref('')
+const editorCharacter = ref<CharacterDto | null>(null)
+const greetings = ref<string[]>([])
+const examples = ref<string[]>([])
+const editorExtensions = ref<Readonly<Record<string, unknown>>>({})
+const editorAssets = ref<CharacterDto['revisions'][number]['assets'][number][]>(
+  [],
+)
+const editorLorebooks = ref<
+  Array<{ lorebookRevisionId: string; ordinal: number; enabled: boolean }>
+>([])
+const characterForm = reactive({
+  alias: '',
+  name: '',
+  description: '',
+  personality: '',
+  scenario: '',
+  systemPrompt: '',
+  postHistoryInstructions: '',
+})
+
+function toPlainRecord(
+  value: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(toRaw(value))) as Record<string, unknown>
+}
 
 const characters = computed(() => studio.characters)
 onMounted(() => studio.execute(studio.refreshResources))
@@ -78,6 +141,19 @@ const filtered = computed(() => {
   })
 })
 
+const filteredLorebooks = computed(() => {
+  const terms = lorebookQuery.value
+    .trim()
+    .toLocaleLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+  if (!terms.length) return availableLorebooks.value
+  return availableLorebooks.value.filter((book) => {
+    const searchable = `${book.name} ${book.description}`.toLocaleLowerCase()
+    return terms.every((term) => searchable.includes(term))
+  })
+})
+
 const filterOptions = computed(() => [
   { value: 'all' as Filter, label: '全部', count: characters.value.length },
   {
@@ -94,35 +170,174 @@ const filterOptions = computed(() => [
   },
 ])
 
+function applyCharacter(value: CharacterDto) {
+  editorCharacter.value = value
+  const revision =
+    value.revisions.find((item) => item.isDraft) ??
+    value.revisions.find((item) => item.id === value.currentRevisionId)
+  characterForm.alias = value.alias ?? ''
+  characterForm.name = revision?.name ?? ''
+  characterForm.description = revision?.description ?? ''
+  characterForm.personality = revision?.personality ?? ''
+  characterForm.scenario = revision?.scenario ?? ''
+  characterForm.systemPrompt = revision?.systemPrompt ?? ''
+  characterForm.postHistoryInstructions =
+    revision?.postHistoryInstructions ?? ''
+  greetings.value = [...(revision?.greetings ?? [])]
+  examples.value = [...(revision?.examples ?? [])]
+  editorExtensions.value = structuredClone(revision?.extensions ?? {})
+  editorAssets.value = [...(revision?.assets ?? [])]
+  editorLorebooks.value = (revision?.lorebooks ?? []).map((item) => ({
+    lorebookRevisionId: item.lorebookRevisionId,
+    ordinal: item.ordinal,
+    enabled: item.enabled,
+  }))
+}
+
 async function createCharacter() {
-  const name = window.prompt('角色名称')?.trim()
-  if (!name) return
-  await studio.execute(async () => {
-    await api.createCharacter({ name })
+  editorError.value = ''
+  try {
+    const created = await api.createCharacter({ name: '未命名角色' })
+    applyCharacter(created)
+    editorOpen.value = true
     await studio.refreshResources()
-  })
+  } catch (error) {
+    editorError.value = toIpcError(error).message
+  }
+}
+
+async function openCharacterEditor(characterId: string) {
+  editorOpen.value = true
+  editorLoading.value = true
+  editorError.value = ''
+  try {
+    let value = await api.getCharacter({ characterId })
+    if (!value) throw new Error('角色不存在')
+    if (!value.draftRevisionId) {
+      value = await api.createCharacterDraft({ characterId })
+    }
+    applyCharacter(value)
+  } catch (error) {
+    editorError.value = toIpcError(error).message
+  } finally {
+    editorLoading.value = false
+  }
+}
+
+function addGreeting() {
+  greetings.value.push('')
+}
+
+function addExample() {
+  examples.value.push('')
+}
+
+async function addCharacterAsset() {
+  const character = editorCharacter.value
+  if (!character) return
+  editorError.value = ''
+  try {
+    const asset = await api.importCharacterAsset({
+      characterId: character.id,
+      kind: 'other',
+    })
+    if (asset)
+      editorAssets.value.push({ ...asset, ordinal: editorAssets.value.length })
+  } catch (error) {
+    editorError.value = toIpcError(error).message
+  }
+}
+
+async function saveCharacterDraft(closeOnSuccess = true): Promise<boolean> {
+  const character = editorCharacter.value
+  if (!character) return false
+  editorSaving.value = true
+  editorError.value = ''
+  try {
+    const updated = await api.saveCharacterDraft({
+      characterId: character.id,
+      alias: characterForm.alias.trim() || null,
+      content: {
+        name: characterForm.name.trim(),
+        description: characterForm.description,
+        personality: characterForm.personality,
+        scenario: characterForm.scenario,
+        systemPrompt: characterForm.systemPrompt,
+        postHistoryInstructions: characterForm.postHistoryInstructions,
+        greetings: [...greetings.value],
+        examples: [...examples.value],
+        extensions: toPlainRecord(editorExtensions.value),
+      },
+      assets: editorAssets.value.map((item, ordinal) => ({
+        assetId: item.assetId,
+        kind: item.kind,
+        name: item.name,
+        uri: item.uri,
+        ordinal,
+        extensions: toPlainRecord(item.extensions),
+      })),
+      lorebooks: editorLorebooks.value.map((item, ordinal) => ({
+        lorebookRevisionId: item.lorebookRevisionId,
+        ordinal,
+        enabled: item.enabled,
+      })),
+    })
+    applyCharacter(updated)
+    await studio.refreshResources()
+    if (closeOnSuccess) {
+      editorOpen.value = false
+      toast.success('角色草稿已保存', {
+        description: `“${characterForm.name}”的草稿内容已更新。`,
+      })
+    }
+    return true
+  } catch (error) {
+    editorError.value = toIpcError(error).message
+    return false
+  } finally {
+    editorSaving.value = false
+  }
+}
+
+async function publishCharacter() {
+  const character = editorCharacter.value
+  if (!character) return
+  editorPublishing.value = true
+  editorError.value = ''
+  try {
+    if (!(await saveCharacterDraft(false))) return
+    const revisionId = editorCharacter.value?.draftRevisionId
+    if (!revisionId) throw new Error('角色不存在可发布草稿')
+    const updated = await api.publishCharacterRevision({
+      characterId: character.id,
+      revisionId,
+    })
+    applyCharacter(updated)
+    editorOpen.value = false
+    await studio.refreshResources()
+    toast.success('角色已发布', {
+      description: `“${characterForm.name}”的新版本现在可用于对话。`,
+    })
+  } catch (error) {
+    editorError.value = toIpcError(error).message
+  } finally {
+    editorPublishing.value = false
+  }
 }
 
 async function importCharacterCard() {
-  const selected = await studio.execute(() =>
-    api.selectFile({
-      title: '导入角色卡',
-      filters: [{ name: 'Character Card JSON', extensions: ['json'] }],
-    }),
-  )
-  const filePath = selected?.path
-  if (!filePath) return
   await studio.execute(async () => {
-    await api.importCharacterCard({
-      filePath,
-      formatHint: 'json',
-    })
+    const imported = await api.importCharacterCard({ formatHint: 'json' })
     await studio.refreshResources()
+    toast.success('角色卡已导入', {
+      description: `“${imported.revisions[0]?.name ?? '角色'}”已创建为草稿。`,
+    })
   })
 }
 
 async function editCharacterLorebooks(characterId: string) {
   lorebookDialogOpen.value = true
+  lorebookQuery.value = ''
   lorebookLoading.value = true
   lorebookError.value = ''
   try {
@@ -196,31 +411,35 @@ async function exportCharacterCard(characterId: string) {
   const name =
     character.revisions.find((item) => item.id === revisionId)?.name ??
     'character'
-  const selected = await studio.execute(() =>
-    api.saveFile({
-      title: '导出角色卡',
-      defaultName: `${name}.json`,
-      filters: [{ name: 'Character Card JSON', extensions: ['json'] }],
-    }),
+  const result = await studio.execute(() =>
+    api.exportCharacterCard({ characterId, revisionId, format: 'json' }),
   )
-  const destinationPath = selected?.path
-  if (!destinationPath) return
-  await studio.execute(() =>
-    api.exportCharacterCard({
-      characterId,
-      revisionId,
-      format: 'json',
-      destinationPath,
-    }),
-  )
+  if (result && !result.cancelled)
+    toast.success('角色卡已导出', { description: `${name}.json 已保存。` })
 }
 
-async function deleteCharacter(characterId: string) {
-  if (!window.confirm('确定删除这个角色吗？')) return
-  await studio.execute(async () => {
-    await api.deleteCharacter({ characterId })
+function confirmDelete(characterId: string, name: string) {
+  pendingDelete.value = { id: characterId, name }
+  deleteDialogOpen.value = true
+}
+
+async function deleteCharacter() {
+  const target = pendingDelete.value
+  if (!target) return
+  deleting.value = true
+  try {
+    await api.deleteCharacter({ characterId: target.id })
     await studio.refreshResources()
-  })
+    deleteDialogOpen.value = false
+    pendingDelete.value = null
+    toast.success('角色已删除')
+  } catch (error) {
+    toast.error('无法删除角色', {
+      description: toIpcError(error).message,
+    })
+  } finally {
+    deleting.value = false
+  }
 }
 </script>
 
@@ -317,6 +536,9 @@ async function deleteCharacter(characterId: string) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" class="w-40">
               <DropdownMenuLabel>操作</DropdownMenuLabel>
+              <DropdownMenuItem @select="openCharacterEditor(chr.id)">
+                <User :size="14" />编辑草稿
+              </DropdownMenuItem>
               <DropdownMenuItem @select="editCharacterLorebooks(chr.id)">
                 <BookMarked :size="14" />管理世界书
               </DropdownMenuItem>
@@ -326,7 +548,7 @@ async function deleteCharacter(characterId: string) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
-                @select="deleteCharacter(chr.id)"
+                @select="confirmDelete(chr.id, chr.name)"
                 ><Trash2 :size="14" />删除</DropdownMenuItem
               >
             </DropdownMenuContent>
@@ -359,6 +581,262 @@ async function deleteCharacter(characterId: string) {
         </Button>
       </EmptyState>
     </div>
+    <AlertDialog v-model:open="deleteDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>删除 {{ pendingDelete?.name }}？</AlertDialogTitle>
+          <AlertDialogDescription>
+            角色的全部草稿和已发布版本都会永久删除。被会话引用的角色无法删除。
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel :disabled="deleting">取消</AlertDialogCancel>
+          <AlertDialogAction :disabled="deleting" @click="deleteCharacter">
+            <Loader2 v-if="deleting" class="animate-spin" :size="15" />
+            删除角色
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <Sheet v-model:open="editorOpen">
+      <SheetContent side="right" class="w-full overflow-y-auto sm:max-w-4xl">
+        <SheetHeader>
+          <SheetTitle>{{ characterForm.name || '角色编辑器' }}</SheetTitle>
+          <SheetDescription>
+            编辑角色草稿。发布后会生成不可变版本并可用于实际对话。
+          </SheetDescription>
+        </SheetHeader>
+        <div
+          v-if="editorLoading"
+          class="flex flex-1 items-center justify-center"
+        >
+          <Loader2 class="animate-spin" />
+        </div>
+        <Tabs
+          v-else-if="editorCharacter"
+          default-value="profile"
+          class="min-h-0 flex-1 px-4"
+        >
+          <TabsList class="w-full justify-start">
+            <TabsTrigger value="profile">基础资料</TabsTrigger>
+            <TabsTrigger value="prompts">提示词</TabsTrigger>
+            <TabsTrigger value="greetings">问候语</TabsTrigger>
+            <TabsTrigger value="examples">对话示例</TabsTrigger>
+            <TabsTrigger value="assets">资源</TabsTrigger>
+            <TabsTrigger value="versions">版本</TabsTrigger>
+          </TabsList>
+          <TabsContent value="profile" class="grid gap-4 py-4 sm:grid-cols-2">
+            <div class="flex flex-col gap-1.5 text-sm font-medium">
+              角色名称
+              <Input v-model="characterForm.name" maxlength="200" />
+            </div>
+            <div class="flex flex-col gap-1.5 text-sm font-medium">
+              别名
+              <Input v-model="characterForm.alias" maxlength="200" />
+            </div>
+            <div
+              class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
+            >
+              描述
+              <Textarea v-model="characterForm.description" rows="6" />
+            </div>
+            <div
+              class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
+            >
+              性格
+              <Textarea v-model="characterForm.personality" rows="5" />
+            </div>
+            <div
+              class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
+            >
+              场景
+              <Textarea v-model="characterForm.scenario" rows="5" />
+            </div>
+          </TabsContent>
+          <TabsContent value="prompts" class="flex flex-col gap-4 py-4">
+            <div class="flex flex-col gap-1.5 text-sm font-medium">
+              系统提示词
+              <Textarea
+                v-model="characterForm.systemPrompt"
+                rows="10"
+                placeholder="支持 {{char}}、{{user}} 与 {{original}} 宏。"
+              />
+            </div>
+            <div class="flex flex-col gap-1.5 text-sm font-medium">
+              历史后指令
+              <Textarea
+                v-model="characterForm.postHistoryInstructions"
+                rows="8"
+              />
+            </div>
+          </TabsContent>
+          <TabsContent value="greetings" class="flex flex-col gap-3 py-4">
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-muted-foreground">
+                至少添加一条问候语后才能发布。
+              </p>
+              <Button size="sm" variant="outline" @click="addGreeting"
+                ><Plus :size="14" />添加问候语</Button
+              >
+            </div>
+            <div
+              v-for="(_, index) in greetings"
+              :key="index"
+              class="flex items-start gap-2"
+            >
+              <Textarea
+                v-model="greetings[index]"
+                rows="4"
+                :placeholder="`问候语 ${index + 1}`"
+              />
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                @click="greetings.splice(index, 1)"
+                ><X :size="14" /></Button
+              >
+            </div>
+            <p
+              v-if="!greetings.length"
+              class="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"
+            >
+              尚未添加问候语。
+            </p>
+          </TabsContent>
+          <TabsContent value="examples" class="flex flex-col gap-3 py-4">
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-muted-foreground">
+                示例会进入角色提示词，可使用 &#123;&#123;user&#125;&#125; 和
+                &#123;&#123;char&#125;&#125;。
+              </p>
+              <Button size="sm" variant="outline" @click="addExample"
+                ><CopyPlus :size="14" />添加示例</Button
+              >
+            </div>
+            <div
+              v-for="(_, index) in examples"
+              :key="index"
+              class="flex items-start gap-2"
+            >
+              <Textarea
+                v-model="examples[index]"
+                rows="6"
+                :placeholder="`示例 ${index + 1}`"
+              />
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                @click="examples.splice(index, 1)"
+                ><X :size="14" /></Button
+              >
+            </div>
+            <p
+              v-if="!examples.length"
+              class="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"
+            >
+              尚未添加对话示例。
+            </p>
+          </TabsContent>
+          <TabsContent value="assets" class="flex flex-col gap-3 py-4">
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-muted-foreground">
+                资源会随角色版本保存，并可嵌入导出的 JSON 角色卡。
+              </p>
+              <Button size="sm" variant="outline" @click="addCharacterAsset"
+                ><Upload :size="14" />添加资源</Button
+              >
+            </div>
+            <div
+              v-for="(asset, index) in editorAssets"
+              :key="asset.assetId"
+              class="flex items-center gap-3 rounded-xl border p-3"
+            >
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium">{{ asset.name }}</p>
+                <p class="truncate text-xs text-muted-foreground">
+                  {{ asset.kind }}
+                  · {{ asset.uri }}
+                </p>
+              </div>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                @click="editorAssets.splice(index, 1)"
+                ><X :size="14" /></Button
+              >
+            </div>
+            <p
+              v-if="!editorAssets.length"
+              class="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"
+            >
+              尚未添加角色资源。
+            </p>
+          </TabsContent>
+          <TabsContent value="versions" class="flex flex-col gap-3 py-4">
+            <p class="text-sm text-muted-foreground">
+              已发布版本不可修改；编辑已发布角色时会自动创建下一个草稿版本。
+            </p>
+            <div
+              v-for="revision in [...editorCharacter.revisions].sort((a, b) => b.revisionNumber - a.revisionNumber)"
+              :key="revision.id"
+              class="flex items-center gap-3 rounded-xl border p-3"
+            >
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium">
+                  v{{ revision.revisionNumber }}
+                  · {{ revision.name }}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                  {{ revision.isDraft ? '草稿' : '已发布' }}
+                  · {{ revision.greetings.length }} 条问候语 ·
+                  {{ revision.assets.length }}
+                  个资源
+                </p>
+              </div>
+              <Badge :variant="revision.isDraft ? 'soft' : 'success'"
+                >{{ revision.isDraft ? '草稿' : '已发布' }}</Badge
+              >
+              <Badge
+                v-if="revision.id === editorCharacter.currentRevisionId"
+                variant="outline"
+                >当前版本</Badge
+              >
+            </div>
+          </TabsContent>
+        </Tabs>
+        <p
+          v-if="editorError"
+          class="mx-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {{ editorError }}
+        </p>
+        <SheetFooter class="border-t">
+          <Badge variant="outline">
+            {{ editorCharacter?.draftRevisionId ? '草稿' : '已发布' }}
+          </Badge>
+          <Button variant="ghost" @click="editorOpen = false"
+            ><X :size="15" />关闭</Button
+          >
+          <Button
+            variant="outline"
+            :disabled="editorSaving || editorPublishing"
+            @click="saveCharacterDraft()"
+          >
+            <Loader2 v-if="editorSaving" class="animate-spin" :size="15" />
+            <Check v-else :size="15" />保存草稿
+          </Button>
+          <Button
+            :disabled="editorSaving || editorPublishing"
+            @click="publishCharacter"
+          >
+            <Loader2 v-if="editorPublishing" class="animate-spin" :size="15" />
+            <Send v-else :size="15" />发布版本
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
     <Dialog v-model:open="lorebookDialogOpen">
       <DialogContent class="sm:max-w-xl">
         <DialogHeader>
@@ -367,15 +845,26 @@ async function deleteCharacter(characterId: string) {
             为角色草稿绑定世界书当前已发布版本。发布新世界书版本后可在这里重新选择。
           </DialogDescription>
         </DialogHeader>
+        <div v-if="!lorebookLoading" class="relative">
+          <Search
+            class="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
+            :size="15"
+          />
+          <Input
+            v-model="lorebookQuery"
+            placeholder="搜索世界书名称或描述…"
+            class="pl-9"
+          />
+        </div>
         <div v-if="lorebookLoading" class="flex justify-center py-10">
           <Loader2 class="animate-spin" />
         </div>
         <div v-else class="max-h-96 space-y-2 overflow-y-auto">
           <button
-            v-for="book in availableLorebooks"
+            v-for="book in filteredLorebooks"
             :key="book.id"
             type="button"
-            class="flex w-full items-center gap-3 rounded-xl border p-3 text-left hover:bg-muted"
+            class="flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left hover:bg-muted"
             :class="selectedLorebookRevisions.includes(book.currentRevisionId ?? '') ? 'border-primary bg-primary/5' : ''"
             @click="book.currentRevisionId && toggleLorebookRevision(book.currentRevisionId)"
           >
@@ -384,22 +873,33 @@ async function deleteCharacter(characterId: string) {
               <span class="block truncate text-sm font-medium"
                 >{{ book.name }}</span
               >
-              <span class="block text-xs text-muted-foreground">
+              <span class="block truncate text-xs text-muted-foreground">
                 v{{ book.revisions.find((revision) => revision.id === book.currentRevisionId)?.revisionNumber }}
-                · {{ book.description || '暂无描述' }}
+                <template v-if="book.description">
+                  · {{ book.description }}</template
+                >
               </span>
             </span>
-            <Check
+            <Badge
               v-if="selectedLorebookRevisions.includes(book.currentRevisionId ?? '')"
-              :size="16"
-              class="text-primary"
-            />
+              variant="soft"
+              class="shrink-0"
+            >
+              <Check :size="12" />
+              已绑定
+            </Badge>
           </button>
           <p
             v-if="!availableLorebooks.length"
             class="py-8 text-center text-sm text-muted-foreground"
           >
             暂无已发布世界书，请先在世界书页面发布一个版本。
+          </p>
+          <p
+            v-else-if="!filteredLorebooks.length"
+            class="py-8 text-center text-sm text-muted-foreground"
+          >
+            没有匹配“{{ lorebookQuery.trim() }}”的世界书。
           </p>
         </div>
         <p
