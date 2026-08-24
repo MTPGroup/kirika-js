@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import {
+  BookMarked,
   Check,
   Clock,
   Download,
+  Loader2,
   MoreVertical,
-  Pencil,
   Plus,
   Search,
   Trash2,
@@ -16,6 +17,14 @@ import PageHeader from '@renderer/components/layout/PageHeader.vue'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -25,7 +34,12 @@ import {
 } from '@renderer/components/ui/dropdown-menu'
 import { Input } from '@renderer/components/ui/input'
 import { initials, timeAgo } from '@renderer/lib/format'
-import { api } from '@renderer/services/api'
+import {
+  api,
+  type CharacterDto,
+  type LorebookDto,
+  toIpcError,
+} from '@renderer/services/api'
 import { useStudioStore } from '@renderer/stores/studio'
 import { computed, onMounted, ref } from 'vue'
 
@@ -35,6 +49,13 @@ type Filter = 'all' | 'published' | 'draft'
 
 const query = ref('')
 const filter = ref<Filter>('all')
+const lorebookDialogOpen = ref(false)
+const lorebookLoading = ref(false)
+const lorebookSaving = ref(false)
+const lorebookError = ref('')
+const editingCharacter = ref<CharacterDto | null>(null)
+const availableLorebooks = ref<LorebookDto[]>([])
+const selectedLorebookRevisions = ref<string[]>([])
 
 const characters = computed(() => studio.characters)
 onMounted(() => studio.execute(studio.refreshResources))
@@ -98,6 +119,71 @@ async function importCharacterCard() {
     })
     await studio.refreshResources()
   })
+}
+
+async function editCharacterLorebooks(characterId: string) {
+  lorebookDialogOpen.value = true
+  lorebookLoading.value = true
+  lorebookError.value = ''
+  try {
+    const [character, ...books] = await Promise.all([
+      api.getCharacter({ characterId }),
+      ...studio.lorebooks.map((item) =>
+        api.getLorebook({ lorebookId: item.id }),
+      ),
+    ])
+    if (!character) throw new Error('角色不存在')
+    editingCharacter.value = character
+    availableLorebooks.value = books.filter(
+      (item): item is LorebookDto =>
+        item !== null && item.currentRevisionId !== null,
+    )
+    const draft = character.revisions.find((item) => item.isDraft)
+    selectedLorebookRevisions.value = (draft?.lorebooks ?? []).map(
+      (item) => item.lorebookRevisionId,
+    )
+  } catch (error) {
+    lorebookError.value = toIpcError(error).message
+  } finally {
+    lorebookLoading.value = false
+  }
+}
+
+function toggleLorebookRevision(revisionId: string) {
+  selectedLorebookRevisions.value = selectedLorebookRevisions.value.includes(
+    revisionId,
+  )
+    ? selectedLorebookRevisions.value.filter((value) => value !== revisionId)
+    : [...selectedLorebookRevisions.value, revisionId]
+}
+
+async function saveCharacterLorebooks() {
+  const character = editingCharacter.value
+  if (!character) return
+  lorebookSaving.value = true
+  lorebookError.value = ''
+  try {
+    let target = character
+    if (!target.draftRevisionId) {
+      target = await api.createCharacterDraft({ characterId: target.id })
+    }
+    await api.replaceCharacterLorebooks({
+      characterId: target.id,
+      lorebooks: selectedLorebookRevisions.value.map(
+        (lorebookRevisionId, ordinal) => ({
+          lorebookRevisionId,
+          ordinal,
+          enabled: true,
+        }),
+      ),
+    })
+    lorebookDialogOpen.value = false
+    await studio.refreshResources()
+  } catch (error) {
+    lorebookError.value = toIpcError(error).message
+  } finally {
+    lorebookSaving.value = false
+  }
 }
 
 async function exportCharacterCard(characterId: string) {
@@ -231,7 +317,9 @@ async function deleteCharacter(characterId: string) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" class="w-40">
               <DropdownMenuLabel>操作</DropdownMenuLabel>
-              <DropdownMenuItem><Pencil :size="14" />编辑草稿</DropdownMenuItem>
+              <DropdownMenuItem @select="editCharacterLorebooks(chr.id)">
+                <BookMarked :size="14" />管理世界书
+              </DropdownMenuItem>
               <DropdownMenuItem @select="exportCharacterCard(chr.id)"
                 ><Download :size="14" />导出卡片</DropdownMenuItem
               >
@@ -271,5 +359,68 @@ async function deleteCharacter(characterId: string) {
         </Button>
       </EmptyState>
     </div>
+    <Dialog v-model:open="lorebookDialogOpen">
+      <DialogContent class="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>管理角色世界书</DialogTitle>
+          <DialogDescription>
+            为角色草稿绑定世界书当前已发布版本。发布新世界书版本后可在这里重新选择。
+          </DialogDescription>
+        </DialogHeader>
+        <div v-if="lorebookLoading" class="flex justify-center py-10">
+          <Loader2 class="animate-spin" />
+        </div>
+        <div v-else class="max-h-96 space-y-2 overflow-y-auto">
+          <button
+            v-for="book in availableLorebooks"
+            :key="book.id"
+            type="button"
+            class="flex w-full items-center gap-3 rounded-xl border p-3 text-left hover:bg-muted"
+            :class="selectedLorebookRevisions.includes(book.currentRevisionId ?? '') ? 'border-primary bg-primary/5' : ''"
+            @click="book.currentRevisionId && toggleLorebookRevision(book.currentRevisionId)"
+          >
+            <BookMarked :size="18" />
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-medium"
+                >{{ book.name }}</span
+              >
+              <span class="block text-xs text-muted-foreground">
+                v{{ book.revisions.find((revision) => revision.id === book.currentRevisionId)?.revisionNumber }}
+                · {{ book.description || '暂无描述' }}
+              </span>
+            </span>
+            <Check
+              v-if="selectedLorebookRevisions.includes(book.currentRevisionId ?? '')"
+              :size="16"
+              class="text-primary"
+            />
+          </button>
+          <p
+            v-if="!availableLorebooks.length"
+            class="py-8 text-center text-sm text-muted-foreground"
+          >
+            暂无已发布世界书，请先在世界书页面发布一个版本。
+          </p>
+        </div>
+        <p
+          v-if="lorebookError"
+          class="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {{ lorebookError }}
+        </p>
+        <DialogFooter>
+          <Button variant="outline" @click="lorebookDialogOpen = false"
+            >取消</Button
+          >
+          <Button
+            :disabled="lorebookLoading || lorebookSaving"
+            @click="saveCharacterLorebooks"
+          >
+            <Loader2 v-if="lorebookSaving" class="animate-spin" :size="15" />
+            保存绑定
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
