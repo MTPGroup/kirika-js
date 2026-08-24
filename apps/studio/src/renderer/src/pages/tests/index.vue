@@ -38,9 +38,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 const studio = useStudioStore()
 const generation = useGenerationStore()
-const demoCharacters = computed(() => studio.characters)
-const demoLorebooks = computed(() => studio.lorebooks)
-const demoProviders = computed(() => studio.providers)
+const studioCharacters = computed(() => studio.characters)
+const studioLorebooks = computed(() => studio.lorebooks)
+const studioProviders = computed(() => studio.providers)
 
 type Tab = 'response' | 'prompt' | 'request' | 'metrics' | 'logs'
 
@@ -255,7 +255,7 @@ function clearConversation() {
                 >
                 <SelectContent>
                   <SelectItem
-                    v-for="chr in demoCharacters"
+                    v-for="chr in studioCharacters"
                     :key="chr.id"
                     :value="chr.id"
                     >{{ chr.name }}</SelectItem
@@ -270,7 +270,7 @@ function clearConversation() {
                   ><SelectValue placeholder="选择世界书" /></SelectTrigger
                 ><SelectContent
                   ><SelectItem
-                    v-for="book in demoLorebooks"
+                    v-for="book in studioLorebooks"
                     :key="book.id"
                     :value="book.id"
                     >{{ book.name }}</SelectItem
@@ -305,7 +305,7 @@ function clearConversation() {
                 >
                 <SelectContent>
                   <SelectItem
-                    v-for="p in demoProviders"
+                    v-for="p in studioProviders"
                     :key="p.id"
                     :value="p.id"
                     >{{ p.name }}</SelectItem

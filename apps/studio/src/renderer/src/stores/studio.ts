@@ -30,6 +30,11 @@ export const useStudioStore = defineStore('studio', () => {
     })
   }
 
+  async function refreshProviders() {
+    if (!workspace.value) return
+    providers.value = await api.listProviders()
+  }
+
   async function refreshResources() {
     if (!workspace.value) return
     const [nextCharacters, nextLorebooks, nextConversations, nextProviders] =
@@ -93,6 +98,7 @@ export const useStudioStore = defineStore('studio', () => {
     isOpen,
     initialize,
     refreshResources,
+    refreshProviders,
     openWorkspace,
     closeWorkspace,
     execute,

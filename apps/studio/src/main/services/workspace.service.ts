@@ -12,7 +12,9 @@ export async function ensureWorkspaceOwner(
     .onConflictDoNothing({ target: users.id })
 }
 
-export function toWorkspaceState(runtime: StudioRuntime): WorkspaceStateDto {
+export async function toWorkspaceState(
+  runtime: StudioRuntime,
+): Promise<WorkspaceStateDto> {
   return {
     rootDir: runtime.paths.workspaceDir,
     name: runtime.settings.name,
@@ -20,7 +22,7 @@ export function toWorkspaceState(runtime: StudioRuntime): WorkspaceStateDto {
     assetsDir: runtime.paths.assetsDir,
     schemaVersion: 1,
     ownerId: runtime.settings.ownerId,
-    providers: runtime.settings.listProviders(),
+    providers: await runtime.settings.listProviders(),
     activeCharacterId: runtime.settings.activeCharacterId,
     activeConversationId: runtime.settings.activeConversationId,
   }

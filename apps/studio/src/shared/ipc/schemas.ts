@@ -12,6 +12,29 @@ import { workspaceChannels } from './workspace'
 const nonEmpty = z.string().trim().min(1)
 const id = nonEmpty
 const optionalText = z.string().optional()
+const apiKeyUpdate = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('retain') }).strict(),
+  z
+    .object({ action: z.literal('replace'), value: nonEmpty.max(16_384) })
+    .strict(),
+  z.object({ action: z.literal('clear') }).strict(),
+])
+const providerUrl = z.url().refine((value) => {
+  const url = new URL(value)
+  return (
+    (url.protocol === 'http:' || url.protocol === 'https:') &&
+    !url.username &&
+    !url.password
+  )
+}, '必须是无用户凭据的 HTTP 或 HTTPS URL')
+const providerConnection = z
+  .object({
+    providerId: id.optional(),
+    baseUrl: providerUrl,
+    apiKey: apiKeyUpdate,
+    model: nonEmpty.optional(),
+  })
+  .strict()
 const generation = z
   .object({
     maxOutputTokens: z.number().int().positive().optional(),
@@ -103,14 +126,17 @@ export const studioInputSchemas = {
     .object({
       id: id.optional(),
       name: nonEmpty,
-      baseUrl: z.url(),
-      apiKey: optionalText,
+      baseUrl: providerUrl,
+      type: z.literal('openai-compatible').optional(),
+      apiKey: apiKeyUpdate,
       defaultModel: nonEmpty,
       generation: generation.optional(),
       enabled: z.boolean().optional(),
     })
     .strict(),
   [providerChannels.delete]: z.object({ id }).strict(),
+  [providerChannels.testConnection]: providerConnection,
+  [providerChannels.listModels]: providerConnection,
   [characterChannels.create]: z
     .object({ ...characterContent, alias: z.string().nullable().optional() })
     .strict(),

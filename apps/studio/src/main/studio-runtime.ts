@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { mkdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import {
@@ -13,6 +14,7 @@ import {
 } from '@kirika-js/adapter-persistence-sqlite'
 import { FilesystemAssetStore } from '@kirika-js/adapter-storage-filesystem'
 import { app } from 'electron'
+import { ProviderCredentialStore } from './services/provider-credential.store'
 import { WorkspaceSettingsStore } from './services/workspace-settings.store'
 
 export interface StudioRuntimePaths {
@@ -55,8 +57,19 @@ export async function createStudioRuntime(
   ])
 
   const db = createSqliteDatabase(`file:${paths.dbPath}`)
+  const workspaceNamespace = createHash('sha256')
+    .update(paths.workspaceDir)
+    .digest('hex')
+  const credentials = new ProviderCredentialStore(
+    join(
+      app.getPath('userData'),
+      'provider-credentials',
+      `${workspaceNamespace}.json`,
+    ),
+  )
   const settings = await WorkspaceSettingsStore.open(
     paths.workspaceDir,
+    credentials,
     options.workspaceName,
   )
 

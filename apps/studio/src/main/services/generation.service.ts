@@ -41,6 +41,7 @@ class GenerationService {
     const runtime = studioRuntime.requireActive()
     const stored = runtime.settings.getProvider(input.providerId)
     if (!stored?.enabled) throw new Error('Provider 不存在或未启用')
+    const apiKey = await runtime.settings.getProviderApiKey(stored.id)
     if (
       [...this.tasks.values()].some(
         (t) => t.conversationId === input.conversationId,
@@ -62,7 +63,7 @@ class GenerationService {
     const engine = new ChatEngine({
       model: new OpenAICompatibleChatModel({
         baseUrl: stored.baseUrl,
-        apiKey: stored.apiKey,
+        apiKey,
       }),
       characterContextResolver: new SqliteCharacterContextResolver(runtime),
     })

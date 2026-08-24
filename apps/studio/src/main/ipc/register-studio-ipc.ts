@@ -119,6 +119,16 @@ export function registerStudioIpc(): () => void {
   )
   register(channels, providerChannels.save, providerService.saveProvider)
   register(channels, providerChannels.delete, providerService.deleteProvider)
+  register(
+    channels,
+    providerChannels.testConnection,
+    providerService.testProviderConnection,
+  )
+  register(
+    channels,
+    providerChannels.listModels,
+    providerService.listProviderModels,
+  )
   registerNoInput(
     channels,
     characterChannels.list,
