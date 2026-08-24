@@ -33,6 +33,7 @@ async function createWorkspace() {
     name.value.trim() || undefined,
   )
 }
+
 async function openRecent(path: string) {
   await studio.openWorkspace(path)
 }

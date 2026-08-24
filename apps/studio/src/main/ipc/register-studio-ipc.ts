@@ -8,8 +8,10 @@ import {
   type InputStudioChannel,
   type IpcResult,
   lorebookChannels,
+  profileChannels,
   providerChannels,
   studioInputSchemas,
+  windowChannels,
   workspaceChannels,
 } from '~/shared/ipc'
 import { characterService } from '../services/character.service'
@@ -17,10 +19,12 @@ import { conversationService } from '../services/conversation.service'
 import { dialogService } from '../services/dialog.service'
 import { generationService } from '../services/generation.service'
 import { lorebookService } from '../services/lorebook.service'
+import { profileService } from '../services/profile.service'
 import {
   providerService,
   workspaceService,
 } from '../services/workspace-provider.service'
+import { openSettingsWindow } from '../window'
 import { toIpcError } from './ipc-error'
 
 function result<T>(operation: () => Promise<T> | T): Promise<IpcResult<T>> {
@@ -73,6 +77,17 @@ function registerWithEvent<C extends InputStudioChannel>(
 
 export function registerStudioIpc(): () => void {
   const channels: string[] = []
+  registerNoInput(channels, windowChannels.openSettings, openSettingsWindow)
+  registerNoInput(
+    channels,
+    profileChannels.selectAvatar,
+    profileService.selectProfileAvatar,
+  )
+  register(
+    channels,
+    profileChannels.saveAvatar,
+    profileService.saveProfileAvatar,
+  )
   register(
     channels,
     dialogChannels.selectDirectory,

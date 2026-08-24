@@ -33,17 +33,22 @@ async function remember(path: string) {
   await writeFile(recentFile(), JSON.stringify(values, null, 2), 'utf8')
 }
 
-async function open(path: string) {
+async function open(path: string, workspaceName?: string) {
   await generationService.abortAll()
-  const runtime = await studioRuntime.open(path)
+
+  const runtime = await studioRuntime.open(path, {
+    workspaceName,
+  })
+
   await ensureWorkspaceOwner(runtime)
   await remember(runtime.paths.workspaceDir)
+
   return toWorkspaceState(runtime)
 }
 
 export const workspaceService: WorkspaceApi = {
   openWorkspace: (input) => open(input.path),
-  createWorkspace: (input) => open(input.path),
+  createWorkspace: (input) => open(input.path, input.name),
   async getWorkspaceState() {
     return studioRuntime.active ? toWorkspaceState(studioRuntime.active) : null
   },

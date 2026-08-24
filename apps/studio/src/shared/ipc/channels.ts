@@ -3,24 +3,30 @@ import { conversationChannels } from './conversation'
 import { dialogChannels } from './dialog'
 import { generationChannels } from './generation'
 import { lorebookChannels } from './lorebook'
+import { profileChannels } from './profile'
 import { providerChannels } from './provider'
+import { windowChannels } from './window'
 import { workspaceChannels } from './workspace'
 
 export const StudioChannels = {
   workspace: workspaceChannels,
   provider: providerChannels,
+  profile: profileChannels,
   character: characterChannels,
   lorebook: lorebookChannels,
   conversation: conversationChannels,
   generation: generationChannels,
   dialog: dialogChannels,
+  window: windowChannels,
 } as const
 
 export type StudioChannel =
   | (typeof workspaceChannels)[keyof typeof workspaceChannels]
   | (typeof providerChannels)[keyof typeof providerChannels]
+  | (typeof profileChannels)[keyof typeof profileChannels]
   | (typeof characterChannels)[keyof typeof characterChannels]
   | (typeof lorebookChannels)[keyof typeof lorebookChannels]
   | (typeof conversationChannels)[keyof typeof conversationChannels]
   | (typeof generationChannels)[keyof typeof generationChannels]
   | (typeof dialogChannels)[keyof typeof dialogChannels]
+  | (typeof windowChannels)[keyof typeof windowChannels]

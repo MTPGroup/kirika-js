@@ -1,37 +1,61 @@
 <script setup lang="ts">
-import { Check, Monitor, Moon, Sun } from '@lucide/vue'
+import { Heart, Monitor, Moon, Star, Sun } from '@lucide/vue'
 
 import { Button } from '@renderer/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@renderer/components/ui/dropdown-menu'
 
-import { type Theme, useThemeStore } from '@renderer/stores/theme'
+import {
+  type Appearance,
+  type CharacterTheme,
+  useThemeStore,
+} from '@renderer/stores/theme'
 
 const theme = useThemeStore()
 
-const items: {
+const appearanceItems: {
   label: string
-  value: Theme
+  value: Appearance
   icon: typeof Sun
 }[] = [
   {
-    label: 'Light',
+    label: '浅色',
     value: 'light',
     icon: Sun,
   },
   {
-    label: 'Dark',
+    label: '深色',
     value: 'dark',
     icon: Moon,
   },
   {
-    label: 'System',
+    label: '跟随系统',
     value: 'system',
     icon: Monitor,
+  },
+]
+
+const characterItems: {
+  label: string
+  value: CharacterTheme
+  icon: typeof Star
+}[] = [
+  {
+    label: 'Kirika',
+    value: 'kirika',
+    icon: Star,
+  },
+  {
+    label: 'Shirabe',
+    value: 'shirabe',
+    icon: Heart,
   },
 ]
 </script>
@@ -40,25 +64,46 @@ const items: {
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button variant="ghost" size="icon" class="size-7 text-muted-foreground">
-        <Sun v-if="theme.resolvedTheme === 'light'" :size="16" />
+        <Sun v-if="theme.resolvedAppearance === 'light'" :size="16" />
 
         <Moon v-else :size="16" />
       </Button>
     </DropdownMenuTrigger>
 
-    <DropdownMenuContent align="end">
-      <DropdownMenuItem
-        v-for="item in items"
-        :key="item.value"
-        class="gap-2"
-        @select="theme.setTheme(item.value)"
+    <DropdownMenuContent align="end" class="w-44">
+      <DropdownMenuLabel> 外观 </DropdownMenuLabel>
+
+      <DropdownMenuRadioGroup
+        :model-value="theme.appearance"
+        @update:model-value="theme.setAppearance($event as Appearance)"
       >
-        <component :is="item.icon" :size="16" />
+        <DropdownMenuRadioItem
+          v-for="item in appearanceItems"
+          :key="item.value"
+          :value="item.value"
+        >
+          <component :is="item.icon" />
+          <span>{{ item.label }}</span>
+        </DropdownMenuRadioItem>
+      </DropdownMenuRadioGroup>
 
-        <span>{{ item.label }}</span>
+      <DropdownMenuSeparator />
 
-        <Check v-if="theme.theme === item.value" class="ml-auto" :size="14" />
-      </DropdownMenuItem>
+      <DropdownMenuLabel> 角色主题 </DropdownMenuLabel>
+
+      <DropdownMenuRadioGroup
+        :model-value="theme.characterTheme"
+        @update:model-value="theme.setCharacterTheme($event as CharacterTheme)"
+      >
+        <DropdownMenuRadioItem
+          v-for="item in characterItems"
+          :key="item.value"
+          :value="item.value"
+        >
+          <component :is="item.icon" />
+          <span>{{ item.label }}</span>
+        </DropdownMenuRadioItem>
+      </DropdownMenuRadioGroup>
     </DropdownMenuContent>
   </DropdownMenu>
 </template>

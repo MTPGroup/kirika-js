@@ -53,6 +53,10 @@ export class WorkspaceSettingsStore {
     return new WorkspaceSettingsStore(filePath, normalizeManifest(data))
   }
 
+  get name(): string {
+    return this.data.name
+  }
+
   get ownerId(): string {
     return this.data.ownerId
   }

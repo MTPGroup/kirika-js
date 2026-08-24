@@ -1,8 +1,18 @@
 <script setup lang="ts">
-import { HelpCircle, Search } from '@lucide/vue'
+import { FolderOpen, Search } from '@lucide/vue'
 import ThemeButton from '@renderer/components/shared/ThemeButton.vue'
-import { Avatar, AvatarFallback } from '@renderer/components/ui/avatar'
 import { Button } from '@renderer/components/ui/button'
+import { api } from '@renderer/services/api'
+import { useStudioStore } from '@renderer/stores/studio'
+
+const studio = useStudioStore()
+
+async function switchWorkspace() {
+  const selected = await studio.execute(() =>
+    api.selectDirectory({ title: '切换 Workspace' }),
+  )
+  if (selected?.path) await studio.openWorkspace(selected.path)
+}
 </script>
 
 <template>
@@ -33,21 +43,17 @@ import { Button } from '@renderer/components/ui/button'
         <Search :size="16" />
       </Button>
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        class="size-7 text-muted-foreground"
-      >
-        <HelpCircle :size="16" />
-      </Button>
-
       <ThemeButton />
 
-      <Avatar class="size-7">
-        <!-- <AvatarImage :src="" /> -->
-        <AvatarFallback>Sen</AvatarFallback>
-      </Avatar>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        title="切换 Workspace"
+        class="size-7 text-muted-foreground"
+        @click="switchWorkspace"
+      >
+        <FolderOpen :size="16" />
+      </Button>
     </div>
   </header>
 </template>

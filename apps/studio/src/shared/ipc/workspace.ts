@@ -1,7 +1,8 @@
 import type { ProviderDto } from './provider'
 
 export interface WorkspaceStateDto {
-  readonly workspaceDir: string
+  readonly rootDir: string
+  readonly name: string
   readonly dbPath: string
   readonly assetsDir: string
   readonly schemaVersion: number

@@ -1,8 +1,8 @@
 import { join } from 'node:path'
 import { is } from '@electron-toolkit/utils'
 import { BrowserWindow, shell } from 'electron'
-import icon from '../../resources/kirika.png?asset'
-import { generationService } from './services/generation.service'
+import icon from '../../../resources/kirika.png?asset'
+import { generationService } from '../services/generation.service'
 
 export function createMainWindow(): void {
   const mainWindow = new BrowserWindow({

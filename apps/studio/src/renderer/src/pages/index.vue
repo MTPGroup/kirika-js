@@ -2,47 +2,47 @@
 import {
   BookOpen,
   Bot,
-  CircleCheck,
   FolderOpen,
   MessageCircle,
   Plus,
   Settings2,
-  Sparkles,
   User,
 } from '@lucide/vue'
 import StatCard from '@renderer/components/layout/StatCard.vue'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
+import WorkspaceHeroBackground from '@renderer/components/workspace/WorkspaceHeroBackground.vue'
+import WorkspaceOnboarding from '@renderer/components/workspace/WorkspaceOnboarding.vue'
 import { initials, timeAgo } from '@renderer/lib/format'
 import { useStudioStore } from '@renderer/stores/studio'
 import type { Component } from 'vue'
 import { computed } from 'vue'
 
 const studio = useStudioStore()
-const demoCharacters = computed(() => studio.characters)
-const demoLorebooks = computed(() => studio.lorebooks)
-const demoConversations = computed(() => studio.conversations)
+const characters = computed(() => studio.characters)
+const lorebooks = computed(() => studio.lorebooks)
+const conversations = computed(() => studio.conversations)
 const workspaceState = computed(() => ({
-  workspaceName: studio.workspace
-    ? studio.workspace.workspaceDir.split(/[\\/]/).pop() || 'Kirika Studio'
-    : '未打开工作区',
+  workspaceDir: studio.workspace?.rootDir.split('/').at(-1) ?? '未打开工作区',
+  workspaceName: studio.workspace?.name ?? '未打开工作区',
   schemaVersion: studio.workspace?.schemaVersion ?? 0,
 }))
-const recentActivity: readonly {
-  id: string
-  kind: string
-  title: string
-  time: string
-}[] = []
 
-const activityIcon: Record<string, unknown> = {
-  character: User,
-  conversation: MessageCircle,
-  lorebook: BookOpen,
-  generation: Sparkles,
-}
+// const recentActivity: readonly {
+//   id: string
+//   kind: string
+//   title: string
+//   time: string
+// }[] = []
+//
+// const activityIcon: Record<string, unknown> = {
+//   character: User,
+//   conversation: MessageCircle,
+//   lorebook: BookOpen,
+//   generation: Sparkles,
+// }
 
-type StatTone = 'default' | 'primary' | 'success' | 'muted'
+type StatAccent = 'default' | 'primary' | 'success'
 
 const stats = computed(
   (): {
@@ -50,116 +50,113 @@ const stats = computed(
     value: number
     hint: string
     icon: Component
-    tone: StatTone
+    accent: StatAccent
   }[] => [
     {
       label: '角色',
-      value: demoCharacters.value.length,
-      hint: `${demoCharacters.value.filter((item) => item.hasDraft).length} 个草稿`,
+      value: characters.value.length,
+      hint: `${characters.value.filter((item) => item.hasDraft).length} 个草稿`,
       icon: User,
-      tone: 'primary',
+      accent: 'default',
     },
     {
       label: '世界书',
-      value: demoLorebooks.value.length,
-      hint: `共 ${demoLorebooks.value.reduce((sum, item) => sum + item.entryCount, 0)} 条目`,
+      value: lorebooks.value.length,
+      hint: `共 ${lorebooks.value.reduce((sum, item) => sum + item.entryCount, 0)} 条目`,
       icon: BookOpen,
-      tone: 'default',
+      accent: 'default',
     },
     {
       label: '会话',
-      value: demoConversations.value.length,
-      hint: `${demoConversations.value.filter((item) => item.status === 'active').length} 个进行中`,
+      value: conversations.value.length,
+      hint: `${conversations.value.filter((item) => item.status === 'active').length} 个进行中`,
       icon: MessageCircle,
-      tone: 'success',
+      accent: 'default',
     },
     {
       label: '模型',
       value: studio.providers.length,
       hint: `${studio.providers.filter((item) => item.enabled).length} 个已启用`,
       icon: Bot,
-      tone: 'muted',
+      accent: 'default',
     },
   ],
 )
-
-const quickSteps = [
-  { title: '配置你的第一个模型', done: true, desc: '连接 OpenAI 兼容接口' },
-  { title: '导入或创建角色', done: true, desc: '开始塑造你的世界角色' },
-  { title: '编写世界书设定', done: false, desc: '为角色补充背景与规则' },
-  { title: '开启一段对话', done: false, desc: '测试并预览生成效果' },
-]
 </script>
 
 <template>
   <div class="mx-auto w-full max-w-280 px-6 py-7 lg:px-8">
     <!-- Hero -->
     <section
-      class="hero-glow relative overflow-hidden rounded-3xl border border-border p-6 sm:p-8"
+      class="relative isolate min-h-90 overflow-hidden rounded-3xl border bg-card"
     >
+      <WorkspaceHeroBackground />
+
       <div
-        class="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-primary/10 blur-3xl"
-      />
-      <div
-        class="pointer-events-none absolute -bottom-32 left-1/4 size-72 rounded-full bg-chart-3/10 blur-3xl"
+        class="pointer-events-none absolute inset-0 bg-linear-to-r from-background from-5% via-background/85 via-48% to-background/5 to-78%"
+        aria-hidden="true"
       />
 
       <div
-        class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+        class="pointer-events-none absolute inset-0 bg-linear-to-t from-background/45 via-transparent to-background/10"
+        aria-hidden="true"
+      />
+
+      <div
+        class="relative flex min-h-90 items-center px-6 py-9 sm:px-10 lg:px-14"
       >
-        <div class="max-w-xl">
-          <div class="flex items-center gap-2">
-            <span
-              class="text-muted-foreground inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-2.5 py-1 text-xs font-medium"
-            >
-              <FolderOpen :size="13" />
-              {{ workspaceState.workspaceName }}
-            </span>
-            <span class="text-muted-foreground text-xs"
-              >schema v{{ workspaceState.schemaVersion }}</span
-            >
-          </div>
+        <div class="flex w-full max-w-2xl flex-col gap-6">
+          <div class="flex flex-col gap-4">
+            <div class="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">
+                <FolderOpen />
+                {{ workspaceState.workspaceName }}
+              </Badge>
 
-          <h1
-            class="text-foreground mt-4 text-2xl font-semibold tracking-tight sm:text-3xl"
-          >
-            欢迎回到<span class="text-muted-foreground">
-              {{ workspaceState.workspaceName }}</span
-            >
-          </h1>
-          <p
-            class="text-muted-foreground mt-2 max-w-lg text-sm leading-relaxed"
-          >
-            在这里组织角色、世界书与对话。一切都保存在本地，随时离线创作。
-          </p>
-
-          <div class="mt-6 flex flex-wrap items-center gap-2">
-            <Button>
-              <Plus :size="15" />
-              新建角色
-            </Button>
-            <Button variant="outline">
-              <MessageCircle :size="15" />
-              继续对话
-            </Button>
-            <Button variant="ghost">
-              <Settings2 :size="15" />
-              配置模型
-            </Button>
-          </div>
-        </div>
-
-        <div class="hidden shrink-0 lg:block">
-          <div class="flex items-center gap-3">
-            <div class="text-right">
-              <p class="text-muted-foreground text-xs font-medium">今日生成</p>
-              <p
-                class="text-foreground text-3xl font-semibold tabular-nums tracking-tight"
-              >
-                1.2k
-              </p>
-              <p class="text-muted-foreground mt-0.5 text-xs">tokens</p>
+              <Badge variant="outline" class="bg-background/40 font-normal">
+                schema v{{ workspaceState.schemaVersion }}
+              </Badge>
             </div>
+
+            <div class="flex flex-col gap-2.5">
+              <h1
+                class="max-w-xl text-2xl font-semibold tracking-tight text-balance sm:text-3xl"
+              >
+                欢迎回到
+                <span class="text-primary"
+                  >{{ workspaceState.workspaceName }}</span
+                >
+              </h1>
+
+              <p
+                class="max-w-xl text-sm leading-6 text-pretty text-muted-foreground sm:text-base"
+              >
+                在这里组织角色、世界书与对话。一切都保存在本地，随时离线创作。
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button as-child size="lg">
+              <RouterLink to="/characters">
+                <Plus data-icon="inline-start" />
+                新建角色
+              </RouterLink>
+            </Button>
+
+            <Button as-child size="lg" variant="secondary">
+              <RouterLink to="/tests">
+                <MessageCircle data-icon="inline-start" />
+                开始测试
+              </RouterLink>
+            </Button>
+
+            <Button as-child size="lg" variant="ghost">
+              <RouterLink to="/models">
+                <Settings2 data-icon="inline-start" />
+                配置模型
+              </RouterLink>
+            </Button>
           </div>
         </div>
       </div>
@@ -174,7 +171,7 @@ const quickSteps = [
         :value="stat.value"
         :hint="stat.hint"
         :icon="stat.icon"
-        :tone="stat.tone"
+        :accent="stat.accent"
       />
     </section>
 
@@ -189,15 +186,15 @@ const quickSteps = [
             <h2 class="text-foreground text-sm font-semibold">最近角色</h2>
             <span class="text-muted-foreground flex items-center gap-1 text-xs">
               查看全部
-              <span class="transition-transform group-hover:translate-x-0.5"
-                >→</span
-              >
+              <span class="transition-transform group-hover:translate-x-0.5">
+                →
+              </span>
             </span>
           </div>
 
           <ul class="mt-3 divide-y divide-border/70">
             <li
-              v-for="chr in demoCharacters.slice(0, 4)"
+              v-for="chr in characters.slice(0, 4)"
               :key="chr.id"
               class="flex items-center gap-3 py-3"
             >
@@ -223,61 +220,32 @@ const quickSteps = [
         </div>
       </RouterLink>
 
-      <div class="space-y-5 lg:col-span-2">
-        <!-- Quick start -->
-        <div class="rounded-2xl border border-border bg-card p-5">
-          <h2 class="text-foreground text-sm font-semibold">快速开始</h2>
-          <ul class="mt-3 space-y-3">
-            <li
-              v-for="step in quickSteps"
-              :key="step.title"
-              class="flex items-start gap-3"
-            >
-              <div
-                class="mt-0.5 flex size-5 shrink-0 items-center justify-center"
-              >
-                <CircleCheck v-if="step.done" :size="16" class="text-success" />
-                <div
-                  v-else
-                  class="size-4 rounded-full border-2 border-border"
-                />
-              </div>
-              <div class="min-w-0">
-                <p
-                  :class="step.done ? 'text-muted-foreground' : 'text-foreground'"
-                  class="text-sm font-medium"
-                >
-                  {{ step.title }}
-                </p>
-                <p class="text-muted-foreground text-xs">{{ step.desc }}</p>
-              </div>
-            </li>
-          </ul>
-        </div>
+      <div class="flex flex-col gap-5 lg:col-span-2">
+        <WorkspaceOnboarding />
 
         <!-- Recent activity -->
-        <div class="rounded-2xl border border-border bg-card p-5">
-          <h2 class="text-foreground text-sm font-semibold">最近动态</h2>
-          <ul class="mt-3 space-y-3.5">
-            <li
-              v-for="item in recentActivity"
-              :key="item.id"
-              class="flex items-center gap-3"
-            >
-              <div
-                class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
-              >
-                <component :is="activityIcon[item.kind]" :size="15" />
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-foreground truncate text-sm">{{ item.title }}</p>
-                <p class="text-muted-foreground text-xs">
-                  {{ timeAgo(item.time) }}
-                </p>
-              </div>
-            </li>
-          </ul>
-        </div>
+        <!-- <div class="rounded-2xl border border-border bg-card p-5"> -->
+        <!--   <h2 class="text-foreground text-sm font-semibold">最近动态</h2> -->
+        <!--   <ul class="mt-3 space-y-3.5"> -->
+        <!--     <li -->
+        <!--       v-for="item in recentActivity" -->
+        <!--       :key="item.id" -->
+        <!--       class="flex items-center gap-3" -->
+        <!--     > -->
+        <!--       <div -->
+        <!--         class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground" -->
+        <!--       > -->
+        <!--         <component :is="activityIcon[item.kind]" :size="15" /> -->
+        <!--       </div> -->
+        <!--       <div class="min-w-0 flex-1"> -->
+        <!--         <p class="text-foreground truncate text-sm">{{ item.title }}</p> -->
+        <!--         <p class="text-muted-foreground text-xs"> -->
+        <!--           {{ timeAgo(item.time) }} -->
+        <!--         </p> -->
+        <!--       </div> -->
+        <!--     </li> -->
+        <!--   </ul> -->
+        <!-- </div> -->
       </div>
     </section>
   </div>

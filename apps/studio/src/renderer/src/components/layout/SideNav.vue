@@ -1,26 +1,22 @@
 <script setup lang="ts">
-import {
-  BookOpen,
-  Box,
-  FlaskConical,
-  FolderOpen,
-  LayoutGrid,
-  Settings,
-  User,
-} from '@lucide/vue'
-import { Button } from '@renderer/components/ui/button'
+import { BookOpen, Box, FlaskConical, LayoutGrid, User } from '@lucide/vue'
+import ProfileMenu from '@renderer/components/shared/ProfileMenu.vue'
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@renderer/components/ui/sidebar'
-import { api } from '@renderer/services/api'
-import { useStudioStore } from '@renderer/stores/studio'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@renderer/components/ui/tooltip'
 import type { Component } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -31,37 +27,30 @@ interface NavItem {
 }
 
 const route = useRoute()
-const studio = useStudioStore()
-async function switchWorkspace() {
-  const selected = await studio.execute(() =>
-    api.selectDirectory({ title: '切换 Workspace' }),
-  )
-  if (selected?.path) await studio.openWorkspace(selected.path)
-}
 
 const items: NavItem[] = [
   {
-    label: 'Workspace',
+    label: '工作区',
     icon: LayoutGrid,
     to: '/',
   },
   {
-    label: 'Characters',
+    label: '角色',
     icon: User,
     to: '/characters',
   },
   {
-    label: 'Lorebooks',
+    label: '世界书',
     icon: BookOpen,
     to: '/lorebooks',
   },
   {
-    label: 'Models',
+    label: '模型管理',
     icon: Box,
     to: '/models',
   },
   {
-    label: 'Tests',
+    label: '功能测试',
     icon: FlaskConical,
     to: '/tests',
   },
@@ -77,7 +66,10 @@ const isActive = (to: string) => {
 </script>
 
 <template>
-  <Sidebar collapsible="none" class="[--sidebar-width:4.25rem]">
+  <Sidebar collapsible="none" class="[--sidebar-width:3rem]">
+    <SidebarHeader class="items-center">
+      <ProfileMenu />
+    </SidebarHeader>
     <SidebarContent class="overflow-hidden py-3">
       <SidebarGroup class="p-0">
         <SidebarGroupContent>
@@ -85,63 +77,39 @@ const isActive = (to: string) => {
             <SidebarMenuItem
               v-for="item in items"
               :key="item.to"
-              class="w-full"
+              class="flex w-full justify-center"
             >
-              <SidebarMenuButton
-                as-child
-                :is-active="isActive(item.to)"
-                class="
-                  h-auto w-full
-                  flex-col gap-1
-                  rounded-lg py-2
-                  text-[10px] font-normal
-                  data-[active=true]:text-sidebar-primary
-                "
-              >
-                <RouterLink :to="item.to">
-                  <component :is="item.icon" :size="18" :stroke-width="1.75" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <SidebarMenuButton
+                      as-child
+                      :is-active="isActive(item.to)"
+                      class="size-8! justify-center rounded-md p-0!"
+                    >
+                      <RouterLink
+                        :to="item.to"
+                        :aria-label="item.label"
+                        class="flex size-full items-center justify-center"
+                      >
+                        <component
+                          :is="item.icon"
+                          :size="18"
+                          :stroke-width="isActive(item.to) ? 1.5 : 1.75"
+                        />
+                      </RouterLink>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
 
-                  <span>
+                  <TooltipContent side="right">
                     {{ item.label }}
-                  </span>
-                </RouterLink>
-              </SidebarMenuButton>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
     </SidebarContent>
-
-    <SidebarFooter class="items-center gap-1 p-2">
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        title="切换 Workspace"
-        @click="switchWorkspace"
-      >
-        <FolderOpen :size="17" />
-      </Button>
-      <SidebarMenu class="w-full">
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            as-child
-            :is-active="isActive('/settings')"
-            class="
-              h-auto w-full
-              flex-col gap-1
-              rounded-lg py-2
-              text-[10px] font-normal
-              data-[active=true]:text-sidebar-primary
-            "
-          >
-            <RouterLink to="/settings">
-              <Settings :size="18" :stroke-width="1.75" />
-
-              <span>Settings</span>
-            </RouterLink>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </SidebarFooter>
   </Sidebar>
 </template>

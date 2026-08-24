@@ -39,6 +39,7 @@ export interface StudioRuntime {
 
 export interface CreateStudioRuntimeOptions {
   readonly migrationsDir?: string
+  readonly workspaceName?: string
 }
 
 export async function createStudioRuntime(
@@ -54,7 +55,10 @@ export async function createStudioRuntime(
   ])
 
   const db = createSqliteDatabase(`file:${paths.dbPath}`)
-  const settings = await WorkspaceSettingsStore.open(paths.workspaceDir)
+  const settings = await WorkspaceSettingsStore.open(
+    paths.workspaceDir,
+    options.workspaceName,
+  )
 
   try {
     await migrateSqliteDatabase(db, paths.migrationsDir)

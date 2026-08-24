@@ -14,7 +14,8 @@ export async function ensureWorkspaceOwner(
 
 export function toWorkspaceState(runtime: StudioRuntime): WorkspaceStateDto {
   return {
-    workspaceDir: runtime.paths.workspaceDir,
+    rootDir: runtime.paths.workspaceDir,
+    name: runtime.settings.name,
     dbPath: runtime.paths.dbPath,
     assetsDir: runtime.paths.assetsDir,
     schemaVersion: 1,

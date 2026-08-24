@@ -1,55 +1,63 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
 
+type StatAccent = 'default' | 'primary' | 'success'
+
 const props = withDefaults(
   defineProps<{
     label: string
     value: string | number
     hint?: string
     icon: Component
-    tone?: 'default' | 'primary' | 'success' | 'muted'
+    accent?: StatAccent
   }>(),
   {
-    tone: 'default',
+    accent: 'default',
   },
 )
 
-const toneClasses: Record<string, string> = {
-  default: 'text-muted-foreground bg-muted',
-  primary: 'text-primary bg-primary/10',
-  success: 'text-success bg-success/10',
-  muted: 'text-muted-foreground bg-muted/60',
-}
+const accentClasses = {
+  default: 'bg-muted text-muted-foreground',
+  primary: 'bg-primary/10 text-primary',
+  success: 'bg-success/10 text-success',
+} satisfies Record<StatAccent, string>
 </script>
 
 <template>
   <div
     class="
-      flex items-start gap-3.5 rounded-2xl border border-border
-      bg-card p-4
-      shadow-[inset_0_1px_0_0_var(--card)] transition-colors
-      hover:border-border/80
-    "
+    flex items-center gap-4 rounded-xl
+    border border-border bg-card
+    px-4 py-3.5
+  "
   >
     <div
-      class="flex size-10 shrink-0 items-center justify-center rounded-xl"
-      :class="toneClasses[props.tone ?? 'default']"
+      class="
+      flex size-10 shrink-0 items-center
+      justify-center rounded-xl
+    "
+      :class="accentClasses[props.accent]"
     >
-      <component :is="props.icon" :size="19" :stroke-width="1.75" />
+      <component :is="props.icon" :size="18" :stroke-width="1.75" />
     </div>
 
     <div class="min-w-0">
-      <p class="text-muted-foreground text-[12px] font-medium leading-none">
-        {{ props.label }}
-      </p>
+      <div class="flex items-baseline gap-2">
+        <span class="text-sm text-muted-foreground">
+          {{ props.label }}
+        </span>
 
-      <p
-        class="text-foreground mt-1.5 text-2xl font-semibold tabular-nums tracking-tight"
-      >
-        {{ props.value }}
-      </p>
+        <span
+          class="
+          text-xl font-semibold
+          tabular-nums text-foreground
+        "
+        >
+          {{ props.value }}
+        </span>
+      </div>
 
-      <p v-if="props.hint" class="text-muted-foreground mt-1 text-xs">
+      <p v-if="props.hint" class="mt-1 text-xs text-muted-foreground">
         {{ props.hint }}
       </p>
     </div>

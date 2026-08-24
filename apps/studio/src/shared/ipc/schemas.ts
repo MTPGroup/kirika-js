@@ -5,6 +5,7 @@ import { conversationChannels } from './conversation'
 import { dialogChannels } from './dialog'
 import { generationChannels } from './generation'
 import { lorebookChannels } from './lorebook'
+import { profileChannels } from './profile'
 import { providerChannels } from './provider'
 import { workspaceChannels } from './workspace'
 
@@ -14,8 +15,8 @@ const optionalText = z.string().optional()
 const generation = z
   .object({
     maxOutputTokens: z.number().int().positive().optional(),
-    temperature: z.number().finite().min(0).max(2).optional(),
-    topP: z.number().finite().min(0).max(1).optional(),
+    temperature: z.number().min(0).max(2).optional(),
+    topP: z.number().min(0).max(1).optional(),
     stopSequences: z.array(z.string()).optional(),
     seed: z.number().int().optional(),
   })
@@ -79,6 +80,11 @@ const fileFilters = z
   .optional()
 
 export const studioInputSchemas = {
+  [profileChannels.saveAvatar]: z
+    .object({
+      dataUrl: z.string().startsWith('data:image/png;base64,').max(6_000_000),
+    })
+    .strict(),
   [dialogChannels.selectDirectory]: dialogOptions.optional(),
   [dialogChannels.selectFile]: dialogOptions
     .extend({ filters: fileFilters })
@@ -256,19 +262,17 @@ export const studioInputSchemas = {
   [generationChannels.abort]: z.object({ requestId: id }).strict(),
 } satisfies Partial<Record<StudioChannel, z.ZodType>>
 
-export const generationEventSchema = z
-  .object({
-    type: z.enum([
-      'started',
-      'text_delta',
-      'content_part',
-      'completed',
-      'failed',
-      'cancelled',
-    ]),
-    requestId: nonEmpty,
-    messageId: z.string(),
-  })
-  .passthrough()
+export const generationEventSchema = z.looseObject({
+  type: z.enum([
+    'started',
+    'text_delta',
+    'content_part',
+    'completed',
+    'failed',
+    'cancelled',
+  ]),
+  requestId: nonEmpty,
+  messageId: z.string(),
+})
 
 export type InputStudioChannel = keyof typeof studioInputSchemas
