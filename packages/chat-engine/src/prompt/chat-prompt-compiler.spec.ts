@@ -119,6 +119,98 @@ describe('ChatPromptCompiler', () => {
     )
   })
 
+  it('独立应用扫描深度、预算并钳制超长插入深度', () => {
+    const { conversation, owner, character } = createDirectFixture()
+    const shallowId = new LorebookRevisionId(crypto.randomUUID())
+    const deepId = new LorebookRevisionId(crypto.randomUUID())
+    const revision = createRevisionFor(character, {
+      name: 'Luna',
+      lorebooks: [
+        new CharacterLorebookReference({
+          lorebookRevisionId: shallowId,
+          ordinal: 0,
+          enabled: true,
+        }),
+        new CharacterLorebookReference({
+          lorebookRevisionId: deepId,
+          ordinal: 1,
+          enabled: true,
+        }),
+      ],
+    })
+    const shallow = LorebookRevision.reconstitute(
+      shallowId,
+      1,
+      false,
+      [
+        LorebookEntry.create(
+          ['古老关键词'],
+          '不应触发',
+          true,
+          '浅层错误内容',
+          'before_history',
+          100,
+        ),
+      ],
+      { scanDepth: 1, tokenBudget: 100 },
+    )
+    const deep = LorebookRevision.reconstitute(
+      deepId,
+      1,
+      false,
+      [
+        LorebookEntry.create(
+          ['古老关键词'],
+          '深层命中',
+          true,
+          '深层正确内容',
+          'at_depth',
+          100,
+          { insertionDepth: 99 },
+        ),
+        LorebookEntry.create(
+          [],
+          '超预算',
+          true,
+          'x'.repeat(500),
+          'after_history',
+          10,
+          { constant: true },
+        ),
+      ],
+      { scanDepth: 2, tokenBudget: 20 },
+    )
+    const oldMessage = conversation.createHumanMessage(
+      owner.id,
+      text('古老关键词'),
+      null,
+    )
+    const recentMessage = conversation.createHumanMessage(
+      owner.id,
+      text('最近消息'),
+      oldMessage,
+    )
+
+    const messages = new ChatPromptCompiler().compile({
+      conversation,
+      history: [oldMessage, recentMessage],
+      speaker: character,
+      character: { revision, lorebooks: [shallow, deep] },
+    })
+    const texts = messages
+      .flatMap((message) => message.content)
+      .filter((part) => part.type === 'text')
+      .map((part) => part.text)
+
+    expect(texts.join('\n')).not.toContain('浅层错误内容')
+    expect(texts.join('\n')).toContain('深层正确内容')
+    expect(texts.join('\n')).not.toContain('x'.repeat(500))
+    expect(messages[1]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('深层正确内容'),
+    })
+  })
+
   it('群聊提示词明确当前发言者和参与者', () => {
     const direct = createDirectFixture()
     direct.conversation.convertToGroup('manual')

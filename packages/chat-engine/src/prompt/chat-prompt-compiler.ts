@@ -80,11 +80,27 @@ export class ChatPromptCompiler {
     if (beforeHistoryBlocks.length > 0) {
       messages.push(systemMessage(beforeHistoryBlocks.join('\n\n')))
     }
-    messages.push(
-      ...input.history.map((message) =>
-        toModelMessage(input.conversation, message, macroContext),
-      ),
+    const historyMessages = input.history.map((message) =>
+      toModelMessage(input.conversation, message, macroContext),
     )
+    const depthEntries = loreEntries.filter(
+      (entry) => entry.position === 'at_depth',
+    )
+    for (const [index, message] of historyMessages.entries()) {
+      const depth = historyMessages.length - index
+      const blocks = depthEntries.filter(
+        (entry) =>
+          Math.min(entry.insertionDepth, historyMessages.length) === depth,
+      )
+      const block = createLorebookBlock(blocks, macroContext)
+      if (block) messages.push(systemMessage(block))
+      messages.push(message)
+    }
+    const zeroDepthBlock = createLorebookBlock(
+      depthEntries.filter((entry) => entry.insertionDepth === 0),
+      macroContext,
+    )
+    if (zeroDepthBlock) messages.push(systemMessage(zeroDepthBlock))
     if (afterHistoryBlocks.length > 0) {
       messages.push(systemMessage(afterHistoryBlocks.join('\n\n')))
     }
@@ -114,11 +130,6 @@ export class ChatPromptCompiler {
     const lorebooksById = new Map(
       resolvedLorebooks.map((lorebook) => [lorebook.id.value, lorebook]),
     )
-    const scanText = history
-      .flatMap((message) => message.content.parts)
-      .map(contentPartToScanText)
-      .filter(isNonEmpty)
-      .join('\n')
     const entries: LorebookEntry[] = []
 
     for (const reference of revision.lorebooks) {
@@ -129,10 +140,23 @@ export class ChatPromptCompiler {
           `未解析角色引用的世界书版本: ${reference.lorebookRevisionId.value}`,
         )
       }
-      entries.push(...lorebook.matchEntries(scanText))
+      const scanText = history
+        .slice(-lorebook.scanDepth)
+        .flatMap((message) => message.content.parts)
+        .map(contentPartToScanText)
+        .filter(isNonEmpty)
+        .join('\n')
+      const activated = lorebook.matchEntries(scanText)
+      let estimatedTokens = 0
+      for (const entry of activated) {
+        const tokens = Math.ceil(entry.content.length / 4)
+        if (estimatedTokens + tokens > lorebook.tokenBudget) continue
+        entries.push(entry)
+        estimatedTokens += tokens
+      }
     }
 
-    return entries
+    return entries.sort((left, right) => right.priority - left.priority)
   }
 }
 
