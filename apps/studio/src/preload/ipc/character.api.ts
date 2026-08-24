@@ -1,6 +1,7 @@
 import type {
   CharacterApi,
   CharacterDto,
+  CharacterRevisionAssetDto,
   CharacterSummaryDto,
   ExportCharacterCardResult,
 } from '~/shared/ipc'
@@ -17,10 +18,17 @@ export const characterApi: CharacterApi = {
   deleteCharacter: (input) => invoke<void>(characterChannels.delete, input),
   updateCharacterDraft: (input) =>
     invoke<CharacterDto>(characterChannels.updateDraft, input),
+  saveCharacterDraft: (input) =>
+    invoke<CharacterDto>(characterChannels.saveDraft, input),
   replaceCharacterGreetings: (input) =>
     invoke<CharacterDto>(characterChannels.replaceGreetings, input),
   replaceCharacterExamples: (input) =>
     invoke<CharacterDto>(characterChannels.replaceExamples, input),
+  importCharacterAsset: (input) =>
+    invoke<CharacterRevisionAssetDto | null>(
+      characterChannels.importAsset,
+      input,
+    ),
   replaceCharacterAssets: (input) =>
     invoke<CharacterDto>(characterChannels.replaceAssets, input),
   replaceCharacterLorebooks: (input) =>

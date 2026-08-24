@@ -49,16 +49,41 @@ const characterId = z.object({ characterId: id }).strict()
 const lorebookId = z.object({ lorebookId: id }).strict()
 const conversationId = z.object({ conversationId: id }).strict()
 const characterContent = {
-  name: nonEmpty,
-  description: optionalText,
-  personality: optionalText,
-  scenario: optionalText,
-  systemPrompt: optionalText,
-  postHistoryInstructions: optionalText,
-  greetings: z.array(z.string()).optional(),
-  examples: z.array(z.string()).optional(),
+  name: nonEmpty.max(200),
+  description: z.string().max(100_000).optional(),
+  personality: z.string().max(100_000).optional(),
+  scenario: z.string().max(100_000).optional(),
+  systemPrompt: z.string().max(100_000).optional(),
+  postHistoryInstructions: z.string().max(100_000).optional(),
+  greetings: z.array(z.string().max(20_000)).max(100).optional(),
+  examples: z.array(z.string().max(50_000)).max(100).optional(),
   extensions: z.record(z.string(), z.unknown()).optional(),
 }
+const characterAsset = z
+  .object({
+    assetId: id,
+    kind: z.enum([
+      'avatar',
+      'background',
+      'emotion',
+      'audio',
+      'video',
+      'model',
+      'other',
+    ]),
+    name: nonEmpty.max(200),
+    uri: nonEmpty.max(4096),
+    ordinal: z.number().int().nonnegative().max(10_000),
+    extensions: z.record(z.string(), z.unknown()),
+  })
+  .strict()
+const characterLorebookReference = z
+  .object({
+    lorebookRevisionId: id,
+    ordinal: z.number().int().nonnegative().max(10_000),
+    enabled: z.boolean(),
+  })
+  .strict()
 const characterParticipant = z
   .object({ characterId: id, characterRevisionId: id, displayName: nonEmpty })
   .strict()
@@ -158,49 +183,45 @@ export const studioInputSchemas = {
         .strict(),
     })
     .strict(),
+  [characterChannels.saveDraft]: z
+    .object({
+      characterId: id,
+      alias: z.string().max(200).nullable(),
+      content: z.object(characterContent).strict(),
+      assets: z.array(characterAsset).max(500),
+      lorebooks: z.array(characterLorebookReference).max(100),
+    })
+    .strict(),
   [characterChannels.replaceGreetings]: z
     .object({ characterId: id, greetings: z.array(z.string()) })
     .strict(),
   [characterChannels.replaceExamples]: z
     .object({ characterId: id, examples: z.array(z.string()) })
     .strict(),
+  [characterChannels.importAsset]: z
+    .object({
+      characterId: id,
+      kind: z.enum([
+        'avatar',
+        'background',
+        'emotion',
+        'audio',
+        'video',
+        'model',
+        'other',
+      ]),
+    })
+    .strict(),
   [characterChannels.replaceAssets]: z
     .object({
       characterId: id,
-      assets: z.array(
-        z
-          .object({
-            assetId: id,
-            kind: z.enum([
-              'avatar',
-              'background',
-              'emotion',
-              'audio',
-              'video',
-              'model',
-              'other',
-            ]),
-            name: nonEmpty,
-            uri: nonEmpty,
-            ordinal: z.number().int().nonnegative(),
-            extensions: z.record(z.string(), z.unknown()),
-          })
-          .strict(),
-      ),
+      assets: z.array(characterAsset).max(500),
     })
     .strict(),
   [characterChannels.replaceLorebooks]: z
     .object({
       characterId: id,
-      lorebooks: z.array(
-        z
-          .object({
-            lorebookRevisionId: id,
-            ordinal: z.number().int().nonnegative(),
-            enabled: z.boolean(),
-          })
-          .strict(),
-      ),
+      lorebooks: z.array(characterLorebookReference).max(100),
     })
     .strict(),
   [characterChannels.createDraft]: characterId,
@@ -208,14 +229,13 @@ export const studioInputSchemas = {
     .object({ characterId: id, revisionId: id })
     .strict(),
   [characterChannels.importCard]: z
-    .object({ filePath: nonEmpty, formatHint: optionalText })
+    .object({ formatHint: z.literal('json').optional() })
     .strict(),
   [characterChannels.exportCard]: z
     .object({
       characterId: id,
       revisionId: id.optional(),
-      format: nonEmpty,
-      destinationPath: nonEmpty,
+      format: z.literal('json'),
     })
     .strict(),
   [lorebookChannels.create]: z
@@ -293,6 +313,7 @@ export const studioInputSchemas = {
   [conversationChannels.restore]: conversationId,
   [generationChannels.start]: z
     .object({
+      requestId: id,
       conversationId: id,
       providerId: id,
       model: nonEmpty.optional(),

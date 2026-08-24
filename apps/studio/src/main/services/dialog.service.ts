@@ -13,13 +13,13 @@ function filters(values?: readonly FileFilterDto[]) {
     extensions: [...item.extensions],
   }))
 }
-function showOpen(options: OpenDialogOptions) {
+export function showOpenDialog(options: OpenDialogOptions) {
   const window = BrowserWindow.getFocusedWindow()
   return window
     ? dialog.showOpenDialog(window, options)
     : dialog.showOpenDialog(options)
 }
-function showSave(options: SaveDialogOptions) {
+export function showSaveDialog(options: SaveDialogOptions) {
   const window = BrowserWindow.getFocusedWindow()
   return window
     ? dialog.showSaveDialog(window, options)
@@ -28,7 +28,7 @@ function showSave(options: SaveDialogOptions) {
 
 export const dialogService: DialogApi = {
   async selectDirectory(input = {}) {
-    const result = await showOpen({
+    const result = await showOpenDialog({
       title: input.title,
       defaultPath: input.defaultPath,
       properties: ['openDirectory', 'createDirectory'],
@@ -36,7 +36,7 @@ export const dialogService: DialogApi = {
     return { path: result.canceled ? null : (result.filePaths[0] ?? null) }
   },
   async selectFile(input = {}) {
-    const result = await showOpen({
+    const result = await showOpenDialog({
       title: input.title,
       defaultPath: input.defaultPath,
       filters: filters(input.filters),
@@ -50,7 +50,7 @@ export const dialogService: DialogApi = {
         ? join(input.defaultPath, input.defaultName)
         : input.defaultName
       : input.defaultPath
-    const result = await showSave({
+    const result = await showSaveDialog({
       title: input.title,
       defaultPath,
       filters: filters(input.filters),

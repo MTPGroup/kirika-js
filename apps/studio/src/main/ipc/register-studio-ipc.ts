@@ -144,6 +144,11 @@ export function registerStudioIpc(): () => void {
   )
   register(
     channels,
+    characterChannels.saveDraft,
+    characterService.saveCharacterDraft,
+  )
+  register(
+    channels,
     characterChannels.replaceGreetings,
     characterService.replaceCharacterGreetings,
   )
@@ -151,6 +156,11 @@ export function registerStudioIpc(): () => void {
     channels,
     characterChannels.replaceExamples,
     characterService.replaceCharacterExamples,
+  )
+  register(
+    channels,
+    characterChannels.importAsset,
+    characterService.importCharacterAsset,
   )
   register(
     channels,

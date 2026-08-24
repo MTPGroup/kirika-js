@@ -70,6 +70,13 @@ export interface UpdateCharacterDraftInput {
   readonly patch: CharacterRevisionPatch
 }
 
+export interface SaveCharacterDraftInput extends CharacterIdInput {
+  readonly alias: string | null
+  readonly content: CharacterRevisionContentInput
+  readonly assets: readonly CharacterRevisionAssetDto[]
+  readonly lorebooks: readonly CharacterLorebookReferenceDto[]
+}
+
 export interface ReplaceCharacterGreetingsInput {
   readonly characterId: string
   readonly greetings: readonly string[]
@@ -78,6 +85,10 @@ export interface ReplaceCharacterGreetingsInput {
 export interface ReplaceCharacterExamplesInput {
   readonly characterId: string
   readonly examples: readonly string[]
+}
+
+export interface ImportCharacterAssetInput extends CharacterIdInput {
+  readonly kind: CharacterRevisionAssetDto['kind']
 }
 
 export interface ReplaceCharacterAssetsInput {
@@ -99,18 +110,17 @@ export interface PublishCharacterRevisionInput extends CharacterIdInput {
 }
 
 export interface ImportCharacterCardInput {
-  readonly filePath: string
-  readonly formatHint?: string
+  readonly formatHint?: 'json'
 }
 
 export interface ExportCharacterCardInput extends CharacterIdInput {
   readonly revisionId?: string
-  readonly format: string
-  readonly destinationPath: string
+  readonly format: 'json'
 }
 
 export interface ExportCharacterCardResult {
-  readonly filePath: string
+  readonly cancelled: boolean
+  readonly filePath: string | null
   readonly format: string
   readonly mediaType: string
 }
@@ -121,8 +131,10 @@ export const characterChannels = {
   get: 'studio:characters:get',
   delete: 'studio:characters:delete',
   updateDraft: 'studio:characters:update-draft',
+  saveDraft: 'studio:characters:save-draft',
   replaceGreetings: 'studio:characters:replace-greetings',
   replaceExamples: 'studio:characters:replace-examples',
+  importAsset: 'studio:characters:import-asset',
   replaceAssets: 'studio:characters:replace-assets',
   replaceLorebooks: 'studio:characters:replace-lorebooks',
   createDraft: 'studio:characters:create-draft',
@@ -137,12 +149,16 @@ export interface CharacterApi {
   getCharacter(input: CharacterIdInput): Promise<CharacterDto | null>
   deleteCharacter(input: CharacterIdInput): Promise<void>
   updateCharacterDraft(input: UpdateCharacterDraftInput): Promise<CharacterDto>
+  saveCharacterDraft(input: SaveCharacterDraftInput): Promise<CharacterDto>
   replaceCharacterGreetings(
     input: ReplaceCharacterGreetingsInput,
   ): Promise<CharacterDto>
   replaceCharacterExamples(
     input: ReplaceCharacterExamplesInput,
   ): Promise<CharacterDto>
+  importCharacterAsset(
+    input: ImportCharacterAssetInput,
+  ): Promise<CharacterRevisionAssetDto | null>
   replaceCharacterAssets(
     input: ReplaceCharacterAssetsInput,
   ): Promise<CharacterDto>

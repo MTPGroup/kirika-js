@@ -2,6 +2,7 @@ import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow } from 'electron'
 import icon from '../../resources/kirika.png?asset'
 import { registerStudioIpc } from './ipc'
+import { registerAssetProtocol } from './services/asset-protocol.service'
 import { registerProfileProtocol } from './services/profile.service'
 import { studioRuntime } from './studio-runtime'
 import { createMainWindow } from './window'
@@ -11,6 +12,7 @@ app.whenReady().then(() => {
   app.setName('Kirika Studio')
   if (process.platform === 'darwin') app.dock?.setIcon(icon)
   registerProfileProtocol()
+  registerAssetProtocol()
   registerStudioIpc()
 
   app.on('browser-window-created', (_, window) => {
