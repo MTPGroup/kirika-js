@@ -32,20 +32,23 @@ import {
 import { Switch } from '@renderer/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { Textarea } from '@renderer/components/ui/textarea'
-import {
-  demoCharacters,
-  demoLorebooks,
-  demoProviders,
-} from '@renderer/lib/demo'
-import { computed, ref } from 'vue'
+import { useGenerationStore } from '@renderer/stores/generation'
+import { useStudioStore } from '@renderer/stores/studio'
+import { computed, onMounted, ref, watch } from 'vue'
+
+const studio = useStudioStore()
+const generation = useGenerationStore()
+const demoCharacters = computed(() => studio.characters)
+const demoLorebooks = computed(() => studio.lorebooks)
+const demoProviders = computed(() => studio.providers)
 
 type Tab = 'response' | 'prompt' | 'request' | 'metrics' | 'logs'
 
 const activeTab = ref<Tab>('response')
-const selectedCharacter = ref(demoCharacters[0]?.name ?? '')
-const selectedModel = ref(demoProviders[0]?.name ?? '')
+const selectedCharacter = ref('')
+const selectedModel = ref('')
 const selectedCharacterVersion = ref('draft')
-const selectedLorebook = ref(demoLorebooks[1]?.name ?? '')
+const selectedLorebook = ref('')
 const selectedLorebookVersion = ref('draft')
 const testInput = ref('你第一次在月光森林遇到她，请主动和她打招呼。')
 const scenario = ref('初次见面')
@@ -91,23 +94,38 @@ const metrics = ref<{ tokens: string; time: string; rate: string }>({
   rate: '—',
 })
 
-const sampleResponse =
-  '月光穿过交错的枝叶，落在林间小径上。她在几步之外停下，回头看你，' +
-  '眼睛里映着细碎的银光。\n\n「你终于来了，」她轻声说，声音像夜风拂过琴弦。「别怕，这条路上只有我们。」\n\n她伸出手，指尖停在你面前一寸的地方，等待你的回应。'
+onMounted(async () => {
+  await studio.execute(studio.refreshResources)
+  selectedCharacter.value ||= studio.characters[0]?.id ?? ''
+  selectedModel.value ||=
+    studio.providers.find((item) => item.enabled)?.id ?? ''
+  selectedLorebook.value ||= studio.lorebooks[0]?.id ?? ''
+})
+watch(
+  () => generation.output,
+  (value) => {
+    output.value = value
+  },
+)
+watch(
+  () => generation.running,
+  (value) => {
+    running.value = value
+  },
+)
 
-let timer: number | null = null
-
-function start() {
+async function start() {
   if (running.value) return
-  if (conversationMode.value) {
-    const text =
-      messages.value.length === 0
-        ? testInput.value.trim()
-        : conversationInput.value.trim()
-    if (!text) return
+  const text =
+    messages.value.length === 0
+      ? testInput.value.trim()
+      : conversationInput.value.trim()
+  const provider = studio.providers.find(
+    (item) => item.id === selectedModel.value,
+  )
+  if (!text || !selectedCharacter.value || !provider) return
+  if (conversationMode.value)
     messages.value.push({ role: 'user', content: text })
-  }
-  running.value = true
   output.value = ''
   logs.value = [
     '[12:00:01] 开始生成…',
@@ -119,52 +137,18 @@ function start() {
   ]
   metrics.value = { tokens: '0', time: '0.0s', rate: '—' }
 
-  const chars = Array.from(sampleResponse)
-  let i = 0
-  let count = 0
-  const startedAt = Date.now()
-
-  timer = window.setInterval(() => {
-    const chunk = chars.slice(i, i + 3).join('')
-    i += 3
-    if (chunk) output.value += chunk
-    count += 3
-    const elapsed = (Date.now() - startedAt) / 1000
-    metrics.value = {
-      tokens: String(count),
-      time: `${elapsed.toFixed(1)}s`,
-      rate: `${(count / Math.max(elapsed, 1)).toFixed(1)} tok/s`,
-    }
-
-    if (count % 24 === 0) {
-      logs.value.push(
-        `[12:00:0${Math.floor(count / 24)}] 流式输出 ${count} tokens`,
-      )
-    }
-
-    if (i >= chars.length) {
-      stopTimer()
-      running.value = false
-      logs.value.push('[12:00:02] 生成完成 · finish_reason=stop')
-      if (conversationMode.value) {
-        messages.value.push({ role: 'assistant', content: output.value })
-        conversationInput.value = ''
-      }
-      saveRun()
-    }
-  }, 40)
+  await generation.start({
+    characterId: selectedCharacter.value,
+    providerId: provider.id,
+    text,
+    model: provider.defaultModel,
+    temperature: Number(temperature.value),
+    maxOutputTokens: Number(maxTokens.value),
+  })
 }
 
-function stopTimer() {
-  if (timer != null) {
-    window.clearInterval(timer)
-    timer = null
-  }
-}
-
-function stop() {
-  stopTimer()
-  running.value = false
+async function stop() {
+  await generation.abort()
   logs.value.push('[手动] 已停止生成')
 }
 
@@ -185,18 +169,6 @@ function chooseScenario(value: unknown) {
   if (typeof value !== 'string') return
   scenario.value = value
   testInput.value = scenarios.find((item) => item.name === value)?.prompt ?? ''
-}
-function saveRun() {
-  if (!output.value) return
-  history.value.unshift({
-    id: Date.now(),
-    label: scenario.value,
-    output: output.value,
-    time: new Date().toLocaleTimeString(),
-    hits: useLorebook.value ? hitEntries.length : 0,
-    character: selectedCharacter.value,
-  })
-  history.value = history.value.slice(0, 8)
 }
 function loadRun(run: (typeof history.value)[number]) {
   output.value = run.output
@@ -285,7 +257,7 @@ function clearConversation() {
                   <SelectItem
                     v-for="chr in demoCharacters"
                     :key="chr.id"
-                    :value="chr.name"
+                    :value="chr.id"
                     >{{ chr.name }}</SelectItem
                   >
                 </SelectContent>
@@ -300,7 +272,7 @@ function clearConversation() {
                   ><SelectItem
                     v-for="book in demoLorebooks"
                     :key="book.id"
-                    :value="book.name"
+                    :value="book.id"
                     >{{ book.name }}</SelectItem
                   ></SelectContent
                 ></Select
@@ -335,7 +307,7 @@ function clearConversation() {
                   <SelectItem
                     v-for="p in demoProviders"
                     :key="p.id"
-                    :value="p.name"
+                    :value="p.id"
                     >{{ p.name }}</SelectItem
                   >
                 </SelectContent>

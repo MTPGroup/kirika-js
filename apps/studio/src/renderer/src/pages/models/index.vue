@@ -44,14 +44,17 @@ import {
   SheetTitle,
 } from '@renderer/components/ui/sheet'
 import { Switch } from '@renderer/components/ui/switch'
-import { demoProviders } from '@renderer/lib/demo'
-import type { ProviderConfig } from '@renderer/services/api'
-import { computed, reactive, ref } from 'vue'
+import { api, type ProviderDto } from '@renderer/services/api'
+import { useStudioStore } from '@renderer/stores/studio'
+import { computed, onMounted, reactive, ref } from 'vue'
 
-const providers = ref<ProviderConfig[]>([...demoProviders])
+const studio = useStudioStore()
+
+const providers = computed(() => studio.providers)
+onMounted(() => studio.execute(studio.refreshResources))
 const sheetOpen = ref(false)
-const editing = ref<ProviderConfig | null>(null)
-const pendingDelete = ref<ProviderConfig | null>(null)
+const editing = ref<ProviderDto | null>(null)
+const pendingDelete = ref<ProviderDto | null>(null)
 const deleteDialogOpen = computed({
   get: () => pendingDelete.value !== null,
   set: (open: boolean) => {
@@ -95,73 +98,78 @@ function openNew() {
   sheetOpen.value = true
 }
 
-function openEdit(provider: ProviderConfig) {
+function openEdit(provider: ProviderDto) {
   editing.value = provider
   Object.assign(form, {
     name: provider.name,
     baseUrl: provider.baseUrl,
-    apiKey: provider.apiKey ?? '',
+    apiKey: '',
     defaultModel: provider.defaultModel,
-    temperature: String(provider.temperature),
-    topP: String(provider.topP),
+    temperature: String(provider.generation.temperature ?? 0.7),
+    topP: String(provider.generation.topP ?? 0.9),
     maxOutputTokens:
-      provider.maxOutputTokens != null ? String(provider.maxOutputTokens) : '',
-    seed: provider.seed != null ? String(provider.seed) : '',
-    stream: provider.stream,
-    useLorebook: provider.useLorebook,
-    saveHistory: provider.saveHistory,
+      provider.generation.maxOutputTokens != null
+        ? String(provider.generation.maxOutputTokens)
+        : '',
+    seed:
+      provider.generation.seed != null ? String(provider.generation.seed) : '',
+    stream: true,
+    useLorebook: true,
+    saveHistory: true,
     enabled: provider.enabled ?? true,
   })
   sheetOpen.value = true
 }
 
-function save() {
-  const base: Omit<ProviderConfig, 'id'> = {
-    name: form.name.trim() || '未命名模型',
-    baseUrl: form.baseUrl.trim(),
-    apiKey: form.apiKey.trim() || undefined,
-    defaultModel: form.defaultModel.trim(),
-    temperature: Number(form.temperature) || 0.7,
-    topP: Number(form.topP) || 0.9,
-    maxOutputTokens: form.maxOutputTokens
-      ? Number(form.maxOutputTokens)
-      : undefined,
-    seed: form.seed ? Number(form.seed) : undefined,
-    stream: form.stream,
-    useLorebook: form.useLorebook,
-    saveHistory: form.saveHistory,
-    enabled: form.enabled,
-  }
-
-  if (editing.value) {
-    const editingId = editing.value.id
-    providers.value = providers.value.map((p) =>
-      p.id === editingId ? { ...base, id: p.id } : p,
-    )
-  } else {
-    providers.value = [
-      { ...base, id: `prov_${Date.now()}` },
-      ...providers.value,
-    ]
-  }
-  sheetOpen.value = false
+async function save() {
+  await studio.execute(async () => {
+    await api.saveProvider({
+      id: editing.value?.id,
+      name: form.name.trim(),
+      baseUrl: form.baseUrl.trim(),
+      apiKey: form.apiKey.trim() || undefined,
+      defaultModel: form.defaultModel.trim(),
+      generation: {
+        temperature: Number(form.temperature),
+        topP: Number(form.topP),
+        maxOutputTokens: form.maxOutputTokens
+          ? Number(form.maxOutputTokens)
+          : undefined,
+        seed: form.seed ? Number(form.seed) : undefined,
+      },
+      enabled: form.enabled,
+    })
+    await studio.refreshResources()
+    sheetOpen.value = false
+  })
 }
 
-function toggleEnabled(provider: ProviderConfig) {
-  providers.value = providers.value.map((p) =>
-    p.id === provider.id ? { ...p, enabled: !p.enabled } : p,
-  )
+async function toggleEnabled(provider: ProviderDto) {
+  await studio.execute(async () => {
+    await api.saveProvider({
+      id: provider.id,
+      name: provider.name,
+      baseUrl: provider.baseUrl,
+      defaultModel: provider.defaultModel,
+      generation: provider.generation,
+      enabled: !provider.enabled,
+    })
+    await studio.refreshResources()
+  })
 }
 
-function requestRemove(provider: ProviderConfig) {
+function requestRemove(provider: ProviderDto) {
   pendingDelete.value = provider
 }
 
-function confirmRemove() {
+async function confirmRemove() {
   if (!pendingDelete.value) return
   const id = pendingDelete.value.id
-  providers.value = providers.value.filter((p) => p.id !== id)
-  pendingDelete.value = null
+  await studio.execute(async () => {
+    await api.deleteProvider({ id })
+    await studio.refreshResources()
+    pendingDelete.value = null
+  })
 }
 
 const enabledCount = computed(
@@ -247,10 +255,14 @@ const enabledCount = computed(
           </Badge>
           <Badge variant="soft" class="gap-1">
             <Gauge :size="12" />
-            T {{ provider.temperature }}
+            T {{ provider.generation.temperature ?? "—" }}
           </Badge>
-          <Badge v-if="provider.maxOutputTokens" variant="soft" class="gap-1">
-            {{ provider.maxOutputTokens }}
+          <Badge
+            v-if="provider.generation.maxOutputTokens"
+            variant="soft"
+            class="gap-1"
+          >
+            {{ provider.generation.maxOutputTokens }}
             tok
           </Badge>
         </div>

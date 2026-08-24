@@ -2,13 +2,20 @@
 import SideNav from '@renderer/components/layout/SideNav.vue'
 import TitleBar from '@renderer/components/layout/TitleBar.vue'
 import { SidebarInset, SidebarProvider } from '@renderer/components/ui/sidebar'
+import WorkspaceWelcome from '@renderer/components/workspace/WorkspaceWelcome.vue'
+import { useStudioStore } from '@renderer/stores/studio'
+
+const studio = useStudioStore()
 </script>
 
 <template>
   <div class="flex h-screen flex-col overflow-hidden bg-background">
     <TitleBar />
 
+    <WorkspaceWelcome v-if="!studio.isOpen" />
+
     <SidebarProvider
+      v-else
       class="min-h-0 flex-1"
       :default-open="true"
       storage-key="studio-sidebar"

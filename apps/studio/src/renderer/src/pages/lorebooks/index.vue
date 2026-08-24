@@ -26,13 +26,34 @@ import {
   DropdownMenuTrigger,
 } from '@renderer/components/ui/dropdown-menu'
 import { Input } from '@renderer/components/ui/input'
-import { demoLorebooks } from '@renderer/lib/demo'
 import { timeAgo } from '@renderer/lib/format'
 import type { LorebookSummaryDto } from '@renderer/services/api'
-import { computed, ref } from 'vue'
+import { api } from '@renderer/services/api'
+import { useStudioStore } from '@renderer/stores/studio'
+import { computed, onMounted, ref } from 'vue'
+
+const studio = useStudioStore()
 
 const query = ref('')
-const books = ref<LorebookSummaryDto[]>([...demoLorebooks])
+const books = computed(() => studio.lorebooks)
+onMounted(() => studio.execute(studio.refreshResources))
+
+async function createLorebook() {
+  const name = window.prompt('世界书名称')?.trim()
+  if (!name) return
+  await studio.execute(async () => {
+    await api.createLorebook({ name })
+    await studio.refreshResources()
+  })
+}
+
+async function deleteLorebook(lorebookId: string) {
+  if (!window.confirm('确定删除这本世界书吗？')) return
+  await studio.execute(async () => {
+    await api.deleteLorebook({ lorebookId })
+    await studio.refreshResources()
+  })
+}
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -62,7 +83,7 @@ const visibilityMeta: Record<
       description="集中维护可被角色引用的设定、关键词与注入规则。"
     >
       <template #actions>
-        <Button>
+        <Button @click="createLorebook">
           <Plus :size="15" />
           新建世界书
         </Button>
@@ -145,7 +166,9 @@ const visibilityMeta: Record<
             <DropdownMenuItem><Pencil :size="14" />编辑条目</DropdownMenuItem>
             <DropdownMenuItem><Upload :size="14" />导出</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive"
+            <DropdownMenuItem
+              variant="destructive"
+              @select="deleteLorebook(book.id)"
               ><Trash2 :size="14" />删除</DropdownMenuItem
             >
           </DropdownMenuContent>
@@ -159,7 +182,7 @@ const visibilityMeta: Record<
         title="没有找到世界书"
         description="调整搜索关键词，或新建一本世界书来整理你的设定。"
       >
-        <Button>
+        <Button @click="createLorebook">
           <Plus :size="15" />
           新建世界书
         </Button>

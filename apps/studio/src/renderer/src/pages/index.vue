@@ -13,15 +13,27 @@ import {
 import StatCard from '@renderer/components/layout/StatCard.vue'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
-import {
-  demoCharacters,
-  demoConversations,
-  demoLorebooks,
-  recentActivity,
-  workspaceState,
-} from '@renderer/lib/demo'
 import { initials, timeAgo } from '@renderer/lib/format'
+import { useStudioStore } from '@renderer/stores/studio'
 import type { Component } from 'vue'
+import { computed } from 'vue'
+
+const studio = useStudioStore()
+const demoCharacters = computed(() => studio.characters)
+const demoLorebooks = computed(() => studio.lorebooks)
+const demoConversations = computed(() => studio.conversations)
+const workspaceState = computed(() => ({
+  workspaceName: studio.workspace
+    ? studio.workspace.workspaceDir.split(/[\\/]/).pop() || 'Kirika Studio'
+    : '未打开工作区',
+  schemaVersion: studio.workspace?.schemaVersion ?? 0,
+}))
+const recentActivity: readonly {
+  id: string
+  kind: string
+  title: string
+  time: string
+}[] = []
 
 const activityIcon: Record<string, unknown> = {
   character: User,
@@ -32,36 +44,44 @@ const activityIcon: Record<string, unknown> = {
 
 type StatTone = 'default' | 'primary' | 'success' | 'muted'
 
-const stats: {
-  label: string
-  value: number
-  hint: string
-  icon: Component
-  tone: StatTone
-}[] = [
-  {
-    label: '角色',
-    value: demoCharacters.length,
-    hint: '6 个草稿 / 版本',
-    icon: User,
-    tone: 'primary',
-  },
-  {
-    label: '世界书',
-    value: demoLorebooks.length,
-    hint: '共 219 条目',
-    icon: BookOpen,
-    tone: 'default',
-  },
-  {
-    label: '会话',
-    value: demoConversations.length,
-    hint: '2 个进行中',
-    icon: MessageCircle,
-    tone: 'success',
-  },
-  { label: '模型', value: 3, hint: '1 个已启用', icon: Bot, tone: 'muted' },
-]
+const stats = computed(
+  (): {
+    label: string
+    value: number
+    hint: string
+    icon: Component
+    tone: StatTone
+  }[] => [
+    {
+      label: '角色',
+      value: demoCharacters.value.length,
+      hint: `${demoCharacters.value.filter((item) => item.hasDraft).length} 个草稿`,
+      icon: User,
+      tone: 'primary',
+    },
+    {
+      label: '世界书',
+      value: demoLorebooks.value.length,
+      hint: `共 ${demoLorebooks.value.reduce((sum, item) => sum + item.entryCount, 0)} 条目`,
+      icon: BookOpen,
+      tone: 'default',
+    },
+    {
+      label: '会话',
+      value: demoConversations.value.length,
+      hint: `${demoConversations.value.filter((item) => item.status === 'active').length} 个进行中`,
+      icon: MessageCircle,
+      tone: 'success',
+    },
+    {
+      label: '模型',
+      value: studio.providers.length,
+      hint: `${studio.providers.filter((item) => item.enabled).length} 个已启用`,
+      icon: Bot,
+      tone: 'muted',
+    },
+  ],
+)
 
 const quickSteps = [
   { title: '配置你的第一个模型', done: true, desc: '连接 OpenAI 兼容接口' },

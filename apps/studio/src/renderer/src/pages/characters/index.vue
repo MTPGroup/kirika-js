@@ -24,17 +24,20 @@ import {
   DropdownMenuTrigger,
 } from '@renderer/components/ui/dropdown-menu'
 import { Input } from '@renderer/components/ui/input'
-import { demoCharacters } from '@renderer/lib/demo'
 import { initials, timeAgo } from '@renderer/lib/format'
-import type { CharacterSummaryDto } from '@renderer/services/api'
-import { computed, ref } from 'vue'
+import { api } from '@renderer/services/api'
+import { useStudioStore } from '@renderer/stores/studio'
+import { computed, onMounted, ref } from 'vue'
+
+const studio = useStudioStore()
 
 type Filter = 'all' | 'published' | 'draft'
 
 const query = ref('')
 const filter = ref<Filter>('all')
 
-const characters = ref<CharacterSummaryDto[]>([...demoCharacters])
+const characters = computed(() => studio.characters)
+onMounted(() => studio.execute(studio.refreshResources))
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -54,21 +57,85 @@ const filtered = computed(() => {
   })
 })
 
-const filterOptions: { value: Filter; label: string; count: number }[] = [
-  { value: 'all', label: '全部', count: characters.value.length },
+const filterOptions = computed(() => [
+  { value: 'all' as Filter, label: '全部', count: characters.value.length },
   {
-    value: 'published',
+    value: 'published' as Filter,
     label: '已发布',
     count: characters.value.filter(
       (c) => !c.hasDraft && c.currentRevisionId != null,
     ).length,
   },
   {
-    value: 'draft',
+    value: 'draft' as Filter,
     label: '草稿',
     count: characters.value.filter((c) => c.hasDraft).length,
   },
-]
+])
+
+async function createCharacter() {
+  const name = window.prompt('角色名称')?.trim()
+  if (!name) return
+  await studio.execute(async () => {
+    await api.createCharacter({ name })
+    await studio.refreshResources()
+  })
+}
+
+async function importCharacterCard() {
+  const selected = await studio.execute(() =>
+    api.selectFile({
+      title: '导入角色卡',
+      filters: [{ name: 'Character Card JSON', extensions: ['json'] }],
+    }),
+  )
+  const filePath = selected?.path
+  if (!filePath) return
+  await studio.execute(async () => {
+    await api.importCharacterCard({
+      filePath,
+      formatHint: 'json',
+    })
+    await studio.refreshResources()
+  })
+}
+
+async function exportCharacterCard(characterId: string) {
+  const character = await studio.execute(() =>
+    api.getCharacter({ characterId }),
+  )
+  if (!character) return
+  const revisionId = character.currentRevisionId ?? character.draftRevisionId
+  if (!revisionId) return
+  const name =
+    character.revisions.find((item) => item.id === revisionId)?.name ??
+    'character'
+  const selected = await studio.execute(() =>
+    api.saveFile({
+      title: '导出角色卡',
+      defaultName: `${name}.json`,
+      filters: [{ name: 'Character Card JSON', extensions: ['json'] }],
+    }),
+  )
+  const destinationPath = selected?.path
+  if (!destinationPath) return
+  await studio.execute(() =>
+    api.exportCharacterCard({
+      characterId,
+      revisionId,
+      format: 'json',
+      destinationPath,
+    }),
+  )
+}
+
+async function deleteCharacter(characterId: string) {
+  if (!window.confirm('确定删除这个角色吗？')) return
+  await studio.execute(async () => {
+    await api.deleteCharacter({ characterId })
+    await studio.refreshResources()
+  })
+}
 </script>
 
 <template>
@@ -79,11 +146,11 @@ const filterOptions: { value: Filter; label: string; count: number }[] = [
       description="管理你的角色卡、草稿版本与已发布内容。"
     >
       <template #actions>
-        <Button variant="outline">
+        <Button variant="outline" @click="importCharacterCard">
           <Upload :size="15" />
           导入角色卡
         </Button>
-        <Button>
+        <Button @click="createCharacter">
           <Plus :size="15" />
           新建角色
         </Button>
@@ -165,11 +232,13 @@ const filterOptions: { value: Filter; label: string; count: number }[] = [
             <DropdownMenuContent align="end" class="w-40">
               <DropdownMenuLabel>操作</DropdownMenuLabel>
               <DropdownMenuItem><Pencil :size="14" />编辑草稿</DropdownMenuItem>
-              <DropdownMenuItem
+              <DropdownMenuItem @select="exportCharacterCard(chr.id)"
                 ><Download :size="14" />导出卡片</DropdownMenuItem
               >
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive"
+              <DropdownMenuItem
+                variant="destructive"
+                @select="deleteCharacter(chr.id)"
                 ><Trash2 :size="14" />删除</DropdownMenuItem
               >
             </DropdownMenuContent>
@@ -196,7 +265,7 @@ const filterOptions: { value: Filter; label: string; count: number }[] = [
         title="没有找到角色"
         description="试试调整筛选条件，或新建一个角色开始创作。"
       >
-        <Button>
+        <Button @click="createCharacter">
           <Plus :size="15" />
           新建角色
         </Button>

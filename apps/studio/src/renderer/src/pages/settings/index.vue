@@ -21,11 +21,25 @@ import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@renderer/components/ui/radio-group'
-import { workspaceState } from '@renderer/lib/demo'
+import { useStudioStore } from '@renderer/stores/studio'
 import { type Theme, useThemeStore } from '@renderer/stores/theme'
 import { computed, ref } from 'vue'
 
 const theme = useThemeStore()
+const studio = useStudioStore()
+const workspaceState = computed(
+  () =>
+    studio.workspace ?? {
+      workspaceDir: '未打开工作区',
+      dbPath: '—',
+      assetsDir: '—',
+      schemaVersion: 0,
+      ownerId: '',
+      providers: [],
+      activeCharacterId: null,
+      activeConversationId: null,
+    },
+)
 const profileName = ref(localStorage.getItem('kirika-profile-name') || '我')
 const profileAvatar = ref(localStorage.getItem('kirika-profile-avatar') || '')
 function saveProfile() {
@@ -43,11 +57,15 @@ const themeOptions: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: 'system', label: '跟随系统', icon: Monitor },
 ]
 
-const storageRows = [
-  { label: '工作区', value: workspaceState.workspaceDir, icon: FolderOpen },
-  { label: '数据库', value: workspaceState.dbPath, icon: Database },
-  { label: '资产目录', value: workspaceState.assetsDir, icon: HardDrive },
-]
+const storageRows = computed(() => [
+  {
+    label: '工作区',
+    value: workspaceState.value.workspaceDir,
+    icon: FolderOpen,
+  },
+  { label: '数据库', value: workspaceState.value.dbPath, icon: Database },
+  { label: '资产目录', value: workspaceState.value.assetsDir, icon: HardDrive },
+])
 </script>
 
 <template>
