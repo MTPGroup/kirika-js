@@ -54,6 +54,7 @@ import {
 import { Switch } from '@renderer/components/ui/switch'
 import { Textarea } from '@renderer/components/ui/textarea'
 import { timeAgo } from '@renderer/lib/format'
+import { searchLorebooks } from '@renderer/lib/lorebook-search'
 import {
   api,
   type LorebookDto,
@@ -123,15 +124,7 @@ const deleteDialogOpen = computed({
   },
 })
 
-const filtered = computed(() => {
-  const value = query.value.trim().toLowerCase()
-  if (!value) return books.value
-  return books.value.filter(
-    (item) =>
-      item.name.toLowerCase().includes(value) ||
-      item.description.toLowerCase().includes(value),
-  )
-})
+const filtered = computed(() => searchLorebooks(books.value, query.value))
 
 onMounted(() => studio.execute(studio.refreshLorebooks))
 
