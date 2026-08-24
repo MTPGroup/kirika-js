@@ -60,6 +60,7 @@ export const useThemeStore = defineStore('theme', () => {
 
   return {
     theme,
+    preference: theme,
     resolvedTheme,
     initialize,
     setTheme,

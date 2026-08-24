@@ -38,6 +38,41 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/characters/': RouteRecordInfo<
+      '/characters/',
+      '/characters',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/lorebooks/': RouteRecordInfo<
+      '/lorebooks/',
+      '/lorebooks',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/models/': RouteRecordInfo<
+      '/models/',
+      '/models',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/settings/': RouteRecordInfo<
+      '/settings/',
+      '/settings',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/tests/': RouteRecordInfo<
+      '/tests/',
+      '/tests',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -54,6 +89,46 @@ declare module 'vue-router/auto-routes' {
     'src/renderer/src/pages/index.vue': {
       routes:
         | '/'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/renderer/src/pages/characters/index.vue': {
+      routes:
+        | '/characters/'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/renderer/src/pages/lorebooks/index.vue': {
+      routes:
+        | '/lorebooks/'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/renderer/src/pages/models/index.vue': {
+      routes:
+        | '/models/'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/renderer/src/pages/settings/index.vue': {
+      routes:
+        | '/settings/'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/renderer/src/pages/tests/index.vue': {
+      routes:
+        | '/tests/'
       views:
         | never
       pathParamNames:

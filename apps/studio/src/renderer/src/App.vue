@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SideNav from '@renderer/components/layout/SideNav.vue'
 import TitleBar from '@renderer/components/layout/TitleBar.vue'
-import { SidebarProvider } from '@renderer/components/ui/sidebar'
+import { SidebarInset, SidebarProvider } from '@renderer/components/ui/sidebar'
 </script>
 
 <template>
@@ -15,9 +15,13 @@ import { SidebarProvider } from '@renderer/components/ui/sidebar'
     >
       <SideNav />
 
-      <main class="min-w-0 flex-1 overflow-hidden">
-        <RouterView />
-      </main>
+      <SidebarInset>
+        <div class="bg-background relative flex min-h-0 flex-1 flex-col">
+          <div class="page-scroll bg-background min-h-0 flex-1 overflow-y-auto">
+            <RouterView />
+          </div>
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   </div>
 </template>
