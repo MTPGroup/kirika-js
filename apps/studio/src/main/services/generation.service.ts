@@ -22,6 +22,9 @@ import {
 import { studioRuntime } from '../studio-runtime'
 import { SqliteCharacterContextResolver } from './character-context-resolver'
 
+const CHECKPOINT_INTERVAL_MS = 250
+const CHECKPOINT_CHARACTER_COUNT = 512
+
 interface Task {
   controller: AbortController
   owner: WebContents
@@ -128,6 +131,8 @@ class GenerationService {
     defaults: StartGenerationInput['generation'],
     signal: AbortSignal,
   ) {
+    let lastCheckpointAt = Date.now()
+    let charactersSinceCheckpoint = 0
     try {
       for await (const event of engine.generateTurn({
         conversation,
@@ -139,8 +144,33 @@ class GenerationService {
         generation: { ...defaults, ...input.generation },
         signal,
       })) {
-        await runtime.messageRepository.save(event.message)
-        await runtime.conversationRepository.save(conversation)
+        if (event.type === 'started') {
+          await runtime.conversationUnitOfWork.startGeneration(
+            conversation,
+            event.message,
+          )
+        } else if (
+          event.type === 'text_delta' ||
+          event.type === 'content_part'
+        ) {
+          charactersSinceCheckpoint +=
+            event.type === 'text_delta' ? event.delta.length : 1
+          if (
+            Date.now() - lastCheckpointAt >= CHECKPOINT_INTERVAL_MS ||
+            charactersSinceCheckpoint >= CHECKPOINT_CHARACTER_COUNT
+          ) {
+            await runtime.conversationUnitOfWork.checkpointGeneration(
+              event.message,
+            )
+            lastCheckpointAt = Date.now()
+            charactersSinceCheckpoint = 0
+          }
+        } else {
+          await runtime.conversationUnitOfWork.finishGeneration(
+            conversation,
+            event.message,
+          )
+        }
         let payload: GenerationEvent
         if (event.type === 'started')
           payload = {
@@ -219,8 +249,10 @@ class GenerationService {
       const reason = error instanceof Error ? error.message : String(error)
       if (message?.isInProgress) {
         conversation.failGeneratedMessage(message, reason)
-        await runtime.messageRepository.save(message)
-        await runtime.conversationRepository.save(conversation)
+        await runtime.conversationUnitOfWork.finishGeneration(
+          conversation,
+          message,
+        )
       }
       if (!owner.isDestroyed())
         owner.send(generationChannels.event, {

@@ -7,6 +7,7 @@ import {
   SqliteCharacterRepository,
   SqliteConversationMessageRepository,
   SqliteConversationRepository,
+  SqliteConversationUnitOfWork,
   type SqliteDatabase,
   SqliteLorebookRepository,
 } from '@kirika-js/adapter-persistence-sqlite'
@@ -30,6 +31,7 @@ export interface StudioRuntime {
   readonly assetRepository: SqliteAssetRepository
   readonly conversationRepository: SqliteConversationRepository
   readonly messageRepository: SqliteConversationMessageRepository
+  readonly conversationUnitOfWork: SqliteConversationUnitOfWork
   readonly assetStore: FilesystemAssetStore
   readonly settings: WorkspaceSettingsStore
   close(): Promise<void>
@@ -61,6 +63,9 @@ export async function createStudioRuntime(
     throw error
   }
 
+  const conversationUnitOfWork = new SqliteConversationUnitOfWork(db)
+  await conversationUnitOfWork.recoverInterruptedGenerations()
+
   return {
     paths,
     db,
@@ -69,6 +74,7 @@ export async function createStudioRuntime(
     assetRepository: new SqliteAssetRepository(db),
     conversationRepository: new SqliteConversationRepository(db),
     messageRepository: new SqliteConversationMessageRepository(db),
+    conversationUnitOfWork,
     assetStore: new FilesystemAssetStore({ rootDir: paths.assetsDir }),
     settings,
     close: async () => {

@@ -193,8 +193,7 @@ export const conversationService: ConversationApi = {
       content(input.content),
       parent,
     )
-    await runtime.messageRepository.save(message)
-    await runtime.conversationRepository.save(conversation)
+    await runtime.conversationUnitOfWork.appendMessage(conversation, message)
     return toConversationMessageDto(message)
   },
   async selectConversationBranch(input) {
