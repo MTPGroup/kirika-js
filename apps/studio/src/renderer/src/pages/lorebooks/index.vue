@@ -64,6 +64,7 @@ import {
 } from '@renderer/services/api'
 import { useStudioStore } from '@renderer/stores/studio'
 import { computed, onMounted, reactive, ref } from 'vue'
+import { toast } from 'vue-sonner'
 
 interface EntryDraft {
   id?: string
@@ -281,7 +282,7 @@ function entryInput(value: EntryDraft): LorebookEntryInput {
   }
 }
 
-async function saveLorebook(): Promise<boolean> {
+async function saveLorebook(closeOnSuccess = true): Promise<boolean> {
   if (!book.value) return false
   editorError.value = ''
   saving.value = true
@@ -298,6 +299,12 @@ async function saveLorebook(): Promise<boolean> {
     })
     applyBook(updated)
     await studio.refreshLorebooks()
+    if (closeOnSuccess) {
+      editorOpen.value = false
+      toast.success('世界书草稿已保存', {
+        description: `“${updated.name}”的草稿内容已更新。`,
+      })
+    }
     return true
   } catch (error) {
     editorError.value = toIpcError(error).message
@@ -314,7 +321,7 @@ async function publish() {
   try {
     const desiredVisibility = metadata.visibility
     if (!book.value.currentRevisionId) metadata.visibility = 'private'
-    if (!(await saveLorebook())) {
+    if (!(await saveLorebook(false))) {
       metadata.visibility = desiredVisibility
       return
     }
@@ -333,6 +340,10 @@ async function publish() {
     }
     applyBook(updated)
     await studio.refreshLorebooks()
+    editorOpen.value = false
+    toast.success('世界书已发布', {
+      description: `“${updated.name}”已发布为 v${updated.revisions.find((revision) => revision.id === updated.currentRevisionId)?.revisionNumber ?? ''}。`,
+    })
   } catch (error) {
     editorError.value = toIpcError(error).message
   } finally {
@@ -552,7 +563,7 @@ async function confirmDelete() {
                   <Input
                     v-model="selectedEntry.keys"
                     :disabled="selectedEntry.constant"
-                    placeholder="月亮, 月之国"
+                    placeholder="Shirabe, Shirabe Tsukuyomi"
                   />
                 </div>
                 <div class="space-y-1.5">

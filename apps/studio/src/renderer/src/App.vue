@@ -4,6 +4,8 @@ import lightStarterBackground from '@renderer/assets/starter/light.png'
 import SideNav from '@renderer/components/layout/SideNav.vue'
 import TitleBar from '@renderer/components/layout/TitleBar.vue'
 import { SidebarInset, SidebarProvider } from '@renderer/components/ui/sidebar'
+import { Toaster } from '@renderer/components/ui/sonner'
+import 'vue-sonner/style.css'
 import WorkspaceWelcome from '@renderer/components/workspace/WorkspaceWelcome.vue'
 import { useStudioStore } from '@renderer/stores/studio'
 import { useThemeStore } from '@renderer/stores/theme'
@@ -51,5 +53,6 @@ const starterBackground = computed(() =>
         </div>
       </SidebarInset>
     </SidebarProvider>
+    <Toaster position="bottom-right" rich-colors close-button />
   </div>
 </template>
