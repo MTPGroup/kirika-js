@@ -78,12 +78,19 @@ const messagePart = z.discriminatedUnion('type', [
 const lorebookEntry = z
   .object({
     id: id.optional(),
-    keys: z.array(nonEmpty).min(1),
-    title: nonEmpty,
+    keys: z.array(nonEmpty).max(100),
+    secondaryKeys: z.array(nonEmpty).max(100).optional(),
+    title: nonEmpty.max(200),
     enabled: z.boolean().optional(),
-    content: nonEmpty,
-    position: z.enum(['before_history', 'after_history']),
+    constant: z.boolean().optional(),
+    content: nonEmpty.max(100_000),
+    position: z.enum(['before_history', 'after_history', 'at_depth']),
+    insertionDepth: z.number().int().min(0).max(1000).optional(),
     priority: z.number().int().optional(),
+    matchMode: z.enum(['any', 'all']).optional(),
+    caseSensitive: z.boolean().optional(),
+    matchWholeWords: z.boolean().optional(),
+    probability: z.number().int().min(0).max(100).optional(),
   })
   .strict()
 
@@ -227,7 +234,15 @@ export const studioInputSchemas = {
     .strict(),
   [lorebookChannels.createDraft]: lorebookId,
   [lorebookChannels.replaceEntries]: z
-    .object({ lorebookId: id, entries: z.array(lorebookEntry) })
+    .object({
+      lorebookId: id,
+      name: nonEmpty.max(200),
+      description: z.string().max(10_000),
+      visibility: z.enum(['private', 'unlisted', 'public']),
+      scanDepth: z.number().int().min(1).max(1000),
+      tokenBudget: z.number().int().min(1).max(1_000_000),
+      entries: z.array(lorebookEntry).max(10_000),
+    })
     .strict(),
   [lorebookChannels.publish]: z
     .object({ lorebookId: id, revisionId: id })

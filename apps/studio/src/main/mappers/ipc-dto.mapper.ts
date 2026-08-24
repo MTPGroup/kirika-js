@@ -96,7 +96,14 @@ function toLorebookEntryDto(entry: LorebookEntry): LorebookEntryDto {
     enabled: entry.enabled,
     content: entry.content,
     position: entry.position,
+    insertionDepth: entry.insertionDepth,
     priority: entry.priority,
+    secondaryKeys: entry.secondaryKeys,
+    matchMode: entry.matchMode,
+    constant: entry.constant,
+    caseSensitive: entry.caseSensitive,
+    matchWholeWords: entry.matchWholeWords,
+    probability: entry.probability,
   }
 }
 function toLorebookRevisionDto(
@@ -106,6 +113,8 @@ function toLorebookRevisionDto(
     id: revision.id.value,
     revisionNumber: revision.revisionNumber,
     isDraft: revision.isDraft,
+    scanDepth: revision.scanDepth,
+    tokenBudget: revision.tokenBudget,
     entries: revision.entries.map(toLorebookEntryDto),
   }
 }

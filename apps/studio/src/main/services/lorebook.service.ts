@@ -24,6 +24,15 @@ async function save(
   return toLorebookDto(lorebook)
 }
 function entry(value: LorebookEntryInput) {
+  const options = {
+    secondaryKeys: value.secondaryKeys,
+    matchMode: value.matchMode,
+    constant: value.constant,
+    caseSensitive: value.caseSensitive,
+    matchWholeWords: value.matchWholeWords,
+    probability: value.probability,
+    insertionDepth: value.insertionDepth,
+  }
   return value.id
     ? LorebookEntry.reconstitute(
         new LorebookEntryId(value.id),
@@ -33,6 +42,7 @@ function entry(value: LorebookEntryInput) {
         value.content,
         value.position,
         value.priority ?? 0,
+        options,
       )
     : LorebookEntry.create(
         [...value.keys],
@@ -41,6 +51,7 @@ function entry(value: LorebookEntryInput) {
         value.content,
         value.position,
         value.priority ?? 0,
+        options,
       )
 }
 
@@ -68,9 +79,24 @@ export const lorebookService: LorebookApi = {
     return value ? toLorebookDto(value) : null
   },
   async deleteLorebook(input) {
-    await studioRuntime
-      .requireActive()
-      .lorebookRepository.delete(new LorebookId(input.lorebookId))
+    const runtime = studioRuntime.requireActive()
+    const lorebook = await runtime.lorebookRepository.findById(
+      new LorebookId(input.lorebookId),
+    )
+    if (!lorebook) return
+    const revisionIds = new Set(
+      lorebook.revisions.map((revision) => revision.id.value),
+    )
+    const referenced = (await runtime.characterRepository.findAll()).some(
+      (character) =>
+        character.revisions.some((revision) =>
+          revision.lorebooks.some((reference) =>
+            revisionIds.has(reference.lorebookRevisionId.value),
+          ),
+        ),
+    )
+    if (referenced) throw new Error('世界书仍被角色版本引用，无法删除')
+    await runtime.lorebookRepository.delete(lorebook.id)
   },
   async updateLorebookMetadata(input) {
     const { runtime, lorebook } = await load(input.lorebookId)
@@ -91,7 +117,16 @@ export const lorebookService: LorebookApi = {
     const { runtime, lorebook } = await load(input.lorebookId)
     const revision = lorebook.draftRevision
     if (!revision) throw new Error('世界书不存在草稿版本')
+    const draftEntryIds = new Set(revision.entries.map((item) => item.id.value))
+    for (const item of input.entries) {
+      if (item.id && !draftEntryIds.has(item.id))
+        throw new Error('世界书条目不属于当前草稿版本')
+    }
+    lorebook.updateMetadata(input.name, input.description)
+    lorebook.updateDraftSettings(input.scanDepth, input.tokenBudget)
     lorebook.replaceRevisionEntries(revision.id, input.entries.map(entry))
+    if (lorebook.visibility !== input.visibility)
+      lorebook.changeVisibility(input.visibility)
     return save(runtime, lorebook)
   },
   async publishLorebookRevision(input) {

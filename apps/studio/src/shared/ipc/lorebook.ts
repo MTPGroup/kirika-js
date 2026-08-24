@@ -1,5 +1,6 @@
 import type {
   LorebookVisibility,
+  LoreEntryMatchMode,
   LoreEntryPosition,
 } from '@kirika-js/domain/lorebook'
 import type { IsoDateTime } from './common'
@@ -7,17 +8,26 @@ import type { IsoDateTime } from './common'
 export interface LorebookEntryDto {
   readonly id: string
   readonly keys: readonly string[]
+  readonly secondaryKeys: readonly string[]
   readonly title: string
   readonly enabled: boolean
+  readonly constant: boolean
   readonly content: string
   readonly position: LoreEntryPosition
+  readonly insertionDepth: number
   readonly priority: number
+  readonly matchMode: LoreEntryMatchMode
+  readonly caseSensitive: boolean
+  readonly matchWholeWords: boolean
+  readonly probability: number
 }
 
 export interface LorebookRevisionDto {
   readonly id: string
   readonly revisionNumber: number
   readonly isDraft: boolean
+  readonly scanDepth: number
+  readonly tokenBudget: number
   readonly entries: readonly LorebookEntryDto[]
 }
 
@@ -67,14 +77,26 @@ export interface ChangeLorebookVisibilityInput extends LorebookIdInput {
 export interface LorebookEntryInput {
   readonly id?: string
   readonly keys: readonly string[]
+  readonly secondaryKeys?: readonly string[]
   readonly title: string
   readonly enabled?: boolean
+  readonly constant?: boolean
   readonly content: string
   readonly position: LoreEntryPosition
+  readonly insertionDepth?: number
   readonly priority?: number
+  readonly matchMode?: LoreEntryMatchMode
+  readonly caseSensitive?: boolean
+  readonly matchWholeWords?: boolean
+  readonly probability?: number
 }
 
 export interface ReplaceLorebookEntriesInput extends LorebookIdInput {
+  readonly name: string
+  readonly description: string
+  readonly visibility: LorebookVisibility
+  readonly scanDepth: number
+  readonly tokenBudget: number
   readonly entries: readonly LorebookEntryInput[]
 }
 

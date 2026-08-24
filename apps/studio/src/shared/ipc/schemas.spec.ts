@@ -3,6 +3,7 @@ import {
   characterChannels,
   conversationChannels,
   dialogChannels,
+  lorebookChannels,
   providerChannels,
   studioInputSchemas,
   workspaceChannels,
@@ -75,6 +76,44 @@ describe('Studio IPC Zod input schemas', () => {
       baseUrl: 'http://localhost:11434/v1',
       apiKey: { action: 'clear' },
     })
+  })
+
+  it('validates advanced lorebook entries and bounded settings', () => {
+    const schema = studioInputSchemas[lorebookChannels.replaceEntries]
+    expect(
+      schema.parse({
+        lorebookId: 'book',
+        name: '测试世界书',
+        description: '',
+        visibility: 'private',
+        scanDepth: 20,
+        tokenBudget: 2048,
+        entries: [
+          {
+            keys: [],
+            constant: true,
+            title: '常驻',
+            content: '内容',
+            position: 'at_depth',
+            insertionDepth: 2,
+            probability: 100,
+          },
+        ],
+      }),
+    ).toMatchObject({
+      name: '测试世界书',
+      visibility: 'private',
+      scanDepth: 20,
+      tokenBudget: 2048,
+    })
+    expect(() =>
+      schema.parse({
+        lorebookId: 'book',
+        scanDepth: 0,
+        tokenBudget: 2048,
+        entries: [],
+      }),
+    ).toThrow()
   })
 
   it('keeps null and undefined parent message semantics distinct', () => {

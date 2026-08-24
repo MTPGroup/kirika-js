@@ -103,6 +103,18 @@ export const characterService: CharacterService = {
   },
   async replaceCharacterLorebooks(input) {
     const { runtime, character } = await load(input.characterId)
+    const availableRevisions = new Map(
+      (await runtime.lorebookRepository.findAll()).flatMap((book) =>
+        book.revisions.map(
+          (revision) => [revision.id.value, revision] as const,
+        ),
+      ),
+    )
+    for (const reference of input.lorebooks) {
+      const revision = availableRevisions.get(reference.lorebookRevisionId)
+      if (!revision) throw new Error('引用的世界书版本不存在')
+      if (revision.isDraft) throw new Error('角色只能引用已发布的世界书版本')
+    }
     const refs = input.lorebooks.map(
       (r) =>
         new CharacterLorebookReference({

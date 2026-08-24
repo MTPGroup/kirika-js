@@ -25,11 +25,11 @@ export class SqliteCharacterContextResolver
     const revision = character?.findRevision(characterRevisionId)
     if (!revision) return null
     const lorebooks: LorebookRevision[] = []
+    const allLorebooks = await this.runtime.lorebookRepository.findAll()
     for (const reference of revision.lorebooks
       .filter((r) => r.enabled)
       .sort((a, b) => a.ordinal - b.ordinal)) {
-      const all = await this.runtime.lorebookRepository.findAll()
-      const book = all.find((item) =>
+      const book = allLorebooks.find((item) =>
         item.findRevision(
           new LorebookRevisionId(reference.lorebookRevisionId.value),
         ),
