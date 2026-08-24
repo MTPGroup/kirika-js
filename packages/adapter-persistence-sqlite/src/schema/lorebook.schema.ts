@@ -7,8 +7,8 @@ import {
   text,
   uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
-import type { Extensions } from './shared.schema'
-import { users } from './user.schema'
+import type { Extensions } from '~/schema/shared.schema'
+import { users } from '~/schema/user.schema'
 
 export const LOREBOOK_ENTRY_POSITIONS = [
   'before_history',

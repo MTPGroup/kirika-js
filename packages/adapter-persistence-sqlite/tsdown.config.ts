@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
@@ -8,6 +9,9 @@ export default defineConfig({
   clean: true,
   exports: true,
   outDir: './dist',
+  alias: {
+    '~': resolve(import.meta.dirname, 'src'),
+  },
   copy: [
     {
       from: './drizzle',

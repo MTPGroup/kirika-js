@@ -4,12 +4,12 @@ import {
   type ConversationRepositoryPort,
 } from '@kirika-js/domain/conversation'
 import { eq } from 'drizzle-orm'
-import type { SqliteDatabase } from '../database'
-import { ConversationMapper } from '../mappers/conversation.mapper'
+import type { SqliteDatabase } from '~/database'
+import { ConversationMapper } from '~/mappers/conversation.mapper'
 import {
   conversationParticipants,
   conversations,
-} from '../schema/conversation.schema'
+} from '~/schema/conversation.schema'
 
 export class SqliteConversationRepository
   implements ConversationRepositoryPort
@@ -35,7 +35,9 @@ export class SqliteConversationRepository
   }
 
   async findAll(): Promise<Conversation[]> {
-    const rows = await this.db.select({ id: conversations.id }).from(conversations)
+    const rows = await this.db
+      .select({ id: conversations.id })
+      .from(conversations)
     const results = await Promise.all(
       rows.map((row) => this.findById(new ConversationId(row.id))),
     )

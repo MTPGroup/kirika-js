@@ -15,7 +15,7 @@ import type {
   characterRevisionLorebooks,
   characterRevisions,
   characters,
-} from '../schema/character.schema'
+} from '~/schema/character.schema'
 
 type CharacterRow = typeof characters.$inferSelect
 type RevisionRow = typeof characterRevisions.$inferSelect

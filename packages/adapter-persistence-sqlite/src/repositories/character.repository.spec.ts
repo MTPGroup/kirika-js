@@ -7,14 +7,14 @@ import {
 } from '@kirika-js/domain/character'
 import { Lorebook, LorebookEntry } from '@kirika-js/domain/lorebook'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { SqliteAssetRepository } from '~/repositories/asset.repository'
+import { SqliteCharacterRepository } from '~/repositories/character.repository'
+import { SqliteLorebookRepository } from '~/repositories/lorebook.repository'
 import {
   createTestDatabase,
   type TestDatabase,
-} from '../testing/create-test-database'
-import { seedUser } from '../testing/fixtures'
-import { SqliteAssetRepository } from './asset.repository'
-import { SqliteCharacterRepository } from './character.repository'
-import { SqliteLorebookRepository } from './lorebook.repository'
+} from '~/testing/create-test-database'
+import { seedUser } from '~/testing/fixtures'
 
 describe('SqliteCharacterRepository', () => {
   let context: Awaited<ReturnType<typeof createTestDatabase>> | undefined

@@ -12,7 +12,7 @@ import type {
   lorebookEntries,
   lorebookRevisions,
   lorebooks,
-} from '../schema/lorebook.schema'
+} from '~/schema/lorebook.schema'
 
 type LorebookRow = typeof lorebooks.$inferSelect
 type RevisionRow = typeof lorebookRevisions.$inferSelect

@@ -5,10 +5,10 @@ import {
 } from '@kirika-js/domain/conversation'
 import { UserId } from '@kirika-js/domain/shared'
 
-import { SqliteCharacterRepository } from '../repositories/character.repository'
-import { SqliteConversationRepository } from '../repositories/conversation.repository'
-import { users } from '../schema'
-import type { TestDatabase } from './create-test-database'
+import { SqliteCharacterRepository } from '~/repositories/character.repository'
+import { SqliteConversationRepository } from '~/repositories/conversation.repository'
+import { users } from '~/schema'
+import type { TestDatabase } from '~/testing/create-test-database'
 
 export async function seedUser(
   db: TestDatabase,

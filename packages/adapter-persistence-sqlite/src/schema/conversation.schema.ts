@@ -8,8 +8,8 @@ import {
   text,
   uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
-import { characterRevisions, characters } from './character.schema'
-import { users } from './user.schema'
+import { characterRevisions, characters } from '~/schema/character.schema'
+import { users } from '~/schema/user.schema'
 
 export const CONVERSATION_MODES = ['direct', 'group'] as const
 

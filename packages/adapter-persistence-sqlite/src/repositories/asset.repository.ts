@@ -5,9 +5,9 @@ import type {
 } from '@kirika-js/domain/character'
 import { eq } from 'drizzle-orm'
 
-import type { SqliteDatabase } from '../database'
-import { SqliteAssetMapper } from '../mappers/asset.mapper'
-import { assets } from '../schema/asset.schema'
+import type { SqliteDatabase } from '~/database'
+import { SqliteAssetMapper } from '~/mappers/asset.mapper'
+import { assets } from '~/schema/asset.schema'
 
 export class SqliteAssetRepository implements AssetRepositoryPort {
   constructor(private readonly db: SqliteDatabase) {}

@@ -6,13 +6,13 @@ import {
 } from '@kirika-js/domain/conversation'
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { conversationMessages } from '../schema'
+import { SqliteConversationMessageRepository } from '~/repositories/conversation-message.repository'
+import { conversationMessages } from '~/schema'
 import {
   createTestDatabase,
   type TestDatabase,
-} from '../testing/create-test-database'
-import { seedConversation } from '../testing/fixtures'
-import { SqliteConversationMessageRepository } from './conversation-message.repository'
+} from '~/testing/create-test-database'
+import { seedConversation } from '~/testing/fixtures'
 
 describe('SqliteConversationMessageRepository', () => {
   let context: Awaited<ReturnType<typeof createTestDatabase>> | undefined

@@ -1,11 +1,11 @@
 import { Lorebook, LorebookEntry, LorebookId } from '@kirika-js/domain/lorebook'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { SqliteLorebookRepository } from '~/repositories/lorebook.repository'
 import {
   createTestDatabase,
   type TestDatabase,
-} from '../testing/create-test-database'
-import { seedUser } from '../testing/fixtures'
-import { SqliteLorebookRepository } from './lorebook.repository'
+} from '~/testing/create-test-database'
+import { seedUser } from '~/testing/fixtures'
 
 describe('SqliteLorebookRepository', () => {
   let context: Awaited<ReturnType<typeof createTestDatabase>> | undefined

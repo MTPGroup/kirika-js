@@ -1,7 +1,11 @@
 {
   "extends": "@kirika-js/typescript-config/bundler.json",
   "compilerOptions": {
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["src/*"]
+    }
   },
   "include": ["src", "drizzle.config.ts"]
 }

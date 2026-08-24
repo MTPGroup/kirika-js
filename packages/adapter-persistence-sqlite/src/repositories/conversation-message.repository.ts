@@ -5,9 +5,9 @@ import type {
   ConversationMessageRepositoryPort,
 } from '@kirika-js/domain/conversation'
 import { eq } from 'drizzle-orm'
-import type { SqliteDatabase } from '../database'
-import { ConversationMapper } from '../mappers/conversation.mapper'
-import { conversationMessages } from '../schema/conversation.schema'
+import type { SqliteDatabase } from '~/database'
+import { ConversationMapper } from '~/mappers/conversation.mapper'
+import { conversationMessages } from '~/schema/conversation.schema'
 
 export class SqliteConversationMessageRepository
   implements ConversationMessageRepositoryPort

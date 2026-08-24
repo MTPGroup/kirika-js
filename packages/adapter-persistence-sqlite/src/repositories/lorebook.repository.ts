@@ -4,13 +4,13 @@ import {
   type LorebookRepositoryPort,
 } from '@kirika-js/domain/lorebook'
 import { and, eq, inArray, notInArray, sql } from 'drizzle-orm'
-import type { SqliteDatabase } from '../database'
-import { LorebookMapper } from '../mappers/lorebook.mapper'
+import type { SqliteDatabase } from '~/database'
+import { LorebookMapper } from '~/mappers/lorebook.mapper'
 import {
   lorebookEntries,
   lorebookRevisions,
   lorebooks,
-} from '../schema/lorebook.schema'
+} from '~/schema/lorebook.schema'
 
 export class SqliteLorebookRepository implements LorebookRepositoryPort {
   constructor(private readonly db: SqliteDatabase) {}

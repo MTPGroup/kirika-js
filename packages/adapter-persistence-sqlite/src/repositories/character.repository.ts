@@ -4,14 +4,14 @@ import {
   type CharacterRepositoryPort,
 } from '@kirika-js/domain/character'
 import { eq, inArray } from 'drizzle-orm'
-import type { SqliteDatabase } from '../database'
-import { CharacterMapper } from '../mappers/character.mapper'
+import type { SqliteDatabase } from '~/database'
+import { CharacterMapper } from '~/mappers/character.mapper'
 import {
   characterRevisionAssets,
   characterRevisionLorebooks,
   characterRevisions,
   characters,
-} from '../schema/character.schema'
+} from '~/schema/character.schema'
 
 export class SqliteCharacterRepository implements CharacterRepositoryPort {
   constructor(private readonly db: SqliteDatabase) {}

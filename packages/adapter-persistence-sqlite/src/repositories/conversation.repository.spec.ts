@@ -1,11 +1,11 @@
 import { ConversationId } from '@kirika-js/domain/conversation'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { SqliteConversationRepository } from '~/repositories/conversation.repository'
 import {
   createTestDatabase,
   type TestDatabase,
-} from '../testing/create-test-database'
-import { seedConversation } from '../testing/fixtures'
-import { SqliteConversationRepository } from './conversation.repository'
+} from '~/testing/create-test-database'
+import { seedConversation } from '~/testing/fixtures'
 
 describe('SqliteConversationRepository', () => {
   let context: Awaited<ReturnType<typeof createTestDatabase>> | undefined

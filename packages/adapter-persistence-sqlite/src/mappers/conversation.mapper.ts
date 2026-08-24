@@ -20,7 +20,7 @@ import type {
   conversationParticipants,
   conversations,
   PersistedMessageContentPart,
-} from '../schema/conversations.schema'
+} from '~/schema/conversations.schema'
 
 type ConversationRow = typeof conversations.$inferSelect
 

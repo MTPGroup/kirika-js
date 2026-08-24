@@ -9,10 +9,10 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
 
-import { assets } from './asset.schema'
-import { lorebookRevisions } from './lorebook.schema'
-import type { Extensions } from './shared.schema'
-import { users } from './user.schema'
+import { assets } from '~/schema/asset.schema'
+import { lorebookRevisions } from '~/schema/lorebook.schema'
+import type { Extensions } from '~/schema/shared.schema'
+import { users } from '~/schema/user.schema'
 
 export const characters = sqliteTable(
   'characters',

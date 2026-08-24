@@ -1,10 +1,10 @@
 import { Asset, AssetId } from '@kirika-js/domain/character'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { SqliteAssetRepository } from '~/repositories/asset.repository'
 import {
   createTestDatabase,
   type TestDatabase,
-} from '../testing/create-test-database'
-import { SqliteAssetRepository } from './asset.repository'
+} from '~/testing/create-test-database'
 
 describe('SqliteAssetRepository', () => {
   let context: Awaited<ReturnType<typeof createTestDatabase>> | undefined
