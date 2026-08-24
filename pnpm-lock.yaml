@@ -183,6 +183,12 @@ importers:
       '@kirika-js/adapter-model-openai-compatible':
         specifier: workspace:*
         version: link:../../packages/adapter-model-openai-compatible
+      '@kirika-js/adapter-persistence-sqlite':
+        specifier: workspace:*
+        version: link:../../packages/adapter-persistence-sqlite
+      '@kirika-js/adapter-storage-filesystem':
+        specifier: workspace:*
+        version: link:../../packages/adapter-storage-filesystem
       '@kirika-js/character-card':
         specifier: workspace:*
         version: link:../../packages/character-card

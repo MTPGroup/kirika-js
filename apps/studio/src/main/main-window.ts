@@ -2,6 +2,7 @@ import { join } from 'node:path'
 import { is } from '@electron-toolkit/utils'
 import { BrowserWindow, shell } from 'electron'
 import icon from '../../resources/icon.png?asset'
+import { generationService } from './services/generation.service'
 
 export function createMainWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -40,6 +41,10 @@ export function createMainWindow(): void {
 
       sandbox: false,
     },
+  })
+
+  mainWindow.on('closed', () => {
+    void generationService.abortByOwner(mainWindow.webContents)
   })
 
   mainWindow.on('ready-to-show', () => {
