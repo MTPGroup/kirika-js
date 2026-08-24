@@ -113,6 +113,10 @@ export const characterRevisions = sqliteTable(
       .default(sql`(unixepoch() * 1000)`),
   },
   (t) => [
+    check('character_revision_number_check', sql`${t.revisionNumber} >= 1`),
+    check('character_revision_draft_check', sql`${t.isDraft} in (0, 1)`),
+    check('character_revision_name_check', sql`length(trim(${t.name})) > 0`),
+
     uniqueIndex('character_revision_number_uq').on(
       t.characterId,
       t.revisionNumber,
@@ -175,6 +179,16 @@ export const characterRevisionAssets = sqliteTable(
     index('character_revision_assets_asset_idx').on(t.assetId),
 
     check(
+      'character_revision_assets_name_check',
+      sql`length(trim(${t.name})) > 0`,
+    ),
+    check(
+      'character_revision_assets_uri_check',
+      sql`length(trim(${t.uri})) > 0`,
+    ),
+    check('character_revision_assets_ordinal_check', sql`${t.ordinal} >= 0`),
+
+    check(
       'character_revision_assets_kind_check',
       sql`${t.kind} in (
         'avatar',
@@ -222,5 +236,10 @@ export const characterRevisionLorebooks = sqliteTable(
     ),
 
     index('character_revision_lorebook_revision_idx').on(t.lorebookRevisionId),
+    check('character_revision_lorebook_ordinal_check', sql`${t.ordinal} >= 0`),
+    check(
+      'character_revision_lorebook_enabled_check',
+      sql`${t.enabled} in (0, 1)`,
+    ),
   ],
 )

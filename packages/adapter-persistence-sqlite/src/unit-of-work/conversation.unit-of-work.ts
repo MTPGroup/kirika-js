@@ -7,6 +7,7 @@ import type { SqliteDatabase } from '~/database'
 import { ConversationMapper } from '~/mappers/conversation.mapper'
 import {
   conversationMessages,
+  conversationParticipants,
   conversations,
 } from '~/schema/conversation.schema'
 
@@ -19,6 +20,20 @@ export class ConversationGenerationConflictError extends Error {
 
 export class SqliteConversationUnitOfWork {
   constructor(private readonly db: SqliteDatabase) {}
+
+  async createWithMessage(
+    conversation: Conversation,
+    message: ConversationMessage,
+  ): Promise<void> {
+    const mapped = ConversationMapper.toPersistence(conversation)
+    const m = ConversationMapper.messageToPersistence(message)
+    await this.db.transaction(async (tx) => {
+      await tx.insert(conversations).values(mapped.conversation)
+      if (mapped.participants.length > 0)
+        await tx.insert(conversationParticipants).values(mapped.participants)
+      await tx.insert(conversationMessages).values(m)
+    })
+  }
 
   async appendMessage(
     conversation: Conversation,
