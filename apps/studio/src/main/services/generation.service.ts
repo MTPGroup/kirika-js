@@ -28,6 +28,7 @@ const CHECKPOINT_CHARACTER_COUNT = 512
 interface Task {
   controller: AbortController
   owner: WebContents
+  ownerId: number
   done: Promise<void>
   conversationId: string
 }
@@ -80,6 +81,7 @@ class GenerationService {
     this.tasks.set(requestId, {
       controller,
       owner,
+      ownerId: owner.id,
       done,
       conversationId: input.conversationId,
     })
@@ -88,15 +90,16 @@ class GenerationService {
   async abort(input: AbortGenerationInput, owner?: WebContents): Promise<void> {
     const task = this.tasks.get(input.requestId)
     if (!task) return
-    if (owner && task.owner.id !== owner.id)
+    if (owner && task.ownerId !== owner.id)
       throw new Error('不能取消其他窗口的生成任务')
     task.controller.abort()
     await task.done
   }
-  async abortByOwner(owner: WebContents): Promise<void> {
+  async abortByOwner(owner: WebContents | number): Promise<void> {
+    const ownerId = typeof owner === 'number' ? owner : owner.id
     await Promise.all(
       [...this.tasks.entries()]
-        .filter(([, t]) => t.owner.id === owner.id)
+        .filter(([, task]) => task.ownerId === ownerId)
         .map(([id]) => this.abort({ requestId: id })),
     )
   }

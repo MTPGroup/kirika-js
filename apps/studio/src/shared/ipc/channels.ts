@@ -1,5 +1,6 @@
 import { characterChannels } from './character'
 import { conversationChannels } from './conversation'
+import { dialogChannels } from './dialog'
 import { generationChannels } from './generation'
 import { lorebookChannels } from './lorebook'
 import { providerChannels } from './provider'
@@ -12,6 +13,7 @@ export const StudioChannels = {
   lorebook: lorebookChannels,
   conversation: conversationChannels,
   generation: generationChannels,
+  dialog: dialogChannels,
 } as const
 
 export type StudioChannel =
@@ -21,3 +23,4 @@ export type StudioChannel =
   | (typeof lorebookChannels)[keyof typeof lorebookChannels]
   | (typeof conversationChannels)[keyof typeof conversationChannels]
   | (typeof generationChannels)[keyof typeof generationChannels]
+  | (typeof dialogChannels)[keyof typeof dialogChannels]

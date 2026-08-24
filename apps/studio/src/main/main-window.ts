@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { is } from '@electron-toolkit/utils'
 import { BrowserWindow, shell } from 'electron'
-import icon from '../../resources/icon.png?asset'
+import icon from '../../resources/kirika.png?asset'
 import { generationService } from './services/generation.service'
 
 export function createMainWindow(): void {
@@ -31,7 +31,7 @@ export function createMainWindow(): void {
           },
         }),
 
-    ...(process.platform === 'linux' ? { icon } : {}),
+    ...(process.platform !== 'darwin' ? { icon } : {}),
 
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -43,8 +43,11 @@ export function createMainWindow(): void {
     },
   })
 
-  mainWindow.on('closed', () => {
-    void generationService.abortByOwner(mainWindow.webContents)
+  const ownerWebContentsId = mainWindow.webContents.id
+  mainWindow.webContents.once('destroyed', () => {
+    void generationService.abortByOwner(ownerWebContentsId).catch((error) => {
+      console.error('取消窗口生成任务失败', error)
+    })
   })
 
   mainWindow.on('ready-to-show', () => {
