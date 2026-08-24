@@ -2,7 +2,7 @@ import { ASSET_KINDS, type AssetKind } from '@kirika-js/domain/character'
 import type { LoreEntryPosition } from '@kirika-js/domain/lorebook'
 import { InvalidCharacterCardError } from '../errors'
 
-export const CHARACTER_CARD_MODEL_VERSION = 1 as const
+export const CHARACTER_CARD_MODEL_VERSION = 2 as const
 
 export interface CharacterCardAsset {
   readonly kind: AssetKind
@@ -16,11 +16,18 @@ export interface CharacterCardAsset {
 
 export interface CharacterCardLorebookEntry {
   readonly keys: readonly string[]
+  readonly secondaryKeys: readonly string[]
   readonly title: string
   readonly enabled: boolean
+  readonly constant: boolean
   readonly content: string
   readonly position: LoreEntryPosition
+  readonly insertionDepth: number
   readonly priority: number
+  readonly matchMode: 'any' | 'all'
+  readonly caseSensitive: boolean
+  readonly matchWholeWords: boolean
+  readonly probability: number
 }
 
 export interface CharacterCardLorebook {
@@ -48,7 +55,7 @@ export interface CharacterCardDocument {
 }
 
 export interface CharacterCardDocumentInput {
-  readonly modelVersion?: typeof CHARACTER_CARD_MODEL_VERSION
+  readonly modelVersion?: 1 | typeof CHARACTER_CARD_MODEL_VERSION
   readonly name: string
   readonly description?: string
   readonly personality?: string
@@ -74,11 +81,18 @@ export interface CharacterCardAssetInput {
 
 export interface CharacterCardLorebookEntryInput {
   readonly keys: readonly string[]
+  readonly secondaryKeys?: readonly string[]
   readonly title: string
   readonly enabled?: boolean
+  readonly constant?: boolean
   readonly content: string
   readonly position: LoreEntryPosition
+  readonly insertionDepth?: number
   readonly priority?: number
+  readonly matchMode?: 'any' | 'all'
+  readonly caseSensitive?: boolean
+  readonly matchWholeWords?: boolean
+  readonly probability?: number
 }
 
 export interface CharacterCardLorebookInput {
@@ -93,7 +107,11 @@ export interface CharacterCardLorebookInput {
 export function createCharacterCardDocument(
   input: CharacterCardDocumentInput,
 ): CharacterCardDocument {
-  if (input.modelVersion !== undefined && input.modelVersion !== 1) {
+  if (
+    input.modelVersion !== undefined &&
+    input.modelVersion !== 1 &&
+    input.modelVersion !== CHARACTER_CARD_MODEL_VERSION
+  ) {
     throw new InvalidCharacterCardError(
       `不支持的角色卡内部模型版本: ${input.modelVersion}`,
     )
@@ -176,9 +194,13 @@ function normalizeLorebook(
 function normalizeLorebookEntry(
   input: CharacterCardLorebookEntryInput,
 ): CharacterCardLorebookEntry {
-  const keys = normalizeTextList(input.keys.map((key) => key.trim()))
-  if (keys.length === 0) {
-    throw new InvalidCharacterCardError('角色卡世界书条目至少需要一个关键词')
+  const keys = normalizeTextList(input.keys)
+  const secondaryKeys = normalizeTextList(input.secondaryKeys ?? [])
+  const constant = input.constant ?? false
+  if (!constant && keys.length === 0) {
+    throw new InvalidCharacterCardError(
+      '非固定角色卡世界书条目至少需要一个关键词',
+    )
   }
 
   const title = input.title.trim()
@@ -190,29 +212,46 @@ function normalizeLorebookEntry(
   }
   if (
     input.position !== 'before_history' &&
-    input.position !== 'after_history'
+    input.position !== 'after_history' &&
+    input.position !== 'at_depth'
   ) {
     throw new InvalidCharacterCardError(
       `不支持的世界书条目位置: ${input.position}`,
     )
   }
   const priority = input.priority ?? 0
-  if (!Number.isFinite(priority)) {
-    throw new InvalidCharacterCardError('世界书条目优先级必须是有限数值')
-  }
+  if (!Number.isInteger(priority))
+    throw new InvalidCharacterCardError('世界书条目优先级必须是整数')
+  const insertionDepth = input.insertionDepth ?? 0
+  if (!Number.isInteger(insertionDepth) || insertionDepth < 0)
+    throw new InvalidCharacterCardError('世界书条目插入深度必须是非负整数')
+  if (input.position !== 'at_depth' && insertionDepth !== 0)
+    throw new InvalidCharacterCardError('只有指定深度位置可以设置插入深度')
+  const probability = input.probability ?? 100
+  if (!Number.isInteger(probability) || probability < 0 || probability > 100)
+    throw new InvalidCharacterCardError(
+      '世界书条目触发概率必须是 0 到 100 的整数',
+    )
 
   return {
     keys,
+    secondaryKeys,
     title,
     enabled: input.enabled ?? true,
-    content: input.content,
+    constant,
+    content: input.content.trim(),
     position: input.position,
+    insertionDepth,
     priority,
+    matchMode: input.matchMode ?? 'any',
+    caseSensitive: input.caseSensitive ?? false,
+    matchWholeWords: input.matchWholeWords ?? false,
+    probability,
   }
 }
 
 function normalizeTextList(values: readonly string[]): string[] {
-  return [...new Set(values.filter((value) => value.trim().length > 0))]
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
 }
 
 function cloneExtensions(

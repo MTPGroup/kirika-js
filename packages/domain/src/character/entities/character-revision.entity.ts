@@ -296,7 +296,7 @@ export class CharacterRevision extends Entity<CharacterRevisionId> {
   }
 
   private static normalizeTextList(values: readonly string[]): string[] {
-    return [...new Set(values.filter((value) => value.trim().length > 0))]
+    return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
   }
 
   private static validateAssets(

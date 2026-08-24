@@ -28,7 +28,7 @@ describe('CharacterCardDocument', () => {
     extensions.nested.enabled = false
 
     expect(card).toMatchObject({
-      modelVersion: 1,
+      modelVersion: 2,
       name: '露娜',
       description: '',
       greetings: ['你好。'],
@@ -42,6 +42,50 @@ describe('CharacterCardDocument', () => {
       mediaType: 'image/png',
     })
     expect(card.assets[0]?.data).toEqual(new Uint8Array([1, 2, 3]))
+  })
+
+  it('完整规范化高级世界书条目并兼容 v1 输入', () => {
+    const card = createCharacterCardDocument({
+      modelVersion: 1,
+      name: 'Kirika',
+      lorebooks: [
+        {
+          ordinal: 0,
+          entries: [
+            {
+              keys: ['  primary ', 'primary'],
+              secondaryKeys: [' secondary '],
+              title: '  深度条目 ',
+              content: ' 内容 ',
+              position: 'at_depth',
+              insertionDepth: 3,
+              constant: false,
+              matchMode: 'all',
+              caseSensitive: true,
+              matchWholeWords: true,
+              probability: 40,
+              priority: 9,
+            },
+          ],
+        },
+      ],
+    })
+    expect(card.modelVersion).toBe(2)
+    expect(card.lorebooks[0]?.entries[0]).toEqual({
+      keys: ['primary'],
+      secondaryKeys: ['secondary'],
+      title: '深度条目',
+      enabled: true,
+      constant: false,
+      content: '内容',
+      position: 'at_depth',
+      insertionDepth: 3,
+      priority: 9,
+      matchMode: 'all',
+      caseSensitive: true,
+      matchWholeWords: true,
+      probability: 40,
+    })
   })
 
   it('拒绝无法进入规范化模型的数据', () => {
