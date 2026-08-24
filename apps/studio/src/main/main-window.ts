@@ -26,8 +26,6 @@ export function createMainWindow(): void {
       : {
           titleBarOverlay: {
             height: 44,
-            color: '#0f1016',
-            symbolColor: '#a1a1aa',
           },
         }),
 
@@ -54,8 +52,15 @@ export function createMainWindow(): void {
     mainWindow.show()
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    const parsed = new URL(url)
+
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      void shell.openExternal(url).catch((error) => {
+        console.error('打开外部链接失败', error)
+      })
+    }
+
     return { action: 'deny' }
   })
 

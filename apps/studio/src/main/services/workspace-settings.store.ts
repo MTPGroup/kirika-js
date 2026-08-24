@@ -56,15 +56,19 @@ export class WorkspaceSettingsStore {
   get ownerId(): string {
     return this.data.ownerId
   }
+
   get activeCharacterId(): string | null {
     return this.data.activeCharacterId
   }
+
   get activeConversationId(): string | null {
     return this.data.activeConversationId
   }
+
   listProviders(): readonly ProviderDto[] {
     return this.data.providers.map(toProviderDto)
   }
+
   getProvider(id: string): StoredProvider | null {
     return this.data.providers.find((item) => item.id === id) ?? null
   }
@@ -83,23 +87,29 @@ export class WorkspaceSettingsStore {
       generation: input.generation ?? existing?.generation,
       enabled: input.enabled ?? existing?.enabled ?? true,
     }
+
     if (!provider.name || !provider.baseUrl || !provider.defaultModel)
       throw new Error('Provider 名称、Base URL 和默认模型不能为空')
+
     this.data.providers = [
       ...this.data.providers.filter((item) => item.id !== provider.id),
       provider,
     ]
     await this.flush()
+
     return toProviderDto(provider)
   }
+
   async deleteProvider(id: string): Promise<void> {
     this.data.providers = this.data.providers.filter((item) => item.id !== id)
     await this.flush()
   }
+
   private async flush(): Promise<void> {
     await writeFile(this.filePath, JSON.stringify(this.data, null, 2), 'utf8')
   }
 }
+
 function toProviderDto(value: StoredProvider): ProviderDto {
   return {
     id: value.id,
@@ -111,6 +121,7 @@ function toProviderDto(value: StoredProvider): ProviderDto {
     enabled: value.enabled,
   }
 }
+
 function normalizeManifest(value: WorkspaceManifest): WorkspaceManifest {
   if (!value.ownerId) value.ownerId = randomUUID()
   return {

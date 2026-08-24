@@ -43,6 +43,7 @@ function register<C extends InputStudioChannel>(
   )
   channels.push(channel)
 }
+
 function registerNoInput(
   channels: string[],
   channel: string,
@@ -52,6 +53,7 @@ function registerNoInput(
   ipcMain.handle(channel, () => result(operation))
   channels.push(channel)
 }
+
 function registerWithEvent<C extends InputStudioChannel>(
   channels: string[],
   channel: C,
