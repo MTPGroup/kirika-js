@@ -1,29 +1,46 @@
 import { type IpcMainInvokeEvent, ipcMain } from 'electron'
-import type { AbortGenerationInput, StartGenerationInput } from '~/shared/ipc'
+import type { z } from 'zod'
 import {
   characterChannels,
   conversationChannels,
+  dialogChannels,
   generationChannels,
+  type InputStudioChannel,
+  type IpcResult,
   lorebookChannels,
   providerChannels,
+  studioInputSchemas,
   workspaceChannels,
 } from '~/shared/ipc'
 import { characterService } from '../services/character.service'
 import { conversationService } from '../services/conversation.service'
+import { dialogService } from '../services/dialog.service'
 import { generationService } from '../services/generation.service'
 import { lorebookService } from '../services/lorebook.service'
 import {
   providerService,
   workspaceService,
 } from '../services/workspace-provider.service'
+import { toIpcError } from './ipc-error'
 
-function register<T>(
+function result<T>(operation: () => Promise<T> | T): Promise<IpcResult<T>> {
+  return Promise.resolve()
+    .then(async () => await operation())
+    .then(
+      (value) => ({ ok: true, value }),
+      (error: unknown) => ({ ok: false, error: toIpcError(error) }),
+    )
+}
+
+function register<C extends InputStudioChannel>(
   channels: string[],
-  channel: string,
-  operation: (input: T) => unknown,
+  channel: C,
+  operation: (input: z.output<(typeof studioInputSchemas)[C]>) => unknown,
 ) {
   ipcMain.removeHandler(channel)
-  ipcMain.handle(channel, (_event, input: T) => operation(input))
+  ipcMain.handle(channel, (_event, input: unknown) =>
+    result(() => operation(studioInputSchemas[channel].parse(input) as never)),
+  )
   channels.push(channel)
 }
 function registerNoInput(
@@ -32,21 +49,35 @@ function registerNoInput(
   operation: () => unknown,
 ) {
   ipcMain.removeHandler(channel)
-  ipcMain.handle(channel, operation)
+  ipcMain.handle(channel, () => result(operation))
   channels.push(channel)
 }
-function registerWithEvent<T>(
+function registerWithEvent<C extends InputStudioChannel>(
   channels: string[],
-  channel: string,
-  operation: (input: T, event: IpcMainInvokeEvent) => unknown,
+  channel: C,
+  operation: (
+    input: z.output<(typeof studioInputSchemas)[C]>,
+    event: IpcMainInvokeEvent,
+  ) => unknown,
 ) {
   ipcMain.removeHandler(channel)
-  ipcMain.handle(channel, (event, input: T) => operation(input, event))
+  ipcMain.handle(channel, (event, input: unknown) =>
+    result(() =>
+      operation(studioInputSchemas[channel].parse(input) as never, event),
+    ),
+  )
   channels.push(channel)
 }
 
 export function registerStudioIpc(): () => void {
   const channels: string[] = []
+  register(
+    channels,
+    dialogChannels.selectDirectory,
+    dialogService.selectDirectory,
+  )
+  register(channels, dialogChannels.selectFile, dialogService.selectFile)
+  register(channels, dialogChannels.saveFile, dialogService.saveFile)
   register(channels, workspaceChannels.open, workspaceService.openWorkspace)
   register(channels, workspaceChannels.create, workspaceService.createWorkspace)
   registerNoInput(
@@ -227,15 +258,11 @@ export function registerStudioIpc(): () => void {
     conversationChannels.restore,
     conversationService.restoreConversation,
   )
-  registerWithEvent<StartGenerationInput>(
-    channels,
-    generationChannels.start,
-    (input, event) => generationService.start(input, event.sender),
+  registerWithEvent(channels, generationChannels.start, (input, event) =>
+    generationService.start(input, event.sender),
   )
-  registerWithEvent<AbortGenerationInput>(
-    channels,
-    generationChannels.abort,
-    (input, event) => generationService.abort(input, event.sender),
+  registerWithEvent(channels, generationChannels.abort, (input, event) =>
+    generationService.abort(input, event.sender),
   )
   return () => {
     for (const channel of channels) ipcMain.removeHandler(channel)

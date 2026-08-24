@@ -16,3 +16,7 @@ export interface IpcErrorPayload {
   readonly message: string
   readonly details?: unknown
 }
+
+export type IpcResult<T> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly error: IpcErrorPayload }
