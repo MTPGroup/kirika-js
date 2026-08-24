@@ -132,9 +132,16 @@ export class Lorebook extends AggregateRoot<LorebookId> {
     const sourceEntries =
       this.currentRevision?.entries.map((entry) => entry.clone()) ?? []
 
+    const sourceRevision = this.currentRevision
     const draft = LorebookRevision.createDraft(
       this.nextRevisionNumber(),
       sourceEntries,
+      sourceRevision
+        ? {
+            scanDepth: sourceRevision.scanDepth,
+            tokenBudget: sourceRevision.tokenBudget,
+          }
+        : undefined,
     )
 
     this._revisions.set(draft.id.value, draft)
@@ -161,6 +168,13 @@ export class Lorebook extends AggregateRoot<LorebookId> {
   ) {
     const revision = this.getRevision(revisionId)
     revision.replaceEntries(entries)
+    this.touch()
+  }
+
+  updateDraftSettings(scanDepth: number, tokenBudget: number) {
+    const revision = this.draftRevision
+    if (!revision) throw new Error('世界书不存在草稿版本')
+    revision.updateSettings({ scanDepth, tokenBudget })
     this.touch()
   }
 

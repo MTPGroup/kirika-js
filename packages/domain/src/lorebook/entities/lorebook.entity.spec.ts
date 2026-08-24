@@ -290,6 +290,51 @@ describe('LorebookRevision', () => {
     )
   })
 
+  it('支持常驻、高级关键词规则、概率和指定深度', () => {
+    const constant = LorebookEntry.create(
+      [],
+      '常驻设定',
+      true,
+      '始终注入',
+      'at_depth',
+      100,
+      { constant: true, insertionDepth: 2, probability: 100 },
+    )
+    expect(constant.isTriggeredBy('任意内容')).toBe(true)
+    expect(constant.insertionDepth).toBe(2)
+
+    const strict = LorebookEntry.create(
+      ['Moon'],
+      '严格匹配',
+      true,
+      '严格内容',
+      'after_history',
+      10,
+      {
+        secondaryKeys: ['Magic'],
+        matchMode: 'all',
+        caseSensitive: true,
+        matchWholeWords: true,
+      },
+    )
+    expect(strict.isTriggeredBy('Moon Magic')).toBe(true)
+    expect(strict.isTriggeredBy('moon magic')).toBe(false)
+    expect(strict.isTriggeredBy('Moonlight Magic')).toBe(false)
+  })
+
+  it('校验并复制世界书扫描和预算设置', () => {
+    const lorebook = Lorebook.create('设置测试', '', ownerId)
+    lorebook.updateDraftSettings(5, 512)
+    const draft = lorebook.draftRevision
+    expect(draft).toMatchObject({ scanDepth: 5, tokenBudget: 512 })
+    if (!draft) throw new Error('缺少草稿')
+    lorebook.replaceRevisionEntries(draft.id, [createEntry()])
+    lorebook.publishRevision(draft.id)
+    const next = lorebook.createNewDraftRevision()
+    expect(next).toMatchObject({ scanDepth: 5, tokenBudget: 512 })
+    expect(() => next.updateSettings({ scanDepth: 0 })).toThrow('扫描深度')
+  })
+
   it('拒绝非法版本号和重复条目 ID', () => {
     expect(() => LorebookRevision.createDraft(0, [])).toThrow(
       '非法的版本号，需要 >= 1',
