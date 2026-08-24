@@ -130,6 +130,53 @@ describe('Studio IPC Zod input schemas', () => {
     ).toBeNull()
   })
 
+  it('bounds complete character draft payloads', () => {
+    const schema = studioInputSchemas[characterChannels.saveDraft]
+    expect(
+      schema.parse({
+        characterId: 'character',
+        alias: null,
+        content: { name: 'Kirika', greetings: ['你好'] },
+        assets: [],
+        lorebooks: [],
+      }),
+    ).toMatchObject({ content: { name: 'Kirika' } })
+    expect(() =>
+      schema.parse({
+        characterId: 'character',
+        alias: null,
+        content: { name: 'x'.repeat(201) },
+        assets: [],
+        lorebooks: [],
+      }),
+    ).toThrow()
+    expect(() =>
+      schema.parse({
+        characterId: 'character',
+        alias: null,
+        content: { name: 'Kirika', greetings: Array(101).fill('hello') },
+        assets: [],
+        lorebooks: [],
+      }),
+    ).toThrow()
+  })
+
+  it('keeps character-card file paths out of renderer IPC', () => {
+    expect(() =>
+      studioInputSchemas[characterChannels.importCard].parse({
+        formatHint: 'json',
+        filePath: '/tmp/private.json',
+      }),
+    ).toThrow()
+    expect(() =>
+      studioInputSchemas[characterChannels.exportCard].parse({
+        characterId: 'character',
+        format: 'json',
+        destinationPath: '/tmp/output.json',
+      }),
+    ).toThrow()
+  })
+
   it('rejects unknown character patch fields', () => {
     expect(() =>
       studioInputSchemas[characterChannels.updateDraft].parse({
