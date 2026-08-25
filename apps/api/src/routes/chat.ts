@@ -1,4 +1,5 @@
 import { zValidator } from '@hono/zod-validator'
+import { skipInferdiDispose } from '@inferdi/hono'
 import {
   CharacterId,
   CharacterRevisionId,
@@ -6,9 +7,7 @@ import {
 import {
   Conversation,
   ConversationId,
-  type ConversationMessageRepositoryPort,
   ConversationParticipant,
-  type ConversationRepositoryPort,
   MessageContent,
 } from '@kirika-js/core/domain/conversation'
 import { UserId } from '@kirika-js/core/domain/shared'
@@ -18,13 +17,10 @@ import { streamSSE } from 'hono/streaming'
 import { describeRoute } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import { z } from 'zod'
-import type { ChatService } from '../chat/chat.service'
+import type { AppEnv } from '../container'
 import { characterRevisions } from '../db/character-schema'
-import type { Auth } from '../lib/auth'
-import type { Db } from '../lib/db'
-import type { AppEnv } from '../lib/logger'
-import { idParamSchema, jsonRequest, sessionSecurity } from './openapi'
-import { problems, validationProblemHook } from './problems'
+import { idParamSchema, jsonRequest, sessionSecurity } from '../http/openapi'
+import { problems, validationProblemHook } from '../http/problems'
 
 const createConversationSchema = z.object({
   characterRevisionId: z.uuid(),
@@ -36,18 +32,7 @@ const sendMessageSchema = z.object({
   model: z.string().trim().min(1).optional(),
 })
 
-export interface ChatRouteDependencies {
-  readonly auth: Auth
-  readonly db: Db
-  readonly chatService: ChatService
-  readonly conversationRepository: ConversationRepositoryPort
-  readonly messageRepository: ConversationMessageRepositoryPort
-}
-
-export function mountChatRoutes(
-  app: Hono<AppEnv>,
-  deps: ChatRouteDependencies,
-): void {
+export function mountChatRoutes(app: Hono<AppEnv>): void {
   app.post(
     '/conversations',
     describeRoute({
@@ -63,7 +48,7 @@ export function mountChatRoutes(
     }),
     zValidator('json', createConversationSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -71,7 +56,8 @@ export function mountChatRoutes(
       }
 
       const body = c.req.valid('json')
-      const [revision] = await deps.db
+      const [revision] = await c.var.di
+        .get('db')
         .select({
           id: characterRevisions.id,
           characterId: characterRevisions.characterId,
@@ -103,7 +89,7 @@ export function mountChatRoutes(
         title: body.title ?? null,
       })
 
-      await deps.conversationRepository.save(conversation)
+      await c.var.di.get('conversationRepository').save(conversation)
       return c.json({ id: conversation.id.value }, 201)
     },
   )
@@ -133,7 +119,7 @@ export function mountChatRoutes(
     zValidator('param', idParamSchema, validationProblemHook()),
     zValidator('json', sendMessageSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -141,9 +127,9 @@ export function mountChatRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const conversation = await deps.conversationRepository.findById(
-        new ConversationId(id),
-      )
+      const conversation = await c.var.di
+        .get('conversationRepository')
+        .findById(new ConversationId(id))
       if (!conversation) {
         throw problems.create('NOT_FOUND', { detail: '会话不存在' })
       }
@@ -154,13 +140,14 @@ export function mountChatRoutes(
       }
 
       const history = conversation.activeLeafMessageId
-        ? await deps.messageRepository.findPathToRoot(
-            conversation.id,
-            conversation.activeLeafMessageId,
-          )
+        ? await c.var.di
+            .get('conversationMessageRepository')
+            .findPathToRoot(conversation.id, conversation.activeLeafMessageId)
         : []
       const body = c.req.valid('json')
 
+      skipInferdiDispose(c)
+      const scope = c.var.di
       return streamSSE(c, async (stream) => {
         const startedAt = performance.now()
         const controller = new AbortController()
@@ -168,7 +155,7 @@ export function mountChatRoutes(
 
         let eventCount = 0
         try {
-          for await (const event of deps.chatService.sendMessage({
+          for await (const event of c.var.di.get('chatService').sendMessage({
             conversation,
             history,
             humanParticipantId: owner.id,
@@ -201,6 +188,8 @@ export function mountChatRoutes(
               reason: error instanceof Error ? error.message : String(error),
             }),
           })
+        } finally {
+          await scope.dispose()
         }
       })
     },

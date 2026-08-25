@@ -1,6 +1,7 @@
-import { OpenAICompatibleChatModel } from '@kirika-js/adapter-model-openai-compatible'
+import { inferdiHono } from '@inferdi/hono'
 import { honoLogLayer } from '@loglayer/hono'
 import { Hono } from 'hono'
+import { requestId } from 'hono/request-id'
 import { describeRoute } from 'hono-openapi'
 import {
   ProblemDetailsError,
@@ -8,56 +9,36 @@ import {
   problemDetailsHandler,
 } from 'hono-problem-details'
 import { rateLimiter } from 'hono-rate-limiter'
-import { PgCharacterRepository } from './character/character.repository'
-import { CharacterService } from './character/character.service'
-import { PgCharacterContextResolver } from './character/context-resolver'
-import { ChatService } from './chat/chat.service'
-import { loadConfiguration } from './config/loader'
-import { PgConversationRepository } from './conversation/conversation.repository'
-import { PgConversationMessageRepository } from './conversation/conversation-message.repository'
-import { createAuth } from './lib/auth'
-import { createDb } from './lib/db'
-import { type AppEnv, log } from './lib/logger'
-import { PgLorebookRepository } from './lorebook/lorebook.repository'
-import { LorebookService } from './lorebook/lorebook.service'
+import { type AppEnv, buildRootContainer } from './container'
+import { mountApiDocumentation } from './http/docs'
+import { problems } from './http/problems'
+import { log } from './lib/logger'
 import { mountAuth } from './routes/auth'
 import { mountCharacterRoutes } from './routes/characters'
 import { mountChatRoutes } from './routes/chat'
-import { mountApiDocumentation } from './routes/docs'
 import { mountLorebookRoutes } from './routes/lorebooks'
-import { problems } from './routes/problems'
 
 export function createApp() {
-  const config = loadConfiguration()
-  const db = createDb(config.database.url, config.database.poolMax)
-  const auth = createAuth(db, config.auth)
-
-  const model = new OpenAICompatibleChatModel({
-    baseUrl: config.model.baseUrl,
-    apiKey: config.model.apiKey,
-  })
-
-  const conversationRepository = new PgConversationRepository(db)
-  const messageRepository = new PgConversationMessageRepository(db)
-  const characterRepository = new PgCharacterRepository(db)
-  const lorebookRepository = new PgLorebookRepository(db)
-  const characterContextResolver = new PgCharacterContextResolver(db)
-
-  const chatService = new ChatService({
-    model,
-    characterContextResolver,
-    conversationRepository,
-    messageRepository,
-    defaultModel: config.model.defaultModel,
-  })
-  const characterService = new CharacterService(characterRepository)
-  const lorebookService = new LorebookService(lorebookRepository)
-
+  const root = buildRootContainer()
   const app = new Hono<AppEnv>()
   const api = new Hono<AppEnv>()
   const authRoutes = new Hono<AppEnv>()
 
+  app.use('*', requestId())
   app.use(
+    '*',
+    inferdiHono({
+      container: root,
+      createScope: (container, c) =>
+        container.createScope({
+          request: {
+            requestId: c.req.header('x-request-id') ?? crypto.randomUUID(),
+          },
+        }),
+    }),
+  )
+  app.use(
+    '*',
     honoLogLayer({
       instance: log,
       autoLogging: {
@@ -73,14 +54,17 @@ export function createApp() {
   app.onError((err, c) => {
     const status =
       err instanceof ProblemDetailsError ? err.problemDetails.status : 500
+
     const logger = c.var.logger
       .withError(err)
       .withMetadata({ statusCode: status })
+
     if (status >= 500) {
       logger.error('Request error')
     } else {
       logger.warn('Request rejected')
     }
+
     return problemHandler(err, c)
   })
 
@@ -127,20 +111,11 @@ export function createApp() {
     (c) => c.json({ ok: true }),
   )
 
-  mountAuth(authRoutes, auth)
+  mountAuth(authRoutes)
   api.route('/auth', authRoutes)
-  mountChatRoutes(api, {
-    auth,
-    db,
-    chatService,
-    conversationRepository,
-    messageRepository,
-  })
-  mountCharacterRoutes(api, {
-    auth,
-    service: characterService,
-  })
-  mountLorebookRoutes(api, { auth, service: lorebookService })
+  mountChatRoutes(api)
+  mountCharacterRoutes(api)
+  mountLorebookRoutes(api)
 
   app.route('/api', api)
   mountApiDocumentation(app)

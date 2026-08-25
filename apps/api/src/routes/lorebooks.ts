@@ -5,12 +5,10 @@ import type { Hono } from 'hono'
 import { describeRoute } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import { z } from 'zod'
-import type { Auth } from '../lib/auth'
-import type { AppEnv } from '../lib/logger'
-import type { LorebookService } from '../lorebook/lorebook.service'
+import type { AppEnv } from '../container'
+import { idParamSchema, jsonRequest, sessionSecurity } from '../http/openapi'
+import { problems, validationProblemHook } from '../http/problems'
 import { lorebookToJson } from '../lorebook/serialize'
-import { idParamSchema, jsonRequest, sessionSecurity } from './openapi'
-import { problems, validationProblemHook } from './problems'
 
 const createSchema = z.object({
   name: z.string().trim().min(1),
@@ -48,15 +46,7 @@ const settingsSchema = z.object({
   tokenBudget: z.number().int().min(1),
 })
 
-export interface LorebookRouteDependencies {
-  readonly auth: Auth
-  readonly service: LorebookService
-}
-
-export function mountLorebookRoutes(
-  app: Hono<AppEnv>,
-  deps: LorebookRouteDependencies,
-): void {
+export function mountLorebookRoutes(app: Hono<AppEnv>): void {
   app.post(
     '/lorebooks',
     describeRoute({
@@ -71,7 +61,7 @@ export function mountLorebookRoutes(
     }),
     zValidator('json', createSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -79,11 +69,9 @@ export function mountLorebookRoutes(
       }
 
       const body = c.req.valid('json')
-      const lorebook = await deps.service.create(
-        body.name,
-        body.description ?? '',
-        new UserId(session.user.id),
-      )
+      const lorebook = await c.var.di
+        .get('lorebookService')
+        .create(body.name, body.description ?? '', new UserId(session.user.id))
 
       return c.json(lorebookToJson(lorebook), 201)
     },
@@ -104,7 +92,7 @@ export function mountLorebookRoutes(
     }),
     zValidator('param', idParamSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -112,7 +100,9 @@ export function mountLorebookRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const lorebook = await deps.service.get(new LorebookId(id))
+      const lorebook = await c.var.di
+        .get('lorebookService')
+        .get(new LorebookId(id))
       if (!lorebook) {
         throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
       }
@@ -142,7 +132,7 @@ export function mountLorebookRoutes(
     zValidator('param', idParamSchema, validationProblemHook()),
     zValidator('json', updateSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -150,7 +140,9 @@ export function mountLorebookRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const lorebook = await deps.service.get(new LorebookId(id))
+      const lorebook = await c.var.di
+        .get('lorebookService')
+        .get(new LorebookId(id))
       if (!lorebook) {
         throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
       }
@@ -162,17 +154,18 @@ export function mountLorebookRoutes(
       try {
         let updated = lorebook
         if (body.name !== undefined || body.description !== undefined) {
-          updated = await deps.service.updateMetadata(
-            updated,
-            body.name ?? updated.name,
-            body.description ?? updated.description,
-          )
+          updated = await c.var.di
+            .get('lorebookService')
+            .updateMetadata(
+              updated,
+              body.name ?? updated.name,
+              body.description ?? updated.description,
+            )
         }
         if (body.visibility !== undefined) {
-          updated = await deps.service.changeVisibility(
-            updated,
-            body.visibility,
-          )
+          updated = await c.var.di
+            .get('lorebookService')
+            .changeVisibility(updated, body.visibility)
         }
         return c.json(lorebookToJson(updated))
       } catch (error) {
@@ -201,7 +194,7 @@ export function mountLorebookRoutes(
     zValidator('param', idParamSchema, validationProblemHook()),
     zValidator('json', entriesSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -209,7 +202,9 @@ export function mountLorebookRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const lorebook = await deps.service.get(new LorebookId(id))
+      const lorebook = await c.var.di
+        .get('lorebookService')
+        .get(new LorebookId(id))
       if (!lorebook) {
         throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
       }
@@ -238,7 +233,9 @@ export function mountLorebookRoutes(
       )
 
       try {
-        const updated = await deps.service.replaceEntries(lorebook, entries)
+        const updated = await c.var.di
+          .get('lorebookService')
+          .replaceEntries(lorebook, entries)
         return c.json(lorebookToJson(updated))
       } catch (error) {
         throw problems.create('INVALID_STATE', {
@@ -266,7 +263,7 @@ export function mountLorebookRoutes(
     zValidator('param', idParamSchema, validationProblemHook()),
     zValidator('json', settingsSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -274,7 +271,9 @@ export function mountLorebookRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const lorebook = await deps.service.get(new LorebookId(id))
+      const lorebook = await c.var.di
+        .get('lorebookService')
+        .get(new LorebookId(id))
       if (!lorebook) {
         throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
       }
@@ -284,11 +283,9 @@ export function mountLorebookRoutes(
 
       const body = c.req.valid('json')
       try {
-        const updated = await deps.service.updateSettings(
-          lorebook,
-          body.scanDepth,
-          body.tokenBudget,
-        )
+        const updated = await c.var.di
+          .get('lorebookService')
+          .updateSettings(lorebook, body.scanDepth, body.tokenBudget)
         return c.json(lorebookToJson(updated))
       } catch (error) {
         throw problems.create('INVALID_STATE', {
@@ -314,7 +311,7 @@ export function mountLorebookRoutes(
     }),
     zValidator('param', idParamSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -322,7 +319,9 @@ export function mountLorebookRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const lorebook = await deps.service.get(new LorebookId(id))
+      const lorebook = await c.var.di
+        .get('lorebookService')
+        .get(new LorebookId(id))
       if (!lorebook) {
         throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
       }
@@ -331,7 +330,9 @@ export function mountLorebookRoutes(
       }
 
       try {
-        const published = await deps.service.publish(lorebook)
+        const published = await c.var.di
+          .get('lorebookService')
+          .publish(lorebook)
         return c.json(lorebookToJson(published))
       } catch (error) {
         throw problems.create('INVALID_STATE', {
@@ -356,7 +357,7 @@ export function mountLorebookRoutes(
     }),
     zValidator('param', idParamSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -364,7 +365,9 @@ export function mountLorebookRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const lorebook = await deps.service.get(new LorebookId(id))
+      const lorebook = await c.var.di
+        .get('lorebookService')
+        .get(new LorebookId(id))
       if (!lorebook) {
         throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
       }
@@ -372,7 +375,7 @@ export function mountLorebookRoutes(
         throw problems.create('FORBIDDEN', { detail: '无权删除该世界书' })
       }
 
-      await deps.service.remove(lorebook.id)
+      await c.var.di.get('lorebookService').remove(lorebook.id)
       return c.body(null, 204)
     },
   )

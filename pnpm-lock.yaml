@@ -62,6 +62,12 @@ importers:
       '@hono/zod-validator':
         specifier: ^0.9.0
         version: 0.9.0(hono@4.13.4)(zod@4.4.3)
+      '@inferdi/hono':
+        specifier: ^6.0.1
+        version: 6.0.1(@inferdi/inferdi@6.0.1)(hono@4.13.4)
+      '@inferdi/inferdi':
+        specifier: ^6.0.1
+        version: 6.0.1
       '@kirika-js/adapter-model-openai-compatible':
         specifier: workspace:*
         version: link:../../packages/adapters/model-openai-compatible
@@ -1287,6 +1293,17 @@ packages:
     peerDependencies:
       hono: '>=4.11.2'
       zod: ^3.25.0 || ^4.0.0
+
+  '@inferdi/hono@6.0.1':
+    resolution: {integrity: sha512-q871YpwjsERyVzzTvOP7IYW8/YrRsdod6S5KIyJgJWpRbRxBdPfBXZNpBgnAcGIodeX+4GNPcfutgvU+JFNTDQ==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      '@inferdi/inferdi': ^6.0.0
+      hono: ^4.0.0
+
+  '@inferdi/inferdi@6.0.1':
+    resolution: {integrity: sha512-fvCQjhq4hjMaY+MZaMzjQrAYhirMZ5K26eVOF0iiOc/6RtzRhXmjSHfR1fHvF1PiM7hMnsQQyv9QF9oOeKCphA==}
+    engines: {node: '>=16.0.0'}
 
   '@internationalized/date@3.12.3':
     resolution: {integrity: sha512-fuLX+3ZKLsxI73y8b01EG/WjHb6gE6weCqlfawPO27kBWGMh9G1yH6Csv1uU7/cac9H2GHmOMt6CjmuQ1aia4Q==}
@@ -6809,6 +6826,13 @@ snapshots:
     dependencies:
       hono: 4.13.4
       zod: 4.4.3
+
+  '@inferdi/hono@6.0.1(@inferdi/inferdi@6.0.1)(hono@4.13.4)':
+    dependencies:
+      '@inferdi/inferdi': 6.0.1
+      hono: 4.13.4
+
+  '@inferdi/inferdi@6.0.1': {}
 
   '@internationalized/date@3.12.3':
     dependencies:

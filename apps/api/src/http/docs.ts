@@ -1,7 +1,7 @@
 import { Scalar } from '@scalar/hono-api-reference'
 import type { Hono } from 'hono'
 import { openAPIRouteHandler } from 'hono-openapi'
-import type { AppEnv } from '../lib/logger'
+import type { AppEnv } from '../container'
 
 export function mountApiDocumentation(app: Hono<AppEnv>): void {
   app.get(

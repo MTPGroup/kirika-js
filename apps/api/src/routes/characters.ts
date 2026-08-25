@@ -5,12 +5,10 @@ import type { Hono } from 'hono'
 import { describeRoute } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import { z } from 'zod'
-import type { CharacterService } from '../character/character.service'
 import { characterToJson } from '../character/serialize'
-import type { Auth } from '../lib/auth'
-import type { AppEnv } from '../lib/logger'
-import { idParamSchema, jsonRequest, sessionSecurity } from './openapi'
-import { problems, validationProblemHook } from './problems'
+import type { AppEnv } from '../container'
+import { idParamSchema, jsonRequest, sessionSecurity } from '../http/openapi'
+import { problems, validationProblemHook } from '../http/problems'
 
 const createSchema = z.object({
   alias: z.string().trim().min(1).max(200).optional(),
@@ -35,15 +33,7 @@ const updateSchema = z.object({
   extensions: z.record(z.string(), z.unknown()).optional(),
 })
 
-export interface CharacterRouteDependencies {
-  readonly auth: Auth
-  readonly service: CharacterService
-}
-
-export function mountCharacterRoutes(
-  app: Hono<AppEnv>,
-  deps: CharacterRouteDependencies,
-): void {
+export function mountCharacterRoutes(app: Hono<AppEnv>): void {
   app.post(
     '/characters',
     describeRoute({
@@ -58,7 +48,7 @@ export function mountCharacterRoutes(
     }),
     zValidator('json', createSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -66,10 +56,12 @@ export function mountCharacterRoutes(
       }
 
       const { alias, ...content } = c.req.valid('json')
-      const character = await deps.service.create(new UserId(session.user.id), {
-        alias: alias ?? null,
-        content,
-      })
+      const character = await c.var.di
+        .get('characterService')
+        .create(new UserId(session.user.id), {
+          alias: alias ?? null,
+          content,
+        })
 
       return c.json(characterToJson(character), 201)
     },
@@ -90,7 +82,7 @@ export function mountCharacterRoutes(
     }),
     zValidator('param', idParamSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -98,7 +90,9 @@ export function mountCharacterRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const character = await deps.service.get(new CharacterId(id))
+      const character = await c.var.di
+        .get('characterService')
+        .get(new CharacterId(id))
       if (!character) {
         throw problems.create('NOT_FOUND', { detail: '角色不存在' })
       }
@@ -128,7 +122,7 @@ export function mountCharacterRoutes(
     zValidator('param', idParamSchema, validationProblemHook()),
     zValidator('json', updateSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -136,7 +130,9 @@ export function mountCharacterRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const character = await deps.service.get(new CharacterId(id))
+      const character = await c.var.di
+        .get('characterService')
+        .get(new CharacterId(id))
       if (!character) {
         throw problems.create('NOT_FOUND', { detail: '角色不存在' })
       }
@@ -145,10 +141,9 @@ export function mountCharacterRoutes(
       }
 
       try {
-        const updated = await deps.service.updateDraft(
-          character,
-          c.req.valid('json'),
-        )
+        const updated = await c.var.di
+          .get('characterService')
+          .updateDraft(character, c.req.valid('json'))
         return c.json(characterToJson(updated))
       } catch (error) {
         throw problems.create('INVALID_STATE', {
@@ -174,7 +169,7 @@ export function mountCharacterRoutes(
     }),
     zValidator('param', idParamSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -182,7 +177,9 @@ export function mountCharacterRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const character = await deps.service.get(new CharacterId(id))
+      const character = await c.var.di
+        .get('characterService')
+        .get(new CharacterId(id))
       if (!character) {
         throw problems.create('NOT_FOUND', { detail: '角色不存在' })
       }
@@ -191,7 +188,9 @@ export function mountCharacterRoutes(
       }
 
       try {
-        const published = await deps.service.publish(character)
+        const published = await c.var.di
+          .get('characterService')
+          .publish(character)
         return c.json(characterToJson(published))
       } catch (error) {
         throw problems.create('INVALID_STATE', {
@@ -216,7 +215,7 @@ export function mountCharacterRoutes(
     }),
     zValidator('param', idParamSchema, validationProblemHook()),
     async (c) => {
-      const session = await deps.auth.api.getSession({
+      const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
       })
       if (!session) {
@@ -224,7 +223,9 @@ export function mountCharacterRoutes(
       }
 
       const { id } = c.req.valid('param')
-      const character = await deps.service.get(new CharacterId(id))
+      const character = await c.var.di
+        .get('characterService')
+        .get(new CharacterId(id))
       if (!character) {
         throw problems.create('NOT_FOUND', { detail: '角色不存在' })
       }
@@ -232,7 +233,7 @@ export function mountCharacterRoutes(
         throw problems.create('FORBIDDEN', { detail: '无权删除该角色' })
       }
 
-      await deps.service.remove(character.id)
+      await c.var.di.get('characterService').remove(character.id)
       return c.body(null, 204)
     },
   )
