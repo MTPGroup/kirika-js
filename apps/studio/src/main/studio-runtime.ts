@@ -171,7 +171,8 @@ export function resolveMigrationsDir(): string {
     '..',
     '..',
     'packages',
-    'adapter-persistence-sqlite',
+    'adapters',
+    'persistence-sqlite',
     'drizzle',
   )
 }
