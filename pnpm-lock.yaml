@@ -116,10 +116,10 @@ importers:
         version: 10.1.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/node@24.13.3)(asn1.js@5.4.1)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       '@kirika-js/typescript-config':
         specifier: workspace:*
-        version: link:../../packages/typescript-config
+        version: link:../../packages/configs/typescript
       '@kirika-js/vitest-config':
         specifier: workspace:*
-        version: link:../../packages/vitest-config
+        version: link:../../packages/configs/vitest
       '@nestjs/cli':
         specifier: ^11.0.0
         version: 11.0.24(@swc/cli@0.8.1(@swc/core@1.15.47(@swc/helpers@0.5.23))(chokidar@4.0.3)(supports-color@8.1.1))(@swc/core@1.15.47(@swc/helpers@0.5.23))(@types/node@24.13.3)(cssnano@7.1.9(postcss@8.5.25))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.25)(prettier@3.9.6)(uglify-js@3.19.3)
@@ -182,13 +182,13 @@ importers:
         version: 4.0.0(electron@43.4.1(supports-color@8.1.1))
       '@kirika-js/adapter-model-openai-compatible':
         specifier: workspace:*
-        version: link:../../packages/adapter-model-openai-compatible
+        version: link:../../packages/adapters/model-openai-compatible
       '@kirika-js/adapter-persistence-sqlite':
         specifier: workspace:*
-        version: link:../../packages/adapter-persistence-sqlite
+        version: link:../../packages/adapters/persistence-sqlite
       '@kirika-js/adapter-storage-filesystem':
         specifier: workspace:*
-        version: link:../../packages/adapter-storage-filesystem
+        version: link:../../packages/adapters/storage-filesystem
       '@kirika-js/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -281,21 +281,21 @@ importers:
         specifier: ^3.1.6
         version: 3.3.11(typescript@6.0.3)
 
-  packages/adapter-model-openai-compatible:
+  packages/adapters/model-openai-compatible:
     dependencies:
       '@kirika-js/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../core
       openai:
         specifier: ^7.5.0
         version: 7.5.0(@aws-sdk/credential-provider-node@3.972.80)(@smithy/signature-v4@5.7.3)(ws@8.21.3)(zod@4.4.3)
     devDependencies:
       '@kirika-js/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../configs/typescript
       '@kirika-js/vitest-config':
         specifier: workspace:*
-        version: link:../vitest-config
+        version: link:../../configs/vitest
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -303,26 +303,11 @@ importers:
         specifier: 'catalog:'
         version: 4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0)(vite@8.2.0(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
-  packages/adapter-persistence-postgresql:
-    devDependencies:
-      '@kirika-js/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@kirika-js/vitest-config':
-        specifier: workspace:*
-        version: link:../vitest-config
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0)(vite@8.2.0(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  packages/adapter-persistence-sqlite:
+  packages/adapters/persistence-sqlite:
     dependencies:
       '@kirika-js/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../core
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4
@@ -332,10 +317,10 @@ importers:
     devDependencies:
       '@kirika-js/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../configs/typescript
       '@kirika-js/vitest-config':
         specifier: workspace:*
-        version: link:../vitest-config
+        version: link:../../configs/vitest
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
@@ -352,18 +337,15 @@ importers:
         specifier: 'catalog:'
         version: 4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0)(vite@8.2.0(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
-  packages/adapter-storage-filesystem:
+  packages/adapters/storage-filesystem:
     dependencies:
-      '@aws-sdk/client-s3':
-        specifier: ^3.1115.0
-        version: 3.1115.0
       '@kirika-js/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../core
     devDependencies:
       '@kirika-js/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../configs/typescript
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
@@ -371,21 +353,42 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  packages/adapter-storage-s3:
+  packages/adapters/storage-s3:
     dependencies:
       '@aws-sdk/client-s3':
         specifier: ^3.1115.0
         version: 3.1115.0
       '@kirika-js/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../core
     devDependencies:
       '@kirika-js/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../configs/typescript
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+
+  packages/configs/typescript: {}
+
+  packages/configs/vitest:
+    dependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.10(@types/node@24.13.3)(@vitest/coverage-istanbul@4.1.11)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.0(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+    devDependencies:
+      '@kirika-js/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript
+      '@types/node':
+        specifier: ^24.13.3
+        version: 24.13.3
+      '@vitest/coverage-istanbul':
+        specifier: 'catalog:'
+        version: 4.1.11(supports-color@8.1.1)(vitest@4.1.10)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -398,37 +401,16 @@ importers:
     devDependencies:
       '@kirika-js/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../configs/typescript
       '@kirika-js/vitest-config':
         specifier: workspace:*
-        version: link:../vitest-config
+        version: link:../configs/vitest
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
         version: 4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0)(vite@8.2.0(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  packages/typescript-config: {}
-
-  packages/vitest-config:
-    dependencies:
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.10(@types/node@24.13.3)(@vitest/coverage-istanbul@4.1.11)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.0(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
-    devDependencies:
-      '@kirika-js/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/node':
-        specifier: ^24.13.3
-        version: 24.13.3
-      '@vitest/coverage-istanbul':
-        specifier: 'catalog:'
-        version: 4.1.11(supports-color@8.1.1)(vitest@4.1.10)
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
 
 packages:
 

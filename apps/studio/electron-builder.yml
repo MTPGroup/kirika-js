@@ -10,7 +10,7 @@ files:
   - package.json
 
 extraResources:
-  - from: ../../packages/adapter-persistence-sqlite/drizzle
+  - from: ../../packages/adapters/persistence-sqlite/drizzle
     to: migrations/sqlite
     filter:
       - "**/*"

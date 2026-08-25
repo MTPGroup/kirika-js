@@ -2,9 +2,13 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const workspaceRoot = fileURLToPath(new URL('../../../..', import.meta.url))
+const workspaceRoot = fileURLToPath(new URL('../../../../..', import.meta.url))
 const destinationDir = path.join(process.cwd(), 'coverage/merged-blob')
-const workspaceDirs = ['apps', 'packages']
+const workspaceGroups = [
+  { directory: 'apps' },
+  { directory: 'packages', names: ['core'] },
+  { directory: 'packages/adapters' },
+]
 
 async function mergeBlobReports() {
   await fs.rm(destinationDir, { recursive: true, force: true })
@@ -12,12 +16,12 @@ async function mergeBlobReports() {
 
   const copiedReports: string[] = []
 
-  for (const workspaceDir of workspaceDirs) {
-    const workspacePath = path.join(workspaceRoot, workspaceDir)
-    const packageNames = await fs.readdir(workspacePath)
+  for (const group of workspaceGroups) {
+    const groupPath = path.join(workspaceRoot, group.directory)
+    const packageNames = group.names ?? (await fs.readdir(groupPath))
 
     for (const packageName of packageNames) {
-      const blobDir = path.join(workspacePath, packageName, 'coverage/blob')
+      const blobDir = path.join(groupPath, packageName, 'coverage/blob')
 
       let blobFiles: string[]
 
@@ -27,7 +31,7 @@ async function mergeBlobReports() {
         if (
           error instanceof Error &&
           'code' in error &&
-          error.code === 'ENOENT'
+          (error.code === 'ENOENT' || error.code === 'ENOTDIR')
         ) {
           continue
         }
@@ -36,14 +40,12 @@ async function mergeBlobReports() {
       }
 
       for (const blobFile of blobFiles) {
-        if (!blobFile.endsWith('.json')) {
-          continue
-        }
+        if (!blobFile.endsWith('.json')) continue
 
         const source = path.join(blobDir, blobFile)
         const destination = path.join(
           destinationDir,
-          `${workspaceDir}-${packageName}-${blobFile}`,
+          `${group.directory.replace('/', '-')}-${packageName}-${blobFile}`,
         )
 
         await fs.copyFile(source, destination)

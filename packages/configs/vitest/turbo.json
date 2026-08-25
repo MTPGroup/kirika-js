@@ -6,7 +6,8 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/*/coverage/blob/**",
-        "$TURBO_ROOT$/packages/*/coverage/blob/**"
+        "$TURBO_ROOT$/packages/core/coverage/blob/**",
+        "$TURBO_ROOT$/packages/adapters/*/coverage/blob/**"
       ],
       "outputs": ["coverage/merged-blob/**"]
     },
@@ -15,7 +16,8 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/*/coverage/blob/**",
-        "$TURBO_ROOT$/packages/*/coverage/blob/**"
+        "$TURBO_ROOT$/packages/core/coverage/blob/**",
+        "$TURBO_ROOT$/packages/adapters/*/coverage/blob/**"
       ],
       "outputs": ["coverage/report/**"]
     },

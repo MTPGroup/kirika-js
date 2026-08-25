@@ -1,6 +1,8 @@
 packages:
   - "apps/*"
-  - "packages/*"
+  - "packages/core"
+  - "packages/adapters/*"
+  - "packages/configs/*"
 
 disallowWorkspaceCycles: true
 
