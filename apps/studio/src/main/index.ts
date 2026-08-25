@@ -1,4 +1,4 @@
-import { electronApp, optimizer } from '@electron-toolkit/utils'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow } from 'electron'
 import icon from '../../resources/icon.png?asset'
 import { registerStudioIpc } from './ipc'
@@ -10,7 +10,11 @@ import { createMainWindow } from './window'
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('cn.kirika.studio')
   app.setName('Kirika Studio')
-  if (process.platform === 'darwin') app.dock?.setIcon(icon)
+
+  if (is.dev && process.platform === 'darwin') {
+    app.dock?.setIcon(icon)
+  }
+
   registerProfileProtocol()
   registerAssetProtocol()
   registerStudioIpc()

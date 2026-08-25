@@ -29,7 +29,7 @@ export function createMainWindow(): void {
           },
         }),
 
-    ...(process.platform !== 'darwin' ? { icon } : {}),
+    ...(is.dev && process.platform !== 'darwin' ? { icon } : {}),
 
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
