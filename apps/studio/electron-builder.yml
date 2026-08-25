@@ -47,6 +47,7 @@ linux:
     - deb
   category: Development
   maintainer: MTPGroup
+  syncDesktopName: true
 
 appImage:
   artifactName: kirika-studio-${version}-${arch}.${ext}
