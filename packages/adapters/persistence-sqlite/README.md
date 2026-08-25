@@ -19,7 +19,3 @@ yarn add @kirika-js/adapter-persistence-sqlite
 ## 运行环境
 
 - Node.js >= 22.12
-
-## 许可证
-
-[MIT License](./LICENSE)

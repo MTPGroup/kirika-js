@@ -15,7 +15,3 @@ npm install @kirika-js/core
 # or
 yarn add @kirika-js/core
 ```
-
-## 许可证
-
-[MIT License](./LICENSE)

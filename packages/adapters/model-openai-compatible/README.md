@@ -24,7 +24,3 @@ yarn add @kirika-js/core @kirika-js/adapter-model-openai-compatible
 - 支持 `AbortSignal` 和异步迭代器的现代 JavaScript 运行时
 
 不要在浏览器或 Electron renderer 中直接暴露 API Key。桌面应用应在 Electron main process 中创建并调用该适配器。
-
-## 许可证
-
-[MIT License](./LICENSE)
