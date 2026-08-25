@@ -17,6 +17,7 @@ extraResources:
 
 win:
   executableName: kirika-studio
+  icon: build/icons/win/icon.ico
   target:
     - nsis
 
@@ -27,6 +28,7 @@ nsis:
   createDesktopShortcut: always
 
 mac:
+  icon: build/icons/mac/icon.icns
   target:
     - dmg
     - zip
@@ -39,6 +41,7 @@ dmg:
 
 linux:
   executableName: kirika-studio
+  icon: build/png/1024x1024.png
   target:
     - AppImage
     - deb

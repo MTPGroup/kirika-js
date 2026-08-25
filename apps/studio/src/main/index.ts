@@ -1,6 +1,6 @@
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow } from 'electron'
-import icon from '../../resources/kirika.png?asset'
+import icon from '../../resources/icon.png?asset'
 import { registerStudioIpc } from './ipc'
 import { registerAssetProtocol } from './services/asset-protocol.service'
 import { registerProfileProtocol } from './services/profile.service'
