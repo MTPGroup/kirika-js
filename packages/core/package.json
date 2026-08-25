@@ -1,0 +1,77 @@
+{
+  "name": "@kirika-js/core",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "check-types": "tsc --noEmit",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "test:watch": "vitest -w"
+  },
+  "dependencies": {
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "@kirika-js/typescript-config": "workspace:*",
+    "@kirika-js/vitest-config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./domain": {
+      "types": "./dist/domain.d.mts",
+      "import": "./dist/domain.mjs",
+      "require": "./dist/domain.cjs"
+    },
+    "./domain/character": {
+      "types": "./dist/domain/character.d.mts",
+      "import": "./dist/domain/character.mjs",
+      "require": "./dist/domain/character.cjs"
+    },
+    "./domain/conversation": {
+      "types": "./dist/domain/conversation.d.mts",
+      "import": "./dist/domain/conversation.mjs",
+      "require": "./dist/domain/conversation.cjs"
+    },
+    "./domain/lorebook": {
+      "types": "./dist/domain/lorebook.d.mts",
+      "import": "./dist/domain/lorebook.mjs",
+      "require": "./dist/domain/lorebook.cjs"
+    },
+    "./domain/shared": {
+      "types": "./dist/domain/shared.d.mts",
+      "import": "./dist/domain/shared.mjs",
+      "require": "./dist/domain/shared.cjs"
+    },
+    "./chat": {
+      "types": "./dist/chat.d.mts",
+      "import": "./dist/chat.mjs",
+      "require": "./dist/chat.cjs"
+    },
+    "./chat/testing": {
+      "types": "./dist/chat/testing.d.mts",
+      "import": "./dist/chat/testing.mjs",
+      "require": "./dist/chat/testing.cjs"
+    },
+    "./character-card": {
+      "types": "./dist/character-card.d.mts",
+      "import": "./dist/character-card.mjs",
+      "require": "./dist/character-card.cjs"
+    },
+    "./package.json": "./package.json"
+  }
+}

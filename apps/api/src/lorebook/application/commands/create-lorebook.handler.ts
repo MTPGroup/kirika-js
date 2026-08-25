@@ -2,7 +2,7 @@ import {
   LOREBOOK_REPOSITORY_PORT,
   Lorebook,
   type LorebookRepositoryPort,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import { Inject } from '@nestjs/common'
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs'
 import { UserId } from '~/auth/user-id.vo'

@@ -3,7 +3,7 @@ import {
   AssetId,
   CharacterId,
   CharacterRevisionId,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import {
   Conversation,
   ConversationId,
@@ -13,8 +13,8 @@ import {
   ConversationParticipantId,
   MessageContent,
   TokenUsage,
-} from '@kirika-js/domain/conversation'
-import { UserId } from '@kirika-js/domain/shared'
+} from '@kirika-js/core/domain/conversation'
+import { UserId } from '@kirika-js/core/domain/shared'
 import type {
   conversationMessages,
   conversationParticipants,

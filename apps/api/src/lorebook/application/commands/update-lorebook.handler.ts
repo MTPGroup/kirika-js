@@ -2,7 +2,7 @@ import {
   LOREBOOK_REPOSITORY_PORT,
   LorebookId,
   type LorebookRepositoryPort,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import {
   BadRequestException,
   ForbiddenException,

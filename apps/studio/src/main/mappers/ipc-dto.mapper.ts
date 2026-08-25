@@ -1,14 +1,17 @@
-import type { Character, CharacterRevision } from '@kirika-js/domain/character'
+import type {
+  Character,
+  CharacterRevision,
+} from '@kirika-js/core/domain/character'
 import type {
   Conversation,
   ConversationMessage,
   ConversationParticipant,
-} from '@kirika-js/domain/conversation'
+} from '@kirika-js/core/domain/conversation'
 import type {
   Lorebook,
   LorebookEntry,
   LorebookRevision,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import type {
   CharacterDto,
   CharacterRevisionDto,

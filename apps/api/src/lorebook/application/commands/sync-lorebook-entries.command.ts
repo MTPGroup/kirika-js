@@ -1,4 +1,4 @@
-import type { LoreEntryPosition } from '@kirika-js/domain/lorebook'
+import type { LoreEntryPosition } from '@kirika-js/core/domain/lorebook'
 import { Command } from '@nestjs/cqrs'
 import type { LorebookRevisionResult } from '../lorebook-revision.result'
 

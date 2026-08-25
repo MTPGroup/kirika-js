@@ -4,7 +4,7 @@ import {
   LorebookEntryId,
   type LorebookRepositoryPort,
   LorebookRevisionId,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import {
   BadRequestException,
   ConflictException,

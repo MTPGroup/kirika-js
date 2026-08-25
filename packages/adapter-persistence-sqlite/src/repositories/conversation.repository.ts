@@ -2,7 +2,7 @@ import {
   type Conversation,
   ConversationId,
   type ConversationRepositoryPort,
-} from '@kirika-js/domain/conversation'
+} from '@kirika-js/core/domain/conversation'
 import { eq } from 'drizzle-orm'
 import type { SqliteDatabase } from '~/database'
 import { ConversationMapper } from '~/mappers/conversation.mapper'

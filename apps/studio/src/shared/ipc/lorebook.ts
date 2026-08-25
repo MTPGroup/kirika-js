@@ -2,7 +2,7 @@ import type {
   LorebookVisibility,
   LoreEntryMatchMode,
   LoreEntryPosition,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import type { IsoDateTime } from './common'
 
 export interface LorebookEntryDto {

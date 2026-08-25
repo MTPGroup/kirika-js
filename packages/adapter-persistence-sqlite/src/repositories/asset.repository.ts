@@ -2,7 +2,7 @@ import type {
   Asset,
   AssetId,
   AssetRepositoryPort,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import { eq } from 'drizzle-orm'
 
 import type { SqliteDatabase } from '~/database'

@@ -7,9 +7,9 @@ import {
   CharacterRevision,
   CharacterRevisionAsset,
   CharacterRevisionId,
-} from '@kirika-js/domain/character'
-import { LorebookRevisionId } from '@kirika-js/domain/lorebook'
-import { UserId } from '@kirika-js/domain/shared'
+} from '@kirika-js/core/domain/character'
+import { LorebookRevisionId } from '@kirika-js/core/domain/lorebook'
+import { UserId } from '@kirika-js/core/domain/shared'
 import type {
   characterRevisionAssets,
   characterRevisionLorebooks,

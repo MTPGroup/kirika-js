@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: 实例类允许只有静态方法 */
-import { Asset, AssetId } from '@kirika-js/domain/character'
+import { Asset, AssetId } from '@kirika-js/core/domain/character'
 
 import type { assets } from '~/schema/asset.schema'
 

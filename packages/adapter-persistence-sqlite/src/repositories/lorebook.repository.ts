@@ -2,7 +2,7 @@ import {
   type Lorebook,
   LorebookId,
   type LorebookRepositoryPort,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import { and, eq, inArray, notInArray, sql } from 'drizzle-orm'
 import type { SqliteDatabase } from '~/database'
 import { LorebookMapper } from '~/mappers/lorebook.mapper'

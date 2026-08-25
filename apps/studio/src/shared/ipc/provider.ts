@@ -1,4 +1,4 @@
-import type { ChatGenerationConfig } from '@kirika-js/chat-engine'
+import type { ChatGenerationConfig } from '@kirika-js/core/chat'
 
 export type ProviderType = 'openai-compatible'
 export type ApiKeyUpdate =

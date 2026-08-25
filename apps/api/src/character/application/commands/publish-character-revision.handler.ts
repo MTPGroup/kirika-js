@@ -2,7 +2,7 @@ import {
   CHARACTER_REPOSITORY_PORT,
   type CharacterRepositoryPort,
   CharacterRevisionId,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import {
   BadRequestException,
   ConflictException,

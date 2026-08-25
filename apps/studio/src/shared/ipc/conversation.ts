@@ -9,7 +9,7 @@ import type {
   ConversationTurnPolicy,
   GenerationFinishReason,
   MessageAssetModality,
-} from '@kirika-js/domain/conversation'
+} from '@kirika-js/core/domain/conversation'
 import type { IsoDateTime } from './common'
 
 export interface ConversationParticipantDto {

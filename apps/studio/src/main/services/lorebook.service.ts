@@ -4,8 +4,8 @@ import {
   LorebookEntryId,
   LorebookId,
   LorebookRevisionId,
-} from '@kirika-js/domain/lorebook'
-import { UserId } from '@kirika-js/domain/shared'
+} from '@kirika-js/core/domain/lorebook'
+import { UserId } from '@kirika-js/core/domain/shared'
 import type { LorebookApi, LorebookDto, LorebookEntryInput } from '~/shared/ipc'
 import { toLorebookDto, toLorebookSummaryDto } from '../mappers/ipc-dto.mapper'
 import { studioRuntime } from '../studio-runtime'

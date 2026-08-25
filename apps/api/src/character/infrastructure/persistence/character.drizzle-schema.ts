@@ -1,4 +1,4 @@
-import { ASSET_KINDS } from '@kirika-js/domain/character'
+import { ASSET_KINDS } from '@kirika-js/core/domain/character'
 import { defineRelationsPart, sql } from 'drizzle-orm'
 import {
   bigint,

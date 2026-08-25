@@ -1,4 +1,4 @@
-import type { CharacterRevisionPatch } from '@kirika-js/domain/character'
+import type { CharacterRevisionPatch } from '@kirika-js/core/domain/character'
 import type { CharacterRevisionAssetDto } from './asset'
 import type { IsoDateTime } from './common'
 

@@ -1,13 +1,13 @@
 import type {
   AssetKind,
   CharacterRevisionContent,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import {
   AssetId,
   CharacterLorebookReference,
   CharacterRevisionAsset,
-} from '@kirika-js/domain/character'
-import { LorebookRevisionId } from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/character'
+import { LorebookRevisionId } from '@kirika-js/core/domain/lorebook'
 
 export interface CharacterRevisionAssetInput {
   assetId: string

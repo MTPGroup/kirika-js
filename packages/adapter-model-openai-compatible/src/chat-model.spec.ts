@@ -3,7 +3,7 @@ import {
   ChatModelConnectionError,
   ChatModelRateLimitError,
   type ChatModelRequest,
-} from '@kirika-js/chat-engine'
+} from '@kirika-js/core/chat'
 import OpenAI from 'openai'
 import { describe, expect, it, vi } from 'vitest'
 import { OpenAICompatibleChatModel } from './chat-model'

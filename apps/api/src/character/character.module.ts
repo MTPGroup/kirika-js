@@ -1,4 +1,4 @@
-import { CHARACTER_REPOSITORY_PORT } from '@kirika-js/domain/character'
+import { CHARACTER_REPOSITORY_PORT } from '@kirika-js/core/domain/character'
 import { Module } from '@nestjs/common'
 import { SharedModule } from '~/shared/shared.module'
 import { CreateCharacterHandler } from './application/commands/create-character.handler'

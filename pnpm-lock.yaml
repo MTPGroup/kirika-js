@@ -41,9 +41,9 @@ importers:
       '@fastify/static':
         specifier: ^10.1.3
         version: 10.1.3
-      '@kirika-js/domain':
+      '@kirika-js/core':
         specifier: workspace:*
-        version: link:../../packages/domain
+        version: link:../../packages/core
       '@nestjs-modules/mailer':
         specifier: ^2.3.7
         version: 2.3.7(@nestjs/common@11.1.29(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.1.29)(chokidar@4.0.3)(nodemailer@9.0.5)(svgo@4.0.2)(terser@5.50.0)(typescript@6.0.3)
@@ -189,15 +189,9 @@ importers:
       '@kirika-js/adapter-storage-filesystem':
         specifier: workspace:*
         version: link:../../packages/adapter-storage-filesystem
-      '@kirika-js/character-card':
+      '@kirika-js/core':
         specifier: workspace:*
-        version: link:../../packages/character-card
-      '@kirika-js/chat-engine':
-        specifier: workspace:*
-        version: link:../../packages/chat-engine
-      '@kirika-js/domain':
-        specifier: workspace:*
-        version: link:../../packages/domain
+        version: link:../../packages/core
       '@lucide/vue':
         specifier: ^1.33.0
         version: 1.33.0(vue@3.5.41(typescript@6.0.3))
@@ -289,12 +283,9 @@ importers:
 
   packages/adapter-model-openai-compatible:
     dependencies:
-      '@kirika-js/chat-engine':
+      '@kirika-js/core':
         specifier: workspace:*
-        version: link:../chat-engine
-      '@kirika-js/domain':
-        specifier: workspace:*
-        version: link:../domain
+        version: link:../core
       openai:
         specifier: ^7.5.0
         version: 7.5.0(@aws-sdk/credential-provider-node@3.972.80)(@smithy/signature-v4@5.7.3)(ws@8.21.3)(zod@4.4.3)
@@ -329,9 +320,9 @@ importers:
 
   packages/adapter-persistence-sqlite:
     dependencies:
-      '@kirika-js/domain':
+      '@kirika-js/core':
         specifier: workspace:*
-        version: link:../domain
+        version: link:../core
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4
@@ -366,9 +357,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1115.0
         version: 3.1115.0
-      '@kirika-js/domain':
+      '@kirika-js/core':
         specifier: workspace:*
-        version: link:../domain
+        version: link:../core
     devDependencies:
       '@kirika-js/typescript-config':
         specifier: workspace:*
@@ -385,9 +376,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1115.0
         version: 3.1115.0
-      '@kirika-js/domain':
+      '@kirika-js/core':
         specifier: workspace:*
-        version: link:../domain
+        version: link:../core
     devDependencies:
       '@kirika-js/typescript-config':
         specifier: workspace:*
@@ -399,45 +390,7 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
 
-  packages/character-card:
-    dependencies:
-      '@kirika-js/domain':
-        specifier: workspace:*
-        version: link:../domain
-    devDependencies:
-      '@kirika-js/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@kirika-js/vitest-config':
-        specifier: workspace:*
-        version: link:../vitest-config
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0)(vite@8.2.0(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  packages/chat-engine:
-    dependencies:
-      '@kirika-js/domain':
-        specifier: workspace:*
-        version: link:../domain
-    devDependencies:
-      '@kirika-js/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@kirika-js/vitest-config':
-        specifier: workspace:*
-        version: link:../vitest-config
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0)(vite@8.2.0(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
-
-  packages/domain:
+  packages/core:
     dependencies:
       uuid:
         specifier: ^14.0.1
@@ -11227,7 +11180,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.10(@types/node@22.20.1)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0(supports-color@8.1.1))(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+      vitest: 4.1.10(@types/node@24.13.3)(@vitest/coverage-istanbul@4.1.11)(@vitest/coverage-v8@4.1.10)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.2.0(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   '@vitest/expect@4.1.10':
     dependencies:

@@ -2,7 +2,7 @@ import type {
   Lorebook,
   LorebookRevision,
   LoreEntryPosition,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 
 export interface LorebookRevisionEntryResult {
   id: string

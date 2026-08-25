@@ -1,9 +1,9 @@
-import type { LorebookRepositoryPort } from '@kirika-js/domain/lorebook'
+import type { LorebookRepositoryPort } from '@kirika-js/core/domain/lorebook'
 import {
   Lorebook,
   LorebookEntry,
   type LorebookId,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import {
   BadRequestException,
   ForbiddenException,

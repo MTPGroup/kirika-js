@@ -3,7 +3,7 @@ import {
   ConversationMessageId,
   MessageContent,
   TokenUsage,
-} from '@kirika-js/domain/conversation'
+} from '@kirika-js/core/domain/conversation'
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { SqliteConversationMessageRepository } from '~/repositories/conversation-message.repository'

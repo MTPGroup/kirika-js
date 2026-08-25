@@ -1,5 +1,5 @@
-import type { CharacterRepositoryPort } from '@kirika-js/domain/character'
-import { Character, type CharacterId } from '@kirika-js/domain/character'
+import type { CharacterRepositoryPort } from '@kirika-js/core/domain/character'
+import { Character, type CharacterId } from '@kirika-js/core/domain/character'
 import {
   BadRequestException,
   ConflictException,

@@ -1,7 +1,7 @@
 import type {
   Conversation,
   ConversationMessage,
-} from '@kirika-js/domain/conversation'
+} from '@kirika-js/core/domain/conversation'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import type { SqliteDatabase } from '~/database'
 import { ConversationMapper } from '~/mappers/conversation.mapper'

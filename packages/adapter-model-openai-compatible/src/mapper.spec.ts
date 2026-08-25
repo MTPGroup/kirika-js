@@ -1,8 +1,8 @@
 import type {
   ChatModelFinishReason,
   ChatModelRequest,
-} from '@kirika-js/chat-engine'
-import { AssetId } from '@kirika-js/domain'
+} from '@kirika-js/core/chat'
+import { AssetId } from '@kirika-js/core/domain'
 import { describe, expect, it } from 'vitest'
 import { mapFinishReason, mapMessages, mapRequests } from './mapper'
 

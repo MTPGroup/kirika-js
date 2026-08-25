@@ -1,4 +1,4 @@
-import type { ChatModelFinishReason } from '@kirika-js/chat-engine'
+import type { ChatModelFinishReason } from '@kirika-js/core/chat'
 import type {
   ConversationMessageDto,
   ConversationParticipantDto,

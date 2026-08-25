@@ -1,4 +1,4 @@
-import type { AssetKind } from '@kirika-js/domain/character'
+import type { AssetKind } from '@kirika-js/core/domain/character'
 
 export interface AssetDto {
   readonly id: string

@@ -1,7 +1,7 @@
 import {
   LOREBOOK_REPOSITORY_PORT,
   type LorebookRepositoryPort,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import { Inject } from '@nestjs/common'
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs'
 import { loadOwnedLorebook } from '../services/load-owned-lorebook'

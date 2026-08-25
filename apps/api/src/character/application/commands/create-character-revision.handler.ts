@@ -1,7 +1,7 @@
 import {
   CHARACTER_REPOSITORY_PORT,
   type CharacterRepositoryPort,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import { ConflictException, Inject } from '@nestjs/common'
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs'
 import { type CharacterResult, toCharacterResult } from '../character.result'

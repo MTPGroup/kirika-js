@@ -1,15 +1,15 @@
 import type {
   ChatCharacterContextResolverPort,
   ResolvedChatCharacterContext,
-} from '@kirika-js/chat-engine'
+} from '@kirika-js/core/chat'
 import type {
   CharacterId,
   CharacterRevisionId,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import {
   type LorebookRevision,
   LorebookRevisionId,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import type { StudioRuntime } from '../studio-runtime'
 
 export class SqliteCharacterContextResolver

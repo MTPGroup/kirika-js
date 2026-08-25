@@ -7,7 +7,7 @@ import {
   LorebookId,
   LorebookRevision,
   LorebookRevisionId,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import { UserId } from '~/auth/user-id.vo'
 import type {
   lorebookEntries,

@@ -2,7 +2,7 @@ import type {
   Lorebook,
   LorebookId,
   LorebookRepositoryPort,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import { Injectable } from '@nestjs/common'
 import { and, eq, notInArray, sql } from 'drizzle-orm'
 import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'

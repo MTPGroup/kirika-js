@@ -4,8 +4,8 @@ import {
   CharacterId,
   CharacterLorebookReference,
   CharacterRevisionAsset,
-} from '@kirika-js/domain/character'
-import { Lorebook, LorebookEntry } from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/character'
+import { Lorebook, LorebookEntry } from '@kirika-js/core/domain/lorebook'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { SqliteAssetRepository } from '~/repositories/asset.repository'
 import { SqliteCharacterRepository } from '~/repositories/character.repository'

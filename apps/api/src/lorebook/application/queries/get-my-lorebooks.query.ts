@@ -1,4 +1,4 @@
-import type { LorebookVisibility } from '@kirika-js/domain/lorebook'
+import type { LorebookVisibility } from '@kirika-js/core/domain/lorebook'
 import { Query } from '@nestjs/cqrs'
 import type { PageResult } from '~/shared/application/page-result.interface'
 import type { LorebookListItem } from '../ports/lorebook-list-read.port'

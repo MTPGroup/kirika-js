@@ -19,8 +19,7 @@
     "test:watch": "vitest -w"
   },
   "dependencies": {
-    "@kirika-js/chat-engine": "workspace:*",
-    "@kirika-js/domain": "workspace:*",
+    "@kirika-js/core": "workspace:*",
     "openai": "^7.5.0"
   },
   "devDependencies": {

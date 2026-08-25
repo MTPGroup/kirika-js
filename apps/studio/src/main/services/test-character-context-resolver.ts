@@ -1,17 +1,17 @@
 import type {
   ChatCharacterContextResolverPort,
   ResolvedChatCharacterContext,
-} from '@kirika-js/chat-engine'
+} from '@kirika-js/core/chat'
 import {
   type CharacterId,
   CharacterLorebookReference,
   CharacterRevision,
   type CharacterRevisionId,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import {
   type LorebookRevision,
   LorebookRevisionId,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import type { GenerationContextOverrideDto } from '~/shared/ipc'
 import type { StudioRuntime } from '../studio-runtime'
 

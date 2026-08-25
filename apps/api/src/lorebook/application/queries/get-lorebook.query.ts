@@ -1,7 +1,7 @@
 import type {
   LorebookVisibility,
   LoreEntryPosition,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import { Query } from '@nestjs/cqrs'
 
 export interface LorebookEntryResult {

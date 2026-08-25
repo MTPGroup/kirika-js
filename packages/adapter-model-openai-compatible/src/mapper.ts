@@ -2,7 +2,7 @@ import type {
   ChatModelFinishReason,
   ChatModelMessage,
   ChatModelRequest,
-} from '@kirika-js/chat-engine'
+} from '@kirika-js/core/chat'
 import type OpenAI from 'openai'
 
 export function mapRequests(

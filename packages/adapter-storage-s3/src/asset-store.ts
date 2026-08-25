@@ -7,7 +7,7 @@ import {
   S3ServiceException,
 } from '@aws-sdk/client-s3'
 
-import type { AssetStorePort, PutAssetInput } from '@kirika-js/domain'
+import type { AssetStorePort, PutAssetInput } from '@kirika-js/core/domain'
 
 import type { S3AssetStoreConfig } from './config'
 

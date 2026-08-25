@@ -1,4 +1,4 @@
-import { MessageContent } from '@kirika-js/domain/conversation'
+import { MessageContent } from '@kirika-js/core/domain/conversation'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { SqliteConversationRepository } from '~/repositories/conversation.repository'
 import { SqliteConversationMessageRepository } from '~/repositories/conversation-message.repository'

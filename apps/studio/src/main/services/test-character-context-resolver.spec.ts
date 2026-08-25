@@ -2,9 +2,9 @@ import {
   Character,
   CharacterLorebookReference,
   type CharacterRevisionId,
-} from '@kirika-js/domain/character'
-import { Lorebook, LorebookEntry } from '@kirika-js/domain/lorebook'
-import { UserId } from '@kirika-js/domain/shared'
+} from '@kirika-js/core/domain/character'
+import { Lorebook, LorebookEntry } from '@kirika-js/core/domain/lorebook'
+import { UserId } from '@kirika-js/core/domain/shared'
 import { describe, expect, it } from 'vitest'
 import { TestCharacterContextResolver } from './test-character-context-resolver'
 

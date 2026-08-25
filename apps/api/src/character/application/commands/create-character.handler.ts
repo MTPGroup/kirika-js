@@ -2,7 +2,7 @@ import {
   CHARACTER_REPOSITORY_PORT,
   Character,
   type CharacterRepositoryPort,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import { Inject } from '@nestjs/common'
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs'
 import { UserId } from '~/auth/user-id.vo'

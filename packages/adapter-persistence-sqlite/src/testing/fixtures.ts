@@ -1,9 +1,12 @@
-import { Character, type CharacterRevision } from '@kirika-js/domain/character'
+import {
+  Character,
+  type CharacterRevision,
+} from '@kirika-js/core/domain/character'
 import {
   Conversation,
   ConversationParticipant,
-} from '@kirika-js/domain/conversation'
-import { UserId } from '@kirika-js/domain/shared'
+} from '@kirika-js/core/domain/conversation'
+import { UserId } from '@kirika-js/core/domain/shared'
 
 import { SqliteCharacterRepository } from '~/repositories/character.repository'
 import { SqliteConversationRepository } from '~/repositories/conversation.repository'

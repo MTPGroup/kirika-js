@@ -7,7 +7,7 @@ import {
   createCharacterCardDocument,
   fromCharacterRevision,
   toCharacterRevisionContent,
-} from '@kirika-js/character-card'
+} from '@kirika-js/core/character-card'
 import {
   Asset,
   AssetId,
@@ -16,12 +16,12 @@ import {
   CharacterLorebookReference,
   CharacterRevisionAsset,
   CharacterRevisionId,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import {
   Lorebook,
   LorebookEntry,
   LorebookRevisionId,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import type {
   CharacterApi,
   CharacterDto,
@@ -209,7 +209,7 @@ export const characterService: CharacterService = {
   async createCharacter(input) {
     const runtime = studioRuntime.requireActive()
     const character = Character.create({
-      ownerId: new (await import('@kirika-js/domain/shared')).UserId(
+      ownerId: new (await import('@kirika-js/core/domain/shared')).UserId(
         runtime.settings.ownerId,
       ),
       alias: input.alias,
@@ -399,7 +399,7 @@ export const characterService: CharacterService = {
           const lorebook = Lorebook.create(
             card.name ?? `${imported.card.name} 世界书`,
             card.description ?? '',
-            new (await import('@kirika-js/domain/shared')).UserId(
+            new (await import('@kirika-js/core/domain/shared')).UserId(
               runtime.settings.ownerId,
             ),
           )
@@ -421,7 +421,7 @@ export const characterService: CharacterService = {
       throw error
     }
     const character = Character.create({
-      ownerId: new (await import('@kirika-js/domain/shared')).UserId(
+      ownerId: new (await import('@kirika-js/core/domain/shared')).UserId(
         runtime.settings.ownerId,
       ),
       initialRevision: content,

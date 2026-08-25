@@ -1,10 +1,13 @@
 import { OpenAICompatibleChatModel } from '@kirika-js/adapter-model-openai-compatible'
-import { ChatEngine } from '@kirika-js/chat-engine'
-import { CharacterId, CharacterRevisionId } from '@kirika-js/domain/character'
+import { ChatEngine } from '@kirika-js/core/chat'
+import {
+  CharacterId,
+  CharacterRevisionId,
+} from '@kirika-js/core/domain/character'
 import {
   ConversationId,
   ConversationParticipantId,
-} from '@kirika-js/domain/conversation'
+} from '@kirika-js/core/domain/conversation'
 import type { WebContents } from 'electron'
 import type {
   AbortGenerationInput,

@@ -1,7 +1,7 @@
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import type { AssetStorePort, PutAssetInput } from '@kirika-js/domain'
+import type { AssetStorePort, PutAssetInput } from '@kirika-js/core/domain'
 
 export interface FilesystemAssetStoreOptions {
   readonly rootDir: string

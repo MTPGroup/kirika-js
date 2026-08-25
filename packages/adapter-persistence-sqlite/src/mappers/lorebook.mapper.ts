@@ -6,8 +6,8 @@ import {
   LorebookId,
   LorebookRevision,
   LorebookRevisionId,
-} from '@kirika-js/domain/lorebook'
-import { UserId } from '@kirika-js/domain/shared'
+} from '@kirika-js/core/domain/lorebook'
+import { UserId } from '@kirika-js/core/domain/shared'
 import type {
   lorebookEntries,
   lorebookRevisions,

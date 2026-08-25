@@ -2,7 +2,7 @@ import type {
   Character,
   CharacterId,
   CharacterRepositoryPort,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import { Injectable } from '@nestjs/common'
 import { eq } from 'drizzle-orm'
 import { DrizzleService } from '~/shared/infrastructure/drizzle/drizzle.service'

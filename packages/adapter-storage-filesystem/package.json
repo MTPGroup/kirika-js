@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1115.0",
-    "@kirika-js/domain": "workspace:*"
+    "@kirika-js/core": "workspace:*"
   },
   "devDependencies": {
     "@kirika-js/typescript-config": "workspace:*",

@@ -1,4 +1,4 @@
-import { Asset, AssetId } from '@kirika-js/domain/character'
+import { Asset, AssetId } from '@kirika-js/core/domain/character'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { SqliteAssetRepository } from '~/repositories/asset.repository'
 import {

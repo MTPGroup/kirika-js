@@ -1,5 +1,5 @@
-import type { LorebookRepositoryPort } from '@kirika-js/domain/lorebook'
-import { Lorebook, type LorebookId } from '@kirika-js/domain/lorebook'
+import type { LorebookRepositoryPort } from '@kirika-js/core/domain/lorebook'
+import { Lorebook, type LorebookId } from '@kirika-js/core/domain/lorebook'
 import {
   BadRequestException,
   ConflictException,

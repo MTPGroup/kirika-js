@@ -1,4 +1,8 @@
-import { Lorebook, LorebookEntry, LorebookId } from '@kirika-js/domain/lorebook'
+import {
+  Lorebook,
+  LorebookEntry,
+  LorebookId,
+} from '@kirika-js/core/domain/lorebook'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { SqliteLorebookRepository } from '~/repositories/lorebook.repository'
 import {

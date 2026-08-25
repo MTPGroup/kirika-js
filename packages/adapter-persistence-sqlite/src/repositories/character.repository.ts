@@ -2,7 +2,7 @@ import {
   type Character,
   CharacterId,
   type CharacterRepositoryPort,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import { eq, inArray } from 'drizzle-orm'
 import type { SqliteDatabase } from '~/database'
 import { CharacterMapper } from '~/mappers/character.mapper'

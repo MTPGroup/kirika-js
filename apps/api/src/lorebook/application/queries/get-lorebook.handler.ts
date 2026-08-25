@@ -2,7 +2,7 @@ import {
   LOREBOOK_REPOSITORY_PORT,
   LorebookId,
   type LorebookRepositoryPort,
-} from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/lorebook'
 import { Inject, NotFoundException } from '@nestjs/common'
 import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs'
 import { GetLorebookQuery, type GetLorebookResult } from './get-lorebook.query'

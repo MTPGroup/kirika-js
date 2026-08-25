@@ -1,4 +1,4 @@
-import { ConversationId } from '@kirika-js/domain/conversation'
+import { ConversationId } from '@kirika-js/core/domain/conversation'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { SqliteConversationRepository } from '~/repositories/conversation.repository'
 import {

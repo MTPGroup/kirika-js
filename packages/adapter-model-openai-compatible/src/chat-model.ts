@@ -7,7 +7,7 @@ import {
   type ChatModelRequest,
   type ChatModelStreamEvent,
   type TokenUsage,
-} from '@kirika-js/chat-engine'
+} from '@kirika-js/core/chat'
 import OpenAI from 'openai'
 import { mapFinishReason, mapRequests } from './mapper'
 

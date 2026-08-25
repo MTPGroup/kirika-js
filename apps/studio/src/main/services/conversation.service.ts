@@ -2,7 +2,7 @@ import {
   AssetId,
   CharacterId,
   CharacterRevisionId,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 import {
   Conversation,
   ConversationId,
@@ -10,8 +10,8 @@ import {
   ConversationParticipant,
   ConversationParticipantId,
   MessageContent,
-} from '@kirika-js/domain/conversation'
-import { UserId } from '@kirika-js/domain/shared'
+} from '@kirika-js/core/domain/conversation'
+import { UserId } from '@kirika-js/core/domain/shared'
 import type { ConversationApi, MessageContentInput } from '~/shared/ipc'
 import {
   toConversationDto,

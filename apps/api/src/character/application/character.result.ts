@@ -2,7 +2,7 @@ import type {
   Character,
   CharacterRevision,
   CharacterRevisionAsset,
-} from '@kirika-js/domain/character'
+} from '@kirika-js/core/domain/character'
 
 export interface CharacterRevisionAssetResult {
   assetId: string

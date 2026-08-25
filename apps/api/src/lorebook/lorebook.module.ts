@@ -1,4 +1,4 @@
-import { LOREBOOK_REPOSITORY_PORT } from '@kirika-js/domain/lorebook'
+import { LOREBOOK_REPOSITORY_PORT } from '@kirika-js/core/domain/lorebook'
 import { Module } from '@nestjs/common'
 import { SharedModule } from '~/shared/shared.module'
 import { CreateLorebookHandler } from './application/commands/create-lorebook.handler'

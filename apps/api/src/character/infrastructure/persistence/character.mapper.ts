@@ -8,8 +8,8 @@ import {
   CharacterRevision,
   CharacterRevisionAsset,
   CharacterRevisionId,
-} from '@kirika-js/domain/character'
-import { LorebookRevisionId } from '@kirika-js/domain/lorebook'
+} from '@kirika-js/core/domain/character'
+import { LorebookRevisionId } from '@kirika-js/core/domain/lorebook'
 import { UserId } from '~/auth/user-id.vo'
 import type {
   characterRevisionAssets,

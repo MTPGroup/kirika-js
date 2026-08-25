@@ -1,4 +1,4 @@
-import type { LorebookVisibility } from '@kirika-js/domain/lorebook'
+import type { LorebookVisibility } from '@kirika-js/core/domain/lorebook'
 
 export const LOREBOOK_LIST_READ_PORT = Symbol('LOREBOOK_LIST_READ_PORT')
 

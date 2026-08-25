@@ -1,1 +1,1 @@
-export { UserId } from '@kirika-js/domain/shared'
+export { UserId } from '@kirika-js/core/domain/shared'
