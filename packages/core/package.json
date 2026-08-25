@@ -72,6 +72,11 @@
       "import": "./dist/character-card.mjs",
       "require": "./dist/character-card.cjs"
     },
+    "./storage": {
+      "types": "./dist/storage.d.mts",
+      "import": "./dist/storage.mjs",
+      "require": "./dist/storage.cjs"
+    },
     "./package.json": "./package.json"
   }
 }

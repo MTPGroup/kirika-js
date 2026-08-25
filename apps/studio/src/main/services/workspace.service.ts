@@ -19,7 +19,8 @@ export async function toWorkspaceState(
     rootDir: runtime.paths.workspaceDir,
     name: runtime.settings.name,
     dbPath: runtime.paths.dbPath,
-    assetsDir: runtime.paths.assetsDir,
+    // Preserve the existing IPC field name for renderer compatibility.
+    assetsDir: runtime.paths.objectsDir,
     schemaVersion: 1,
     ownerId: runtime.settings.ownerId,
     providers: await runtime.settings.listProviders(),

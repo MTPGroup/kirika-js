@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { extname, join } from 'node:path'
+import { FilesystemObjectStorage } from '@kirika-js/adapter-storage-filesystem'
+import type { ObjectStoragePort } from '@kirika-js/core/storage'
 import {
   app,
   BrowserWindow,
@@ -11,6 +13,7 @@ import {
 import type { ProfileApi } from '~/shared/ipc'
 
 const PROFILE_SCHEME = 'kirika-profile'
+const PROFILE_AVATAR_PREFIX = 'profile/avatars/'
 const MAX_SOURCE_BYTES = 10 * 1024 * 1024
 const allowedExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif'])
 const contentTypes: Readonly<Record<string, string>> = {
@@ -20,6 +23,8 @@ const contentTypes: Readonly<Record<string, string>> = {
   '.webp': 'image/webp',
   '.gif': 'image/gif',
 }
+
+let globalObjectStorage: ObjectStoragePort | null = null
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -33,25 +38,44 @@ protocol.registerSchemesAsPrivileged([
   },
 ])
 
-function profileAssetDir() {
-  return join(app.getPath('userData'), 'profile')
+function requireGlobalObjectStorage(): ObjectStoragePort {
+  globalObjectStorage ??= new FilesystemObjectStorage({
+    rootDir: join(app.getPath('userData'), 'objects'),
+  })
+  return globalObjectStorage
 }
 
-function avatarUrl(fileName: string) {
-  return `${PROFILE_SCHEME}://avatar/${encodeURIComponent(fileName)}`
+function avatarUrl(key: string) {
+  return `${PROFILE_SCHEME}://object/${key
+    .split('/')
+    .map(encodeURIComponent)
+    .join('/')}`
 }
 
 export function registerProfileProtocol(): void {
   protocol.handle(PROFILE_SCHEME, async (request) => {
     const url = new URL(request.url)
-    const fileName = decodeURIComponent(url.pathname.replace(/^\//, ''))
-    if (!/^[a-f0-9-]+\.(png|jpe?g|webp|gif)$/i.test(fileName)) {
+    if (url.hostname !== 'object') {
       return new Response('Not found', { status: 404 })
     }
+
+    const key = url.pathname
+      .split('/')
+      .map((part) => decodeURIComponent(part))
+      .filter(Boolean)
+      .join('/')
+    if (!key.startsWith(PROFILE_AVATAR_PREFIX)) {
+      return new Response('Not found', { status: 404 })
+    }
+
     try {
-      const extension = extname(fileName).toLowerCase()
-      const content = await readFile(join(profileAssetDir(), fileName))
-      return new Response(content, {
+      const extension = extname(key).toLowerCase()
+      const content = await requireGlobalObjectStorage().get(key)
+      const body = content.buffer.slice(
+        content.byteOffset,
+        content.byteOffset + content.byteLength,
+      ) as ArrayBuffer
+      return new Response(body, {
         headers: {
           'Content-Type': contentTypes[extension] ?? 'application/octet-stream',
           'Cache-Control': 'no-store',
@@ -97,10 +121,12 @@ export const profileService: ProfileApi = {
     if (!content.length || content.length > MAX_SOURCE_BYTES)
       throw new Error('裁切后的头像数据无效')
 
-    const directory = profileAssetDir()
-    await mkdir(directory, { recursive: true })
-    const fileName = `${randomUUID()}.png`
-    await writeFile(join(directory, fileName), content)
-    return { url: avatarUrl(fileName) }
+    const key = `${PROFILE_AVATAR_PREFIX}${randomUUID()}.png`
+    await requireGlobalObjectStorage().put({
+      key,
+      data: content,
+      contentType: 'image/png',
+    })
+    return { url: avatarUrl(key) }
   },
 }

@@ -1,4 +1,4 @@
-export interface S3AssetStoreConfig {
+export interface S3ObjectStorageConfig {
   readonly bucket: string
   readonly region?: string
   readonly endpoint?: string

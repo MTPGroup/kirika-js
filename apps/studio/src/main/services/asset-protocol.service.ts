@@ -33,6 +33,7 @@ export function registerAssetProtocol(): void {
   protocol.handle(ASSET_SCHEME, async (request) => {
     try {
       const url = new URL(request.url)
+
       const storageKey = [url.hostname, url.pathname]
         .join('')
         .split('/')
@@ -40,13 +41,16 @@ export function registerAssetProtocol(): void {
         .filter(Boolean)
         .join('/')
       if (!storageKey) return new Response('Not found', { status: 404 })
+
       const content = await studioRuntime
         .requireActive()
-        .assetStore.get(storageKey)
+        .objectStorage.get(storageKey)
+
       const body = content.buffer.slice(
         content.byteOffset,
         content.byteOffset + content.byteLength,
       ) as ArrayBuffer
+
       return new Response(body, {
         headers: {
           'Content-Type':

@@ -11,6 +11,7 @@ export default defineConfig({
     chat: 'src/chat/index.ts',
     'chat/testing': 'src/chat/testing/index.ts',
     'character-card': 'src/character-card/index.ts',
+    storage: 'src/storage/index.ts',
   },
   exports: false,
   clean: true,

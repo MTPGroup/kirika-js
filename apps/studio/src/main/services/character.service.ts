@@ -284,8 +284,8 @@ export const characterService: CharacterService = {
     let asset = await runtime.assetRepository.findBySha256(sha256)
     if (!asset) {
       const extension = extname(filePath).replace(/^\./, '')
-      const storageKey = `character/${randomUUID()}${extension ? `.${extension}` : ''}`
-      await runtime.assetStore.put({
+      const storageKey = `characters/assets/${randomUUID()}${extension ? `.${extension}` : ''}`
+      await runtime.objectStorage.put({
         key: storageKey,
         data,
         contentType: 'application/octet-stream',
@@ -299,7 +299,7 @@ export const characterService: CharacterService = {
       try {
         await runtime.assetRepository.save(asset)
       } catch (error) {
-        await runtime.assetStore.delete(storageKey)
+        await runtime.objectStorage.delete(storageKey)
         throw error
       }
     }
@@ -379,8 +379,8 @@ export const characterService: CharacterService = {
               uri: `kirika-asset://${existing.storageKey}`,
             }
           const extension = extname(card.uri ?? '').replace(/^\./, '')
-          const storageKey = `character/${randomUUID()}${extension ? `.${extension}` : ''}`
-          await runtime.assetStore.put({
+          const storageKey = `characters/assets/${randomUUID()}${extension ? `.${extension}` : ''}`
+          await runtime.objectStorage.put({
             key: storageKey,
             data: card.data,
             contentType: card.mediaType ?? 'application/octet-stream',
@@ -416,7 +416,7 @@ export const characterService: CharacterService = {
       })
     } catch (error) {
       await Promise.allSettled(
-        writtenAssetKeys.map((key) => runtime.assetStore.delete(key)),
+        writtenAssetKeys.map((key) => runtime.objectStorage.delete(key)),
       )
       throw error
     }
@@ -434,7 +434,7 @@ export const characterService: CharacterService = {
       return await save(runtime, character)
     } catch (error) {
       await Promise.allSettled([
-        ...writtenAssetKeys.map((key) => runtime.assetStore.delete(key)),
+        ...writtenAssetKeys.map((key) => runtime.objectStorage.delete(key)),
         ...importedAssets.map((asset) =>
           runtime.assetRepository.delete(asset.id),
         ),
@@ -467,7 +467,7 @@ export const characterService: CharacterService = {
         const asset = await runtime.assetRepository.findById(reference.assetId)
         if (!asset?.storageKey) throw new Error('角色引用的资源不存在')
         return {
-          data: await runtime.assetStore.get(asset.storageKey),
+          data: await runtime.objectStorage.get(asset.storageKey),
           mediaType: asset.mediaType ?? undefined,
           uri: reference.uri,
         }

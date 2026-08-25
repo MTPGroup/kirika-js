@@ -1,11 +1,11 @@
-export interface PutAssetInput {
+export interface PutObjectInput {
   readonly key: string
   readonly data: Uint8Array
   readonly contentType: string
 }
 
-export interface AssetStorePort {
-  put(input: PutAssetInput): Promise<void>
+export interface ObjectStoragePort {
+  put(input: PutObjectInput): Promise<void>
 
   get(key: string): Promise<Uint8Array>
 

@@ -6,16 +6,18 @@ import {
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3'
+import {
+  type ObjectStoragePort,
+  type PutObjectInput,
+  StoredObjectNotFoundError,
+} from '@kirika-js/core/storage'
+import type { S3ObjectStorageConfig } from './config'
 
-import type { AssetStorePort, PutAssetInput } from '@kirika-js/core/domain'
-
-import type { S3AssetStoreConfig } from './config'
-
-export class S3AssetStore implements AssetStorePort {
+export class S3ObjectStorage implements ObjectStoragePort {
   private readonly client: S3Client
   private readonly bucket: string
 
-  constructor(config: S3AssetStoreConfig) {
+  constructor(config: S3ObjectStorageConfig) {
     const bucket = config.bucket.trim()
 
     if (!bucket) {
@@ -48,13 +50,13 @@ export class S3AssetStore implements AssetStorePort {
     })
   }
 
-  async put(input: PutAssetInput): Promise<void> {
+  async put(input: PutObjectInput): Promise<void> {
     const key = normalizeKey(input.key)
 
     const contentType = input.contentType.trim()
 
     if (!contentType) {
-      throw new Error('Asset contentType 不能为空')
+      throw new Error('Object contentType 不能为空')
     }
 
     await this.client.send(
@@ -85,7 +87,7 @@ export class S3AssetStore implements AssetStorePort {
       return await result.Body.transformToByteArray()
     } catch (error) {
       if (isNotFound(error)) {
-        throw new AssetObjectNotFoundError(normalizedKey)
+        throw new StoredObjectNotFoundError(normalizedKey)
       }
 
       throw error
@@ -129,18 +131,6 @@ export class S3AssetStore implements AssetStorePort {
   }
 }
 
-export class AssetObjectNotFoundError extends Error {
-  readonly key: string
-
-  constructor(key: string) {
-    super(`Asset 不存在: ${key}`)
-
-    this.name = 'AssetObjectNotFoundError'
-
-    this.key = key
-  }
-}
-
 function normalizeKey(key: string): string {
   const normalized = key.trim()
 
@@ -159,7 +149,7 @@ function normalizeOptionalString(
   return normalized || undefined
 }
 
-function assertCredentialConfig(config: S3AssetStoreConfig): void {
+function assertCredentialConfig(config: S3ObjectStorageConfig): void {
   const hasAccessKey = Boolean(config.accessKeyId)
 
   const hasSecretKey = Boolean(config.secretAccessKey)

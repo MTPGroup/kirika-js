@@ -12,7 +12,8 @@ import {
   type SqliteDatabase,
   SqliteLorebookRepository,
 } from '@kirika-js/adapter-persistence-sqlite'
-import { FilesystemAssetStore } from '@kirika-js/adapter-storage-filesystem'
+import { FilesystemObjectStorage } from '@kirika-js/adapter-storage-filesystem'
+import type { ObjectStoragePort } from '@kirika-js/core/storage'
 import { app } from 'electron'
 import { ProviderCredentialStore } from './services/provider-credential.store'
 import { WorkspaceSettingsStore } from './services/workspace-settings.store'
@@ -21,7 +22,7 @@ export interface StudioRuntimePaths {
   readonly workspaceDir: string
   readonly dataDir: string
   readonly dbPath: string
-  readonly assetsDir: string
+  readonly objectsDir: string
   readonly migrationsDir: string
 }
 
@@ -34,7 +35,7 @@ export interface StudioRuntime {
   readonly conversationRepository: SqliteConversationRepository
   readonly messageRepository: SqliteConversationMessageRepository
   readonly conversationUnitOfWork: SqliteConversationUnitOfWork
-  readonly assetStore: FilesystemAssetStore
+  readonly objectStorage: ObjectStoragePort
   readonly settings: WorkspaceSettingsStore
   close(): Promise<void>
 }
@@ -53,7 +54,7 @@ export async function createStudioRuntime(
   await Promise.all([
     mkdir(paths.workspaceDir, { recursive: true }),
     mkdir(paths.dataDir, { recursive: true }),
-    mkdir(paths.assetsDir, { recursive: true }),
+    mkdir(paths.objectsDir, { recursive: true }),
   ])
 
   const db = createSqliteDatabase(`file:${paths.dbPath}`)
@@ -92,7 +93,7 @@ export async function createStudioRuntime(
     conversationRepository: new SqliteConversationRepository(db),
     messageRepository: new SqliteConversationMessageRepository(db),
     conversationUnitOfWork,
-    assetStore: new FilesystemAssetStore({ rootDir: paths.assetsDir }),
+    objectStorage: new FilesystemObjectStorage({ rootDir: paths.objectsDir }),
     settings,
     close: async () => {
       db.$client.close()
@@ -188,7 +189,8 @@ function resolveRuntimePaths(
     workspaceDir: normalizedWorkspaceDir,
     dataDir,
     dbPath: join(dataDir, 'studio.sqlite'),
-    assetsDir: join(normalizedWorkspaceDir, 'assets'),
+    // Keep the existing directory name so current workspaces remain compatible.
+    objectsDir: join(normalizedWorkspaceDir, 'assets'),
     migrationsDir: migrationsDir
       ? resolve(migrationsDir)
       : resolveMigrationsDir(),

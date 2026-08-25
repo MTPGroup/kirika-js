@@ -1,1 +1,1 @@
-export * from './asset-store'
+export * from './object-storage'
