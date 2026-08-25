@@ -52,50 +52,18 @@
   "engines": {
     "node": ">=22.12.0"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
+  "types": "./dist/index.d.mts",
   "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
-    },
-    "./character-card": {
-      "import": "./dist/character-card.mjs",
-      "require": "./dist/character-card.cjs"
-    },
-    "./chat": {
-      "import": "./dist/chat.mjs",
-      "require": "./dist/chat.cjs"
-    },
-    "./chat/testing": {
-      "import": "./dist/chat/testing.mjs",
-      "require": "./dist/chat/testing.cjs"
-    },
-    "./domain": {
-      "import": "./dist/domain.mjs",
-      "require": "./dist/domain.cjs"
-    },
-    "./domain/character": {
-      "import": "./dist/domain/character.mjs",
-      "require": "./dist/domain/character.cjs"
-    },
-    "./domain/conversation": {
-      "import": "./dist/domain/conversation.mjs",
-      "require": "./dist/domain/conversation.cjs"
-    },
-    "./domain/lorebook": {
-      "import": "./dist/domain/lorebook.mjs",
-      "require": "./dist/domain/lorebook.cjs"
-    },
-    "./domain/shared": {
-      "import": "./dist/domain/shared.mjs",
-      "require": "./dist/domain/shared.cjs"
-    },
-    "./storage": {
-      "import": "./dist/storage.mjs",
-      "require": "./dist/storage.cjs"
-    },
+    ".": "./dist/index.mjs",
+    "./character-card": "./dist/character-card.mjs",
+    "./chat": "./dist/chat.mjs",
+    "./chat/testing": "./dist/chat/testing.mjs",
+    "./domain": "./dist/domain.mjs",
+    "./domain/character": "./dist/domain/character.mjs",
+    "./domain/conversation": "./dist/domain/conversation.mjs",
+    "./domain/lorebook": "./dist/domain/lorebook.mjs",
+    "./domain/shared": "./dist/domain/shared.mjs",
+    "./storage": "./dist/storage.mjs",
     "./package.json": "./package.json"
   }
 }
