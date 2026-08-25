@@ -1,0 +1,83 @@
+name: Release npm Packages
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: npm-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Create release PR or publish packages
+    runs-on: ubuntu-latest
+    environment: npm
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22.12.0
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Update npm for trusted publishing
+        run: npm install --global npm@latest
+
+      - name: Check formatting and linting
+        run: pnpm format-and-lint
+
+      - name: Check types
+        run: pnpm check-types
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build publishable packages
+        run: >-
+          pnpm turbo run build
+          --filter=@kirika-js/core
+          --filter=@kirika-js/adapter-model-openai-compatible
+          --filter=@kirika-js/adapter-persistence-sqlite
+          --filter=@kirika-js/adapter-storage-filesystem
+          --filter=@kirika-js/adapter-storage-s3
+
+      - name: Create release PR or publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm version-packages
+          publish: pnpm release
+          title: "chore(release): publish npm packages"
+          commit: "chore(release): publish npm packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write release summary
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+        run: |
+          echo "## Published npm packages" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo "$PUBLISHED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

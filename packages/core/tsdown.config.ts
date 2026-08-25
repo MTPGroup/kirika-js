@@ -13,7 +13,7 @@ export default defineConfig({
     'character-card': 'src/character-card/index.ts',
     storage: 'src/storage/index.ts',
   },
-  exports: false,
+  exports: true,
   clean: true,
   dts: true,
   format: ['esm', 'cjs'],

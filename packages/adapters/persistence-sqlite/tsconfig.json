@@ -2,10 +2,10 @@
   "extends": "@kirika-js/typescript-config/bundler.json",
   "compilerOptions": {
     "types": ["node"],
-    "baseUrl": ".",
+    "rootDir": "./src",
     "paths": {
-      "~/*": ["src/*"]
+      "~/*": ["./src/*"]
     }
   },
-  "include": ["src", "drizzle.config.ts"]
+  "include": ["src"]
 }

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
+  "baseBranch": "master",
+  "access": "public",
+  "format": "auto",
+  "changelog": [
+    "@changesets/changelog-github",
+    {
+      "repo": "MTPGroup/kirika-js"
+    }
+  ],
+  "commit": false,
+  "ignore": [
+    "@kirika-js/studio",
+    "@kirika-js/api",
+    "@kirika-js/typescript-config",
+    "@kirika-js/vitest-config"
+  ],
+  "fixed": [
+    [
+      "@kirika-js/core",
+      "@kirika-js/adapter-model-openai-compatible",
+      "@kirika-js/adapter-persistence-sqlite",
+      "@kirika-js/adapter-storage-filesystem",
+      "@kirika-js/adapter-storage-s3"
+    ]
+  ],
+  "linked": [],
+  "updateInternalDependencies": "patch"
+}

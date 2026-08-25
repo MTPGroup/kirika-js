@@ -1,9 +1,39 @@
 {
   "name": "@kirika-js/adapter-persistence-sqlite",
   "version": "0.1.0",
-  "private": true,
+  "author": {
+    "name": "MTP Group",
+    "url": "https://github.com/MTPGroup"
+  },
+  "contributors": [
+    {
+      "name": "hanasak1",
+      "email": "hanasakayui2022@gmail.com",
+      "url": "https://github.com/hanasa2023"
+    }
+  ],
   "license": "MIT",
   "type": "module",
+  "files": [
+    "dist",
+    "drizzle",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MTPGroup/kirika-js.git",
+    "directory": "packages/adapters/persistence-sqlite"
+  },
+  "homepage": "https://github.com/MTPGroup/kirika-js/tree/master/packages/adapters/persistence-sqlite#readme",
+  "bugs": {
+    "url": "https://github.com/MTPGroup/kirika-js/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsdown",
     "test": "vitest run",
@@ -24,8 +54,17 @@
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
     "./package.json": "./package.json"
-  }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts"
 }

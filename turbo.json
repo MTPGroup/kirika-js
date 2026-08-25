@@ -22,6 +22,9 @@
       "cache": false,
       "persistent": true
     },
+    "check-types": {
+      "dependsOn": ["^build"]
+    },
     "//#format-and-lint": {},
     "//#format-and-lint:fix": {
       "cache": false
