@@ -70,8 +70,7 @@ jobs:
         run: pnpm dlx electron-icon-builder --input=resources/icon.png --output=build
 
       - name: Build package
-        working-directory: apps/studio
-        run: pnpm ${{ matrix.command }}
+        run: pnpm turbo run ${{ matrix.command }} --filter=@kirika-js/studio
 
       - name: Upload macOS packages
         if: matrix.platform == 'macOS'

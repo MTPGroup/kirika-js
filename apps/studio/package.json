@@ -1,9 +1,10 @@
 {
   "name": "@kirika-js/studio",
   "version": "0.1.0",
-  "description": "",
+  "description": "面向角色、世界书的创作工作台",
   "main": "./out/main/index.js",
   "author": "hanasak1 <hanasakayui2022@gmail.com>",
+  "license": "MIT",
   "scripts": {
     "check": "biome check .",
     "check:fix": "biome check --write .",

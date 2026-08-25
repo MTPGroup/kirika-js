@@ -4,6 +4,21 @@
   "tasks": {
     "dev": {
       "passThroughEnv": ["ELECTRON_RENDERER_URL"]
+    },
+    "build:mac": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build:win": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": ["dist/**"]
+    },
+    "build:linux": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": ["dist/**"]
     }
   }
 }
