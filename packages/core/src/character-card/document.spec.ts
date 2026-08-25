@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  createCharacterCardDocument,
-  InvalidCharacterCardError,
-} from '../index'
+import { createCharacterCardDocument, InvalidCharacterCardError } from './index'
 
 describe('CharacterCardDocument', () => {
   it('规范化角色卡字段并与调用方数据隔离', () => {

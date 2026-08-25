@@ -4,9 +4,8 @@ import {
   type CharacterRevision,
   CharacterRevisionAsset,
   type CharacterRevisionContent,
-} from '../../domain/character'
-import type { LorebookRevisionId } from '../../domain/lorebook'
-import { CharacterCardResourceMappingError } from '../errors'
+} from '../domain/character'
+import type { LorebookRevisionId } from '../domain/lorebook'
 import {
   type CharacterCardAsset,
   type CharacterCardDocument,
@@ -14,7 +13,8 @@ import {
   type CharacterCardLorebook,
   type CharacterCardLorebookEntryInput,
   createCharacterCardDocument,
-} from '../model/character-card-document'
+} from './document'
+import { CharacterCardResourceMappingError } from './errors'
 
 type MaybePromise<T> = T | Promise<T>
 

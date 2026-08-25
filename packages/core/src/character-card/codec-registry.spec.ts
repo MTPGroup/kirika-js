@@ -5,12 +5,12 @@ import type {
   CharacterCardDocument,
   CharacterCardDocumentInput,
   CharacterCardSource,
-} from '../index'
+} from './index'
 import {
-  CharacterCardService,
+  CharacterCardCodecRegistry,
   InvalidCharacterCardError,
   UnsupportedCharacterCardFormatError,
-} from '../index'
+} from './index'
 
 class TestCodec implements CharacterCardCodec {
   constructor(
@@ -36,14 +36,14 @@ class TestCodec implements CharacterCardCodec {
   }
 }
 
-describe('CharacterCardService', () => {
+describe('CharacterCardCodecRegistry', () => {
   const jsonCodec = new TestCodec('JSON', 'application/json', {
     name: '露娜',
   })
   const pngCodec = new TestCodec('png', 'image/png', { name: '菈妮' })
 
   it('按内容探测 codec，也允许调用方显式指定格式', async () => {
-    const service = new CharacterCardService([jsonCodec, pngCodec])
+    const service = new CharacterCardCodecRegistry([jsonCodec, pngCodec])
 
     await expect(
       service.importCard({
@@ -58,7 +58,7 @@ describe('CharacterCardService', () => {
   })
 
   it('使用指定 codec 导出规范化后的角色卡', async () => {
-    const service = new CharacterCardService([jsonCodec])
+    const service = new CharacterCardCodecRegistry([jsonCodec])
     const result = await service.exportCard({ name: ' 露娜 ' }, 'json')
 
     expect(result).toEqual({
@@ -72,13 +72,13 @@ describe('CharacterCardService', () => {
   it('拒绝重复 codec、未知格式和空输入', async () => {
     expect(
       () =>
-        new CharacterCardService([
+        new CharacterCardCodecRegistry([
           jsonCodec,
           new TestCodec('json', 'x', { name: 'x' }),
         ]),
     ).toThrow('角色卡 codec 格式重复: json')
 
-    const service = new CharacterCardService([jsonCodec])
+    const service = new CharacterCardCodecRegistry([jsonCodec])
     await expect(
       service.importCard({
         data: new Uint8Array([1]),

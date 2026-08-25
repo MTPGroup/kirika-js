@@ -1,6 +1,6 @@
-import { ASSET_KINDS, type AssetKind } from '../../domain/character'
-import type { LoreEntryPosition } from '../../domain/lorebook'
-import { InvalidCharacterCardError } from '../errors'
+import { ASSET_KINDS, type AssetKind } from '../domain/character'
+import type { LoreEntryPosition } from '../domain/lorebook'
+import { InvalidCharacterCardError } from './errors'
 
 export const CHARACTER_CARD_MODEL_VERSION = 2 as const
 

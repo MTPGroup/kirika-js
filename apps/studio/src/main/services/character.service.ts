@@ -3,7 +3,7 @@ import { readFile, stat, writeFile } from 'node:fs/promises'
 import { basename, extname } from 'node:path'
 import {
   type CharacterCardCodec,
-  CharacterCardService,
+  CharacterCardCodecRegistry,
   createCharacterCardDocument,
   fromCharacterRevision,
   toCharacterRevisionContent,
@@ -79,7 +79,7 @@ const jsonCodec: CharacterCardCodec = {
     }
   },
 }
-const characterCardService = new CharacterCardService([jsonCodec])
+const characterCardService = new CharacterCardCodecRegistry([jsonCodec])
 
 function toImportedLorebookEntry(value: LorebookEntryInput): LorebookEntry {
   return LorebookEntry.create(

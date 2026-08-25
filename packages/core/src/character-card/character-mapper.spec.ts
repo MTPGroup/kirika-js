@@ -4,13 +4,13 @@ import {
   CharacterLorebookReference,
   CharacterRevision,
   CharacterRevisionAsset,
-} from '../../domain/character'
-import { LorebookRevisionId } from '../../domain/lorebook'
+} from '../domain/character'
+import { LorebookRevisionId } from '../domain/lorebook'
 import {
   CharacterCardResourceMappingError,
   fromCharacterRevision,
   toCharacterRevisionContent,
-} from '../index'
+} from './index'
 
 function createAsset() {
   return new CharacterRevisionAsset({
@@ -31,7 +31,7 @@ function createLorebookReference() {
   })
 }
 
-describe('CharacterCard Domain mapper', () => {
+describe('CharacterCard character mapper', () => {
   it('将规范化角色资料映射为 CharacterRevisionContent', async () => {
     const content = await toCharacterRevisionContent({
       name: '露娜',

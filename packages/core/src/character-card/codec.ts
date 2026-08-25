@@ -1,7 +1,7 @@
 import type {
   CharacterCardDocument,
   CharacterCardDocumentInput,
-} from '../model/character-card-document'
+} from './document'
 
 export interface CharacterCardSource {
   readonly data: Uint8Array

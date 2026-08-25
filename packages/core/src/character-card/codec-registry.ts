@@ -1,24 +1,24 @@
-import {
-  InvalidCharacterCardError,
-  UnsupportedCharacterCardFormatError,
-} from '../errors'
-import {
-  type CharacterCardDocument,
-  type CharacterCardDocumentInput,
-  createCharacterCardDocument,
-} from '../model/character-card-document'
 import type {
   CharacterCardCodec,
   CharacterCardSource,
   EncodedCharacterCard,
-} from '../ports/character-card-codec.port'
+} from './codec'
+import {
+  type CharacterCardDocument,
+  type CharacterCardDocumentInput,
+  createCharacterCardDocument,
+} from './document'
+import {
+  InvalidCharacterCardError,
+  UnsupportedCharacterCardFormatError,
+} from './errors'
 
 export interface ImportedCharacterCard {
   readonly format: string
   readonly card: CharacterCardDocument
 }
 
-export class CharacterCardService {
+export class CharacterCardCodecRegistry {
   private readonly codecs: readonly CharacterCardCodec[]
   private readonly codecsByFormat: ReadonlyMap<string, CharacterCardCodec>
 
