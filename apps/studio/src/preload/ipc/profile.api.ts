@@ -1,5 +1,5 @@
 import type { ProfileApi } from '~/shared/ipc'
-import { profileChannels } from '~/shared/ipc'
+import { profileChannels } from './channel.constants'
 import { invoke } from './invoke'
 
 export const profileApi: ProfileApi = {

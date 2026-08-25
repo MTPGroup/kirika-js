@@ -1,5 +1,5 @@
 import type { WorkspaceApi, WorkspaceStateDto } from '../../shared/ipc'
-import { workspaceChannels } from '../../shared/ipc'
+import { workspaceChannels } from './channel.constants'
 import { invoke } from './invoke'
 
 export const workspaceApi: WorkspaceApi = {

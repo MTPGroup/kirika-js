@@ -1,5 +1,5 @@
 import type { DialogApi } from '~/shared/ipc'
-import { dialogChannels } from '~/shared/ipc'
+import { dialogChannels } from './channel.constants'
 import { invoke } from './invoke'
 
 export const dialogApi: DialogApi = {

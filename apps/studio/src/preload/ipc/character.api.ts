@@ -5,7 +5,7 @@ import type {
   CharacterSummaryDto,
   ExportCharacterCardResult,
 } from '~/shared/ipc'
-import { characterChannels } from '~/shared/ipc'
+import { characterChannels } from './channel.constants'
 import { invoke } from './invoke'
 
 export const characterApi: CharacterApi = {

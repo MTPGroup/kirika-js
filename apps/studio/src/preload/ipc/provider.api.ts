@@ -1,5 +1,5 @@
 import type { ProviderApi, ProviderDto } from '../../shared/ipc'
-import { providerChannels } from '../../shared/ipc'
+import { providerChannels } from './channel.constants'
 import { invoke } from './invoke'
 
 export const providerApi: ProviderApi = {

@@ -3,7 +3,7 @@ import type {
   LorebookDto,
   LorebookSummaryDto,
 } from '../../shared/ipc'
-import { lorebookChannels } from '../../shared/ipc'
+import { lorebookChannels } from './channel.constants'
 import { invoke } from './invoke'
 
 export const lorebookApi: LorebookApi = {

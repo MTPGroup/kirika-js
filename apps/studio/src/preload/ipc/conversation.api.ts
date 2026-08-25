@@ -5,7 +5,7 @@ import type {
   ConversationSummaryDto,
   GetConversationHistoryResult,
 } from '~/shared/ipc'
-import { conversationChannels } from '~/shared/ipc'
+import { conversationChannels } from './channel.constants'
 import { invoke } from './invoke'
 
 export const conversationApi: ConversationApi = {

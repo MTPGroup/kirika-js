@@ -24,7 +24,7 @@ import {
   providerService,
   workspaceService,
 } from '../services/workspace-provider.service'
-import { openSettingsWindow } from '../window'
+import { openAboutWindow, openSettingsWindow } from '../window'
 import { toIpcError } from './ipc-error'
 
 function result<T>(operation: () => Promise<T> | T): Promise<IpcResult<T>> {
@@ -78,6 +78,7 @@ function registerWithEvent<C extends InputStudioChannel>(
 export function registerStudioIpc(): () => void {
   const channels: string[] = []
   registerNoInput(channels, windowChannels.openSettings, openSettingsWindow)
+  registerNoInput(channels, windowChannels.openAbout, openAboutWindow)
   registerNoInput(
     channels,
     profileChannels.selectAvatar,

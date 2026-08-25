@@ -5,7 +5,7 @@ import type {
   GenerationEvent,
   StartGenerationResult,
 } from '../../shared/ipc'
-import { generationChannels } from '../../shared/ipc'
+import { generationChannels } from './channel.constants'
 import { invoke } from './invoke'
 
 function isGenerationEvent(value: unknown): value is GenerationEvent {

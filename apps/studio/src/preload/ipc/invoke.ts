@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron'
-import type { IpcErrorPayload, IpcResult, StudioChannel } from '~/shared/ipc'
+import type { IpcErrorPayload, IpcResult } from '~/shared/ipc'
+import type { PreloadChannel } from './channel.constants'
 
 export class StudioApiError extends Error {
   constructor(readonly payload: IpcErrorPayload) {
@@ -16,7 +17,7 @@ export class StudioApiError extends Error {
 }
 
 export async function invoke<T>(
-  channel: StudioChannel,
+  channel: PreloadChannel,
   input?: unknown,
 ): Promise<T> {
   const response =
