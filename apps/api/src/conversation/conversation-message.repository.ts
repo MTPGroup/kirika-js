@@ -5,9 +5,9 @@ import type {
   ConversationMessageRepositoryPort,
 } from '@kirika-js/core/domain/conversation'
 import { eq } from 'drizzle-orm'
-import { conversationMessages } from '../db/conversation-schema.js'
-import type { Db } from '../lib/db.js'
-import { ConversationMapper } from './mapper.js'
+import { conversationMessages } from '../db/conversation-schema'
+import type { Db } from '../lib/db'
+import { ConversationMapper } from './mapper'
 
 export class PgConversationMessageRepository
   implements ConversationMessageRepositoryPort

@@ -1,4 +1,4 @@
-import type { Db } from '../lib/db.js'
+import type { Db } from '../lib/db'
 
 export function findCharacterByIdQuery(db: Db, id: string) {
   return db.query.characters.findFirst({

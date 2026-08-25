@@ -1,4 +1,4 @@
-import type { Db } from '../lib/db.js'
+import type { Db } from '../lib/db'
 
 export function findLorebookByIdQuery(db: Db, id: string) {
   return db.query.lorebooks.findFirst({

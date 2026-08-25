@@ -10,7 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
-import { users } from './auth-schema.js'
+import { users } from './auth-schema'
 
 export const LOREBOOK_VISIBILITIES = ['private', 'unlisted', 'public'] as const
 export const LORE_ENTRY_POSITIONS = [

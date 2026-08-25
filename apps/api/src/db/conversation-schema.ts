@@ -8,8 +8,8 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
-import { users } from './auth-schema.js'
-import { characterRevisions, characters } from './character-schema.js'
+import { users } from './auth-schema'
+import { characterRevisions, characters } from './character-schema'
 
 export const CONVERSATION_MODES = ['direct', 'group'] as const
 export const CONVERSATION_STATUSES = ['active', 'archived'] as const

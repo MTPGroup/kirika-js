@@ -9,10 +9,10 @@ import {
   characterRevisionLorebooks,
   characterRevisions,
   characters,
-} from '../db/character-schema.js'
-import type { Db } from '../lib/db.js'
-import { CharacterMapper } from './mapper.js'
-import { findCharacterByIdQuery } from './query.js'
+} from '../db/character-schema'
+import type { Db } from '../lib/db'
+import { CharacterMapper } from './mapper'
+import { findCharacterByIdQuery } from './query'
 
 export class PgCharacterRepository implements CharacterRepositoryPort {
   constructor(private readonly db: Db) {}

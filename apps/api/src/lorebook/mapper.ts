@@ -12,8 +12,8 @@ import type {
   lorebookEntries,
   lorebookRevisions,
   lorebooks,
-} from '../db/lorebook-schema.js'
-import type { DrizzleLorebookWithRelations } from './query.js'
+} from '../db/lorebook-schema'
+import type { DrizzleLorebookWithRelations } from './query'
 
 export type DrizzleLorebookInsert = typeof lorebooks.$inferInsert
 export type DrizzleRevisionInsert = typeof lorebookRevisions.$inferInsert

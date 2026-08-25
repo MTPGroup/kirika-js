@@ -4,7 +4,7 @@ import {
   sessions,
   users,
   verifications,
-} from './auth-schema.js'
+} from './auth-schema'
 import {
   assetKindEnum,
   assets,
@@ -13,18 +13,18 @@ import {
   characterRevisionLorebooks,
   characterRevisions,
   characters,
-} from './character-schema.js'
+} from './character-schema'
 import {
   conversationMessages,
   conversationParticipants,
   conversations,
-} from './conversation-schema.js'
+} from './conversation-schema'
 import {
   lorebookEntries,
   lorebookRelations,
   lorebookRevisions,
   lorebooks,
-} from './lorebook-schema.js'
+} from './lorebook-schema'
 
 export {
   accounts,

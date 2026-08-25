@@ -14,8 +14,8 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
-import { users } from './auth-schema.js'
-import { lorebookRevisions } from './lorebook-schema.js'
+import { users } from './auth-schema'
+import { lorebookRevisions } from './lorebook-schema'
 
 export const assetKindEnum = pgEnum('asset_kind', [
   'avatar',

@@ -1,7 +1,8 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter'
 import { betterAuth } from 'better-auth'
-import { schema } from '../db/index.js'
-import type { Db } from './db.js'
+import { openAPI } from 'better-auth/plugins'
+import { schema } from '../db/index'
+import type { Db } from './db'
 
 export interface AuthConfig {
   readonly baseUrl: string
@@ -28,6 +29,7 @@ export function createAuth(db: Db, config: AuthConfig) {
         generateId: 'uuid',
       },
     },
+    plugins: [openAPI({ disableDefaultReference: true })],
   })
 }
 

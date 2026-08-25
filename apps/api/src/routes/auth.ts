@@ -1,6 +1,7 @@
 import type { Hono } from 'hono'
-import type { Auth } from '../lib/auth.js'
+import type { Auth } from '../lib/auth'
+import type { AppEnv } from '../lib/logger'
 
-export function mountAuth(app: Hono, auth: Auth): void {
-  app.on(['GET', 'POST'], '/api/auth/**', (c) => auth.handler(c.req.raw))
+export function mountAuth(app: Hono<AppEnv>, auth: Auth): void {
+  app.all('/**', (c) => auth.handler(c.req.raw))
 }

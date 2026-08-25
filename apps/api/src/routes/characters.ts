@@ -1,11 +1,16 @@
-import type { CharacterRepositoryPort } from '@kirika-js/core/domain/character'
+import { zValidator } from '@hono/zod-validator'
 import { CharacterId } from '@kirika-js/core/domain/character'
 import { UserId } from '@kirika-js/core/domain/shared'
 import type { Hono } from 'hono'
+import { describeRoute } from 'hono-openapi'
+import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import { z } from 'zod'
-import type { CharacterService } from '../character/character.service.js'
-import { characterToJson } from '../character/serialize.js'
-import type { Auth } from '../lib/auth.js'
+import type { CharacterService } from '../character/character.service'
+import { characterToJson } from '../character/serialize'
+import type { Auth } from '../lib/auth'
+import type { AppEnv } from '../lib/logger'
+import { idParamSchema, jsonRequest, sessionSecurity } from './openapi'
+import { problems, validationProblemHook } from './problems'
 
 const createSchema = z.object({
   alias: z.string().trim().min(1).max(200).optional(),
@@ -33,108 +38,202 @@ const updateSchema = z.object({
 export interface CharacterRouteDependencies {
   readonly auth: Auth
   readonly service: CharacterService
-  readonly repository: CharacterRepositoryPort
 }
 
 export function mountCharacterRoutes(
-  app: Hono,
+  app: Hono<AppEnv>,
   deps: CharacterRouteDependencies,
 ): void {
-  app.post('/api/characters', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
+  app.post(
+    '/characters',
+    describeRoute({
+      tags: ['Characters'],
+      summary: '创建角色及初始草稿版本',
+      security: sessionSecurity,
+      requestBody: jsonRequest(createSchema),
+      responses: {
+        201: { description: '角色创建成功。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+      },
+    }),
+    zValidator('json', createSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
 
-    const body = createSchema.safeParse(await c.req.json())
-    if (!body.success) return c.json({ error: body.error.flatten() }, 400)
+      const { alias, ...content } = c.req.valid('json')
+      const character = await deps.service.create(new UserId(session.user.id), {
+        alias: alias ?? null,
+        content,
+      })
 
-    const { alias, ...content } = body.data
-    const character = await deps.service.create(new UserId(session.user.id), {
-      alias: alias ?? null,
-      content,
-    })
+      return c.json(characterToJson(character), 201)
+    },
+  )
 
-    return c.json(characterToJson(character), 201)
-  })
+  app.get(
+    '/characters/:id',
+    describeRoute({
+      tags: ['Characters'],
+      summary: '获取角色及全部版本',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '角色详情。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该角色'),
+        404: problemDetailsResponseJsonSchema(404, '角色不存在'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
 
-  app.get('/api/characters/:id', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
+      const { id } = c.req.valid('param')
+      const character = await deps.service.get(new CharacterId(id))
+      if (!character) {
+        throw problems.create('NOT_FOUND', { detail: '角色不存在' })
+      }
+      if (character.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该角色' })
+      }
 
-    const character = await deps.service.get(new CharacterId(c.req.param('id')))
-    if (!character) return c.json({ error: 'not found' }, 404)
-    if (character.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
+      return c.json(characterToJson(character))
+    },
+  )
 
-    return c.json(characterToJson(character))
-  })
+  app.patch(
+    '/characters/:id',
+    describeRoute({
+      tags: ['Characters'],
+      summary: '更新角色草稿版本',
+      security: sessionSecurity,
+      requestBody: jsonRequest(updateSchema),
+      responses: {
+        200: { description: '草稿更新成功。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权修改该角色'),
+        404: problemDetailsResponseJsonSchema(404, '角色不存在'),
+        422: problemDetailsResponseJsonSchema(422, '请求或领域状态无效'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', updateSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
 
-  app.patch('/api/characters/:id', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
+      const { id } = c.req.valid('param')
+      const character = await deps.service.get(new CharacterId(id))
+      if (!character) {
+        throw problems.create('NOT_FOUND', { detail: '角色不存在' })
+      }
+      if (character.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权修改该角色' })
+      }
 
-    const character = await deps.service.get(new CharacterId(c.req.param('id')))
-    if (!character) return c.json({ error: 'not found' }, 404)
-    if (character.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
+      try {
+        const updated = await deps.service.updateDraft(
+          character,
+          c.req.valid('json'),
+        )
+        return c.json(characterToJson(updated))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
 
-    const body = updateSchema.safeParse(await c.req.json())
-    if (!body.success) return c.json({ error: body.error.flatten() }, 400)
+  app.post(
+    '/characters/:id/publish',
+    describeRoute({
+      tags: ['Characters'],
+      summary: '发布角色草稿版本',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '角色版本发布成功。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权发布该角色'),
+        404: problemDetailsResponseJsonSchema(404, '角色不存在'),
+        422: problemDetailsResponseJsonSchema(422, '角色当前不可发布'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
 
-    try {
-      const updated = await deps.service.updateDraft(character, body.data)
-      return c.json(characterToJson(updated))
-    } catch (error) {
-      return c.json(
-        { error: error instanceof Error ? error.message : String(error) },
-        400,
-      )
-    }
-  })
+      const { id } = c.req.valid('param')
+      const character = await deps.service.get(new CharacterId(id))
+      if (!character) {
+        throw problems.create('NOT_FOUND', { detail: '角色不存在' })
+      }
+      if (character.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权发布该角色' })
+      }
 
-  app.post('/api/characters/:id/publish', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
+      try {
+        const published = await deps.service.publish(character)
+        return c.json(characterToJson(published))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
 
-    const character = await deps.service.get(new CharacterId(c.req.param('id')))
-    if (!character) return c.json({ error: 'not found' }, 404)
-    if (character.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
+  app.delete(
+    '/characters/:id',
+    describeRoute({
+      tags: ['Characters'],
+      summary: '删除角色',
+      security: sessionSecurity,
+      responses: {
+        204: { description: '角色已删除。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权删除该角色'),
+        404: problemDetailsResponseJsonSchema(404, '角色不存在'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
 
-    try {
-      const published = await deps.service.publish(character)
-      return c.json(characterToJson(published))
-    } catch (error) {
-      return c.json(
-        { error: error instanceof Error ? error.message : String(error) },
-        400,
-      )
-    }
-  })
+      const { id } = c.req.valid('param')
+      const character = await deps.service.get(new CharacterId(id))
+      if (!character) {
+        throw problems.create('NOT_FOUND', { detail: '角色不存在' })
+      }
+      if (character.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权删除该角色' })
+      }
 
-  app.delete('/api/characters/:id', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
-
-    const character = await deps.service.get(new CharacterId(c.req.param('id')))
-    if (!character) return c.json({ error: 'not found' }, 404)
-    if (character.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
-
-    await deps.service.remove(character.id)
-    return c.body(null, 204)
-  })
+      await deps.service.remove(character.id)
+      return c.body(null, 204)
+    },
+  )
 }

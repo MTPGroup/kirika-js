@@ -1,20 +1,31 @@
 import { OpenAICompatibleChatModel } from '@kirika-js/adapter-model-openai-compatible'
+import { honoLogLayer } from '@loglayer/hono'
 import { Hono } from 'hono'
-import { PgCharacterRepository } from './character/character.repository.js'
-import { CharacterService } from './character/character.service.js'
-import { PgCharacterContextResolver } from './character/context-resolver.js'
-import { ChatService } from './chat/chat.service.js'
-import { loadConfiguration } from './config/loader.js'
-import { PgConversationRepository } from './conversation/conversation.repository.js'
-import { PgConversationMessageRepository } from './conversation/conversation-message.repository.js'
-import { createAuth } from './lib/auth.js'
-import { createDb } from './lib/db.js'
-import { PgLorebookRepository } from './lorebook/lorebook.repository.js'
-import { LorebookService } from './lorebook/lorebook.service.js'
-import { mountAuth } from './routes/auth.js'
-import { mountCharacterRoutes } from './routes/characters.js'
-import { mountChatRoutes } from './routes/chat.js'
-import { mountLorebookRoutes } from './routes/lorebooks.js'
+import { describeRoute } from 'hono-openapi'
+import {
+  ProblemDetailsError,
+  problemDetails,
+  problemDetailsHandler,
+} from 'hono-problem-details'
+import { rateLimiter } from 'hono-rate-limiter'
+import { PgCharacterRepository } from './character/character.repository'
+import { CharacterService } from './character/character.service'
+import { PgCharacterContextResolver } from './character/context-resolver'
+import { ChatService } from './chat/chat.service'
+import { loadConfiguration } from './config/loader'
+import { PgConversationRepository } from './conversation/conversation.repository'
+import { PgConversationMessageRepository } from './conversation/conversation-message.repository'
+import { createAuth } from './lib/auth'
+import { createDb } from './lib/db'
+import { type AppEnv, log } from './lib/logger'
+import { PgLorebookRepository } from './lorebook/lorebook.repository'
+import { LorebookService } from './lorebook/lorebook.service'
+import { mountAuth } from './routes/auth'
+import { mountCharacterRoutes } from './routes/characters'
+import { mountChatRoutes } from './routes/chat'
+import { mountApiDocumentation } from './routes/docs'
+import { mountLorebookRoutes } from './routes/lorebooks'
+import { problems } from './routes/problems'
 
 export function createApp() {
   const config = loadConfiguration()
@@ -42,24 +53,97 @@ export function createApp() {
   const characterService = new CharacterService(characterRepository)
   const lorebookService = new LorebookService(lorebookRepository)
 
-  const app = new Hono()
+  const app = new Hono<AppEnv>()
+  const api = new Hono<AppEnv>()
+  const authRoutes = new Hono<AppEnv>()
 
-  app.get('/health', (c) => c.json({ ok: true }))
+  app.use(
+    honoLogLayer({
+      instance: log,
+      autoLogging: {
+        ignore: ['/health', '/docs', '/openapi.json'],
+      },
+    }),
+  )
 
-  mountAuth(app, auth)
-  mountChatRoutes(app, {
+  const problemHandler = problemDetailsHandler({
+    includeStack: process.env.NODE_ENV !== 'production',
+    autoInstance: true,
+  })
+  app.onError((err, c) => {
+    const status =
+      err instanceof ProblemDetailsError ? err.problemDetails.status : 500
+    const logger = c.var.logger
+      .withError(err)
+      .withMetadata({ statusCode: status })
+    if (status >= 500) {
+      logger.error('Request error')
+    } else {
+      logger.warn('Request rejected')
+    }
+    return problemHandler(err, c)
+  })
+
+  app.notFound((c) => {
+    throw problems.create('NOT_FOUND', {
+      detail: '接口不存在',
+      instance: c.req.path,
+    })
+  })
+
+  api.use(
+    '/conversations/:id/messages',
+    rateLimiter({
+      windowMs: 60_000,
+      limit: 10,
+      keyGenerator: (c) =>
+        c.req.header('authorization')?.replace(/^Bearer\s+/i, '') ??
+        c.req
+          .header('cookie')
+          ?.match(/better-auth\.session_token=([^;]+)/)?.[1] ??
+        c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ??
+        'anonymous',
+      handler: () => {
+        throw problemDetails({
+          status: 429,
+          title: 'Too Many Requests',
+          type: 'https://api.kirika.cn/problems/rate-limited',
+          detail: '请求过于频繁，请稍后再试。',
+          extensions: { retryAfter: 60 },
+        })
+      },
+    }),
+  )
+
+  app.get(
+    '/health',
+    describeRoute({
+      tags: ['System'],
+      summary: '服务健康检查',
+      responses: {
+        200: { description: '服务正常。' },
+      },
+    }),
+    (c) => c.json({ ok: true }),
+  )
+
+  mountAuth(authRoutes, auth)
+  api.route('/auth', authRoutes)
+  mountChatRoutes(api, {
     auth,
     db,
     chatService,
     conversationRepository,
     messageRepository,
   })
-  mountCharacterRoutes(app, {
+  mountCharacterRoutes(api, {
     auth,
     service: characterService,
-    repository: characterRepository,
   })
-  mountLorebookRoutes(app, { auth, service: lorebookService })
+  mountLorebookRoutes(api, { auth, service: lorebookService })
+
+  app.route('/api', api)
+  mountApiDocumentation(app)
 
   return app
 }

@@ -8,8 +8,8 @@ import {
   CharacterRevisionId,
 } from '@kirika-js/core/domain/character'
 import { eq } from 'drizzle-orm'
-import { characterRevisions } from '../db/character-schema.js'
-import type { Db } from '../lib/db.js'
+import { characterRevisions } from '../db/character-schema'
+import type { Db } from '../lib/db'
 
 export class PgCharacterContextResolver
   implements ChatCharacterContextResolverPort

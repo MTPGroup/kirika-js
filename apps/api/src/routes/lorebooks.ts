@@ -1,14 +1,16 @@
-import {
-  LorebookEntry,
-  LorebookId,
-  type LorebookVisibility,
-} from '@kirika-js/core/domain/lorebook'
+import { zValidator } from '@hono/zod-validator'
+import { LorebookEntry, LorebookId } from '@kirika-js/core/domain/lorebook'
 import { UserId } from '@kirika-js/core/domain/shared'
 import type { Hono } from 'hono'
+import { describeRoute } from 'hono-openapi'
+import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import { z } from 'zod'
-import type { Auth } from '../lib/auth.js'
-import type { LorebookService } from '../lorebook/lorebook.service.js'
-import { lorebookToJson } from '../lorebook/serialize.js'
+import type { Auth } from '../lib/auth'
+import type { AppEnv } from '../lib/logger'
+import type { LorebookService } from '../lorebook/lorebook.service'
+import { lorebookToJson } from '../lorebook/serialize'
+import { idParamSchema, jsonRequest, sessionSecurity } from './openapi'
+import { problems, validationProblemHook } from './problems'
 
 const createSchema = z.object({
   name: z.string().trim().min(1),
@@ -52,193 +54,326 @@ export interface LorebookRouteDependencies {
 }
 
 export function mountLorebookRoutes(
-  app: Hono,
+  app: Hono<AppEnv>,
   deps: LorebookRouteDependencies,
 ): void {
-  app.post('/api/lorebooks', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
-
-    const body = createSchema.safeParse(await c.req.json())
-    if (!body.success) return c.json({ error: body.error.flatten() }, 400)
-
-    const lorebook = await deps.service.create(
-      body.data.name,
-      body.data.description ?? '',
-      new UserId(session.user.id),
-    )
-
-    return c.json(lorebookToJson(lorebook), 201)
-  })
-
-  app.get('/api/lorebooks/:id', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
-
-    const lorebook = await deps.service.get(new LorebookId(c.req.param('id')))
-    if (!lorebook) return c.json({ error: 'not found' }, 404)
-    if (lorebook.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
-
-    return c.json(lorebookToJson(lorebook))
-  })
-
-  app.patch('/api/lorebooks/:id', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
-
-    const lorebook = await deps.service.get(new LorebookId(c.req.param('id')))
-    if (!lorebook) return c.json({ error: 'not found' }, 404)
-    if (lorebook.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
-
-    const body = updateSchema.safeParse(await c.req.json())
-    if (!body.success) return c.json({ error: body.error.flatten() }, 400)
-
-    try {
-      let updated = lorebook
-      if (body.data.name !== undefined || body.data.description !== undefined) {
-        updated = await deps.service.updateMetadata(
-          updated,
-          body.data.name ?? updated.name,
-          body.data.description ?? updated.description,
-        )
+  app.post(
+    '/lorebooks',
+    describeRoute({
+      tags: ['Lorebooks'],
+      summary: '创建世界书及初始草稿版本',
+      security: sessionSecurity,
+      requestBody: jsonRequest(createSchema),
+      responses: {
+        201: { description: '世界书创建成功。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+      },
+    }),
+    zValidator('json', createSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
       }
-      if (body.data.visibility !== undefined) {
-        updated = await deps.service.changeVisibility(
-          updated,
-          body.data.visibility as LorebookVisibility,
-        )
+
+      const body = c.req.valid('json')
+      const lorebook = await deps.service.create(
+        body.name,
+        body.description ?? '',
+        new UserId(session.user.id),
+      )
+
+      return c.json(lorebookToJson(lorebook), 201)
+    },
+  )
+
+  app.get(
+    '/lorebooks/:id',
+    describeRoute({
+      tags: ['Lorebooks'],
+      summary: '获取世界书及全部版本',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '世界书详情。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该世界书'),
+        404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
       }
-      return c.json(lorebookToJson(updated))
-    } catch (error) {
-      return c.json(
-        { error: error instanceof Error ? error.message : String(error) },
-        400,
+
+      const { id } = c.req.valid('param')
+      const lorebook = await deps.service.get(new LorebookId(id))
+      if (!lorebook) {
+        throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
+      }
+      if (lorebook.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该世界书' })
+      }
+
+      return c.json(lorebookToJson(lorebook))
+    },
+  )
+
+  app.patch(
+    '/lorebooks/:id',
+    describeRoute({
+      tags: ['Lorebooks'],
+      summary: '更新世界书元数据或可见性',
+      security: sessionSecurity,
+      requestBody: jsonRequest(updateSchema),
+      responses: {
+        200: { description: '世界书更新成功。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权修改该世界书'),
+        404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
+        422: problemDetailsResponseJsonSchema(422, '请求或领域状态无效'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', updateSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const lorebook = await deps.service.get(new LorebookId(id))
+      if (!lorebook) {
+        throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
+      }
+      if (lorebook.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权修改该世界书' })
+      }
+
+      const body = c.req.valid('json')
+      try {
+        let updated = lorebook
+        if (body.name !== undefined || body.description !== undefined) {
+          updated = await deps.service.updateMetadata(
+            updated,
+            body.name ?? updated.name,
+            body.description ?? updated.description,
+          )
+        }
+        if (body.visibility !== undefined) {
+          updated = await deps.service.changeVisibility(
+            updated,
+            body.visibility,
+          )
+        }
+        return c.json(lorebookToJson(updated))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
+
+  app.patch(
+    '/lorebooks/:id/entries',
+    describeRoute({
+      tags: ['Lorebooks'],
+      summary: '替换世界书草稿条目',
+      security: sessionSecurity,
+      requestBody: jsonRequest(entriesSchema),
+      responses: {
+        200: { description: '世界书条目更新成功。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权修改该世界书'),
+        404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
+        422: problemDetailsResponseJsonSchema(422, '请求或领域状态无效'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', entriesSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const lorebook = await deps.service.get(new LorebookId(id))
+      if (!lorebook) {
+        throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
+      }
+      if (lorebook.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权修改该世界书' })
+      }
+
+      const entries = c.req.valid('json').entries.map((entry) =>
+        LorebookEntry.create(
+          entry.keys,
+          entry.title,
+          entry.enabled ?? true,
+          entry.content,
+          entry.position,
+          entry.priority ?? 0,
+          {
+            secondaryKeys: entry.secondaryKeys,
+            matchMode: entry.matchMode,
+            constant: entry.constant,
+            caseSensitive: entry.caseSensitive,
+            matchWholeWords: entry.matchWholeWords,
+            probability: entry.probability,
+            insertionDepth: entry.insertionDepth,
+          },
+        ),
       )
-    }
-  })
 
-  app.patch('/api/lorebooks/:id/entries', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
+      try {
+        const updated = await deps.service.replaceEntries(lorebook, entries)
+        return c.json(lorebookToJson(updated))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
 
-    const lorebook = await deps.service.get(new LorebookId(c.req.param('id')))
-    if (!lorebook) return c.json({ error: 'not found' }, 404)
-    if (lorebook.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
+  app.patch(
+    '/lorebooks/:id/settings',
+    describeRoute({
+      tags: ['Lorebooks'],
+      summary: '更新世界书草稿扫描设置',
+      security: sessionSecurity,
+      requestBody: jsonRequest(settingsSchema),
+      responses: {
+        200: { description: '扫描设置更新成功。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权修改该世界书'),
+        404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
+        422: problemDetailsResponseJsonSchema(422, '请求或领域状态无效'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', settingsSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
 
-    const body = entriesSchema.safeParse(await c.req.json())
-    if (!body.success) return c.json({ error: body.error.flatten() }, 400)
+      const { id } = c.req.valid('param')
+      const lorebook = await deps.service.get(new LorebookId(id))
+      if (!lorebook) {
+        throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
+      }
+      if (lorebook.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权修改该世界书' })
+      }
 
-    const entries = body.data.entries.map((entry) =>
-      LorebookEntry.create(
-        entry.keys,
-        entry.title,
-        entry.enabled ?? true,
-        entry.content,
-        entry.position,
-        entry.priority ?? 0,
-        {
-          secondaryKeys: entry.secondaryKeys,
-          matchMode: entry.matchMode,
-          constant: entry.constant,
-          caseSensitive: entry.caseSensitive,
-          matchWholeWords: entry.matchWholeWords,
-          probability: entry.probability,
-          insertionDepth: entry.insertionDepth,
-        },
-      ),
-    )
+      const body = c.req.valid('json')
+      try {
+        const updated = await deps.service.updateSettings(
+          lorebook,
+          body.scanDepth,
+          body.tokenBudget,
+        )
+        return c.json(lorebookToJson(updated))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
 
-    try {
-      const updated = await deps.service.replaceEntries(lorebook, entries)
-      return c.json(lorebookToJson(updated))
-    } catch (error) {
-      return c.json(
-        { error: error instanceof Error ? error.message : String(error) },
-        400,
-      )
-    }
-  })
+  app.post(
+    '/lorebooks/:id/publish',
+    describeRoute({
+      tags: ['Lorebooks'],
+      summary: '发布世界书草稿版本',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '世界书版本发布成功。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权发布该世界书'),
+        404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
+        422: problemDetailsResponseJsonSchema(422, '世界书当前不可发布'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
 
-  app.patch('/api/lorebooks/:id/settings', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
+      const { id } = c.req.valid('param')
+      const lorebook = await deps.service.get(new LorebookId(id))
+      if (!lorebook) {
+        throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
+      }
+      if (lorebook.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权发布该世界书' })
+      }
 
-    const lorebook = await deps.service.get(new LorebookId(c.req.param('id')))
-    if (!lorebook) return c.json({ error: 'not found' }, 404)
-    if (lorebook.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
+      try {
+        const published = await deps.service.publish(lorebook)
+        return c.json(lorebookToJson(published))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
 
-    const body = settingsSchema.safeParse(await c.req.json())
-    if (!body.success) return c.json({ error: body.error.flatten() }, 400)
+  app.delete(
+    '/lorebooks/:id',
+    describeRoute({
+      tags: ['Lorebooks'],
+      summary: '删除世界书',
+      security: sessionSecurity,
+      responses: {
+        204: { description: '世界书已删除。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权删除该世界书'),
+        404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await deps.auth.api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
 
-    try {
-      const updated = await deps.service.updateSettings(
-        lorebook,
-        body.data.scanDepth,
-        body.data.tokenBudget,
-      )
-      return c.json(lorebookToJson(updated))
-    } catch (error) {
-      return c.json(
-        { error: error instanceof Error ? error.message : String(error) },
-        400,
-      )
-    }
-  })
+      const { id } = c.req.valid('param')
+      const lorebook = await deps.service.get(new LorebookId(id))
+      if (!lorebook) {
+        throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
+      }
+      if (lorebook.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权删除该世界书' })
+      }
 
-  app.post('/api/lorebooks/:id/publish', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
-
-    const lorebook = await deps.service.get(new LorebookId(c.req.param('id')))
-    if (!lorebook) return c.json({ error: 'not found' }, 404)
-    if (lorebook.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
-
-    try {
-      const published = await deps.service.publish(lorebook)
-      return c.json(lorebookToJson(published))
-    } catch (error) {
-      return c.json(
-        { error: error instanceof Error ? error.message : String(error) },
-        400,
-      )
-    }
-  })
-
-  app.delete('/api/lorebooks/:id', async (c) => {
-    const session = await deps.auth.api.getSession({
-      headers: c.req.raw.headers,
-    })
-    if (!session) return c.json({ error: 'unauthorized' }, 401)
-
-    const lorebook = await deps.service.get(new LorebookId(c.req.param('id')))
-    if (!lorebook) return c.json({ error: 'not found' }, 404)
-    if (lorebook.ownerId.value !== session.user.id) {
-      return c.json({ error: 'forbidden' }, 403)
-    }
-
-    await deps.service.remove(lorebook.id)
-    return c.body(null, 204)
-  })
+      await deps.service.remove(lorebook.id)
+      return c.body(null, 204)
+    },
+  )
 }

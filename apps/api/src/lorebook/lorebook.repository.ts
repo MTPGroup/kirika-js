@@ -8,10 +8,10 @@ import {
   lorebookEntries,
   lorebookRevisions,
   lorebooks,
-} from '../db/lorebook-schema.js'
-import type { Db } from '../lib/db.js'
-import { LorebookMapper } from './mapper.js'
-import { findLorebookByIdQuery } from './query.js'
+} from '../db/lorebook-schema'
+import type { Db } from '../lib/db'
+import { LorebookMapper } from './mapper'
+import { findLorebookByIdQuery } from './query'
 
 export class PgLorebookRepository implements LorebookRepositoryPort {
   constructor(private readonly db: Db) {}

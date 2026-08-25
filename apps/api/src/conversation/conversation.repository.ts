@@ -7,9 +7,9 @@ import { eq } from 'drizzle-orm'
 import {
   conversationParticipants,
   conversations,
-} from '../db/conversation-schema.js'
-import type { Db } from '../lib/db.js'
-import { ConversationMapper } from './mapper.js'
+} from '../db/conversation-schema'
+import type { Db } from '../lib/db'
+import { ConversationMapper } from './mapper'
 
 export class PgConversationRepository implements ConversationRepositoryPort {
   constructor(private readonly db: Db) {}

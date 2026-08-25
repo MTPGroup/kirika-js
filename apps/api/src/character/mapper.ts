@@ -15,8 +15,8 @@ import type {
   characterRevisionLorebooks,
   characterRevisions,
   characters,
-} from '../db/character-schema.js'
-import type { DrizzleCharacterWithRelations } from './query.js'
+} from '../db/character-schema'
+import type { DrizzleCharacterWithRelations } from './query'
 
 export type DrizzleCharacterInsert = typeof characters.$inferInsert
 export type DrizzleCharacterRevisionInsert =
