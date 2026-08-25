@@ -1,12 +1,15 @@
 {
-  "extends": "@kirika-js/typescript-config/node.json",
   "compilerOptions": {
-    "paths": {
-      "~/*": ["./src/*"]
-    },
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "verbatimModuleSyntax": false
+    "target": "ESNext",
+    "module": "NodeNext",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
+    "rootDir": "./src",
+    "outDir": "./dist"
   },
-  "include": ["src/**/*.ts"]
+  "exclude": ["node_modules", "drizzle.config.ts"]
 }

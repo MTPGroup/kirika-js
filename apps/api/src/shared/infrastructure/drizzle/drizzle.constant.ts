@@ -1,1 +1,0 @@
-export const DRIZZLE_OPTIONS = Symbol('DRIZZLE_OPTIONS')

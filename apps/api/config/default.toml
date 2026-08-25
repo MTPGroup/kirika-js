@@ -7,8 +7,3 @@ poolMax = 10
 
 [auth]
 trustedOrigins = ["*"]
-
-[mailer]
-port = 1025
-secure = false
-from = "Kirika <no-reply@kirika.cn>"

@@ -6,15 +6,12 @@ port = 3000
 url = "postgres://kirika:kirika_dev@localhost:5432/kirika"
 poolMax = 10
 
+[model]
+baseUrl = "https://api.openai.com/v1"
+apiKey = "replace-me"
+defaultModel = "gpt-4o-mini"
+
 [auth]
 baseUrl = "http://localhost:3000"
 secret = "38arkh3SaabbgJ6o30QNMmlPmRUKZkKtR4k2jCoUBkM="
 trustedOrigins = ["*"]
-
-[mailer]
-host = "localhost"
-port = 1025
-secure = false
-user = "no-reply@kirika.cn"
-password = "8kY3mN9pA2"
-from = "Kirika <no-reply@kirika.cn>"

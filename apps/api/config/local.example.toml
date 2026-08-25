@@ -1,12 +1,11 @@
 [database]
 url = "postgresql://user:password@localhost:5432/kirika"
 
+[model]
+baseUrl = "https://api.openai.com/v1"
+apiKey = "sk-..."
+defaultModel = "gpt-4o-mini"
+
 [auth]
 baseUrl = "http://localhost:3000"
-
 secret = "replace-with-a-secure-random-secret"
-
-[mailer]
-host = "localhost"
-user = "username"
-password = "password"
