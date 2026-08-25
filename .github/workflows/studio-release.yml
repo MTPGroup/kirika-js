@@ -1,0 +1,127 @@
+name: Build Studio Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: studio-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macOS
+            os: macos-latest
+            command: build:mac
+            artifact: studio-macos
+
+          - platform: Windows
+            os: windows-latest
+            command: build:win
+            artifact: studio-windows
+
+          - platform: Linux
+            os: ubuntu-latest
+            command: build:linux
+            artifact: studio-linux
+
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set package version from tag
+        shell: bash
+        working-directory: apps/studio
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release tag: $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          npm pkg set version="$VERSION"
+
+      - name: Generate application icons
+        working-directory: apps/studio
+        run: pnpm dlx electron-icon-builder --input=resources/icon.png --output=build
+
+      - name: Build package
+        working-directory: apps/studio
+        run: pnpm ${{ matrix.command }}
+
+      - name: Upload macOS packages
+        if: matrix.platform == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            apps/studio/dist/*.dmg
+            apps/studio/dist/*-mac.zip
+            apps/studio/dist/*.blockmap
+          if-no-files-found: error
+
+      - name: Upload Windows packages
+        if: matrix.platform == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            apps/studio/dist/*-setup.exe
+            apps/studio/dist/*.blockmap
+          if-no-files-found: error
+
+      - name: Upload Linux packages
+        if: matrix.platform == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            apps/studio/dist/*.AppImage
+            apps/studio/dist/*.deb
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: studio-*
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
