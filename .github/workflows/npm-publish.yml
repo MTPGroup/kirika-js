@@ -1,29 +1,33 @@
-name: Release npm Packages
+name: Publish npm Packages
 
 on:
-  push:
+  pull_request:
     branches:
       - master
+    types:
+      - closed
 
 permissions:
   contents: write
-  pull-requests: write
   id-token: write
 
 concurrency:
-  group: npm-release-${{ github.ref }}
+  group: npm-publish
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Create release PR or publish packages
+  publish:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref == 'changeset-release/master'
     runs-on: ubuntu-latest
     environment: npm
 
     steps:
-      - name: Checkout repository
+      - name: Checkout merged release
         uses: actions/checkout@v5
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
       - name: Set up pnpm
@@ -32,7 +36,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22.12.0
+          node-version: 22.13
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
@@ -60,24 +64,8 @@ jobs:
           --filter=@kirika-js/adapter-storage-filesystem
           --filter=@kirika-js/adapter-storage-s3
 
-      - name: Create release PR or publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          version: pnpm version-packages
-          publish: pnpm release
-          title: "chore(release): publish npm packages"
-          commit: "chore(release): publish npm packages"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish packages
+        run: pnpm changeset publish
 
-      - name: Write release summary
-        if: steps.changesets.outputs.published == 'true'
-        env:
-          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
-        run: |
-          echo "## Published npm packages" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo '```json' >> "$GITHUB_STEP_SUMMARY"
-          echo "$PUBLISHED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+      - name: Push release tags
+        run: git push --follow-tags
