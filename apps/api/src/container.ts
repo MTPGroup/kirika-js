@@ -9,6 +9,7 @@ import { ChatService } from './chat/chat.service'
 import { loadConfiguration } from './config/loader'
 import { PgConversationRepository } from './conversation/conversation.repository'
 import { PgConversationMessageRepository } from './conversation/conversation-message.repository'
+import { PgIdempotencyStore } from './http/idempotency'
 import { createAuth } from './lib/auth'
 import { createDb } from './lib/db'
 import { PgLorebookRepository } from './lorebook/lorebook.repository'
@@ -37,7 +38,9 @@ export function buildRootContainer() {
         apiKey: config.model.apiKey,
       })
     })
-    .registerClass('conversationRepository', PgConversationRepository, ['db'])
+    .registerClass('conversationRepository', PgConversationRepository, [
+      'db',
+    ])
     .registerClass(
       'conversationMessageRepository',
       PgConversationMessageRepository,
@@ -48,6 +51,7 @@ export function buildRootContainer() {
     .registerClass('characterContextResolver', PgCharacterContextResolver, [
       'db',
     ])
+    .registerClass('idempotencyStore', PgIdempotencyStore, ['db'])
     .registerFactory('chatService', (container) => {
       const config = container.get('config')
       return new ChatService({

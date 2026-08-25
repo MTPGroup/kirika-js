@@ -1,3 +1,6 @@
+[app]
+corsOrigins = ["http://localhost:5173"]
+
 [database]
 url = "postgresql://user:password@localhost:5432/kirika"
 

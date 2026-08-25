@@ -19,6 +19,7 @@ import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-j
 import { z } from 'zod'
 import type { AppEnv } from '../container'
 import { characterRevisions } from '../db/character-schema'
+import { idempotency } from '../http/idempotency-middleware'
 import { idParamSchema, jsonRequest, sessionSecurity } from '../http/openapi'
 import { problems, validationProblemHook } from '../http/problems'
 
@@ -118,6 +119,9 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
     }),
     zValidator('param', idParamSchema, validationProblemHook()),
     zValidator('json', sendMessageSchema, validationProblemHook()),
+    idempotency({
+      resourceId: (c) => `conversation:${c.req.param('id')}:messages`,
+    }),
     async (c) => {
       const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,

@@ -1,7 +1,10 @@
 import { inferdiHono } from '@inferdi/hono'
 import { honoLogLayer } from '@loglayer/hono'
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
+import { cors } from 'hono/cors'
 import { requestId } from 'hono/request-id'
+import { secureHeaders } from 'hono/secure-headers'
 import { describeRoute } from 'hono-openapi'
 import {
   ProblemDetailsError,
@@ -20,11 +23,12 @@ import { mountLorebookRoutes } from './routes/lorebooks'
 
 export function createApp() {
   const root = buildRootContainer()
+  const config = root.get('config')
   const app = new Hono<AppEnv>()
   const api = new Hono<AppEnv>()
   const authRoutes = new Hono<AppEnv>()
-
   app.use('*', requestId())
+  app.use('*', secureHeaders())
   app.use(
     '*',
     inferdiHono({
@@ -44,6 +48,33 @@ export function createApp() {
       autoLogging: {
         ignore: ['/health', '/docs', '/openapi.json'],
       },
+    }),
+  )
+  app.use(
+    '/api/*',
+    cors({
+      origin: [...config.app.corsOrigins],
+      credentials: true,
+      allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
+      allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    }),
+  )
+  app.use(
+    '/api/*',
+    bodyLimit({
+      maxSize: 2 * 1024 * 1024,
+      onError: (c) =>
+        c.json(
+          {
+            type: 'https://api.kirika.cn/problems/payload-too-large',
+            status: 413,
+            title: 'Payload Too Large',
+            detail: '请求体超过 2 MiB 限制',
+            instance: c.req.path,
+          },
+          413,
+          { 'content-type': 'application/problem+json; charset=utf-8' },
+        ),
     }),
   )
 

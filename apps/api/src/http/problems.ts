@@ -28,6 +28,16 @@ export const problems = createProblemTypeRegistry(
       status: 429,
       title: 'Too Many Requests',
     },
+    CONFLICT: {
+      type: 'https://api.kirika.cn/problems/conflict',
+      status: 409,
+      title: 'Conflict',
+    },
+    PAYLOAD_TOO_LARGE: {
+      type: 'https://api.kirika.cn/problems/payload-too-large',
+      status: 413,
+      title: 'Payload Too Large',
+    },
   },
   { autoCode: true },
 )

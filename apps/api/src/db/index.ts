@@ -19,6 +19,7 @@ import {
   conversationParticipants,
   conversations,
 } from './conversation-schema'
+import { idempotencyKeys } from './idempotency-schema'
 import {
   lorebookEntries,
   lorebookRelations,
@@ -39,6 +40,7 @@ export {
   conversationMessages,
   conversationParticipants,
   conversations,
+  idempotencyKeys,
   lorebookEntries,
   lorebookRelations,
   lorebookRevisions,
@@ -62,6 +64,7 @@ export const schema = {
   conversations,
   conversationParticipants,
   conversationMessages,
+  idempotencyKeys,
   lorebooks,
   lorebookRevisions,
   lorebookEntries,

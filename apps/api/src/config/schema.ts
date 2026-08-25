@@ -4,6 +4,7 @@ export const configurationSchema = z.object({
   app: z.object({
     name: z.string().min(1).default('Kirika'),
     port: z.number().int().positive().default(3000),
+    corsOrigins: z.array(z.url()).min(1).default(['http://localhost:3000']),
   }),
 
   database: z.object({

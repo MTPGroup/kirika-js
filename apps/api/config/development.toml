@@ -1,6 +1,7 @@
 [app]
 name = "Kirika"
 port = 3000
+corsOrigins = ["http://localhost:3000", "http://localhost:5173"]
 
 [database]
 url = "postgres://kirika:kirika_dev@localhost:5432/kirika"
@@ -14,4 +15,4 @@ defaultModel = "gpt-4o-mini"
 [auth]
 baseUrl = "http://localhost:3000"
 secret = "38arkh3SaabbgJ6o30QNMmlPmRUKZkKtR4k2jCoUBkM="
-trustedOrigins = ["*"]
+trustedOrigins = ["http://localhost:3000", "http://localhost:5173"]
