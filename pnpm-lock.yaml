@@ -40,10 +40,13 @@ importers:
         version: 0.3.24
       tsdown:
         specifier: ^0.22.14
-        version: 0.22.14(@arethetypeswrong/core@0.18.5)(@volar/typescript@2.4.28(typescript@6.0.3))(publint@0.3.24)(tsx@4.23.12)(typescript@6.0.3)(vue-tsc@3.3.11(typescript@6.0.3))
+        version: 0.22.14(@arethetypeswrong/core@0.18.5)(@volar/typescript@2.4.28(typescript@6.0.3))(publint@0.3.24)(tsx@4.23.12)(typescript@6.0.3)(unrun@0.3.1)(vue-tsc@3.3.11(typescript@6.0.3))
       turbo:
         specifier: ^2.10.8
         version: 2.10.8
+      unrun:
+        specifier: ^0.3.1
+        version: 0.3.1
 
   apps/api:
     dependencies:
@@ -8334,6 +8337,16 @@ packages:
       vite:
         optional: true
       webpack:
+        optional: true
+
+  unrun@0.3.1:
+    resolution: {integrity: sha512-onIck/oNnCaytwths1ZVp1LK2Gq2hPoyFhiHebObuUXqR3S0uHuLLaBK8K6mRRgV7Ptip8AnNvaUsgzwWwBZuA==}
+    engines: {node: ^22.13.0 || >=24.0.0}
+    hasBin: true
+    peerDependencies:
+      synckit: ^0.11.11
+    peerDependenciesMeta:
+      synckit:
         optional: true
 
   unzipper@0.12.5:
@@ -17530,7 +17543,7 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tsdown@0.22.14(@arethetypeswrong/core@0.18.5)(@volar/typescript@2.4.28(typescript@6.0.3))(publint@0.3.24)(tsx@4.23.12)(typescript@6.0.3)(vue-tsc@3.3.11(typescript@6.0.3)):
+  tsdown@0.22.14(@arethetypeswrong/core@0.18.5)(@volar/typescript@2.4.28(typescript@6.0.3))(publint@0.3.24)(tsx@4.23.12)(typescript@6.0.3)(unrun@0.3.1)(vue-tsc@3.3.11(typescript@6.0.3)):
     dependencies:
       ansis: 4.3.1
       cac: 7.0.0
@@ -17552,6 +17565,7 @@ snapshots:
       publint: 0.3.24
       tsx: 4.23.12
       typescript: 6.0.3
+      unrun: 0.3.1
     transitivePeerDependencies:
       - '@typescript/native-preview'
       - '@volar/typescript'
@@ -17698,6 +17712,10 @@ snapshots:
       rollup: 4.62.5
       vite: 8.2.0(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)
       webpack: 5.106.2(@swc/core@1.15.47(@swc/helpers@0.5.23))(cssnano@7.1.9(postcss@8.5.25))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.25)(uglify-js@3.19.3)
+
+  unrun@0.3.1:
+    dependencies:
+      rolldown: 1.2.2
 
   unzipper@0.12.5:
     dependencies:
