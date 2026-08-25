@@ -3,9 +3,9 @@ import type {
   ConversationMessage,
   ConversationParticipant,
   ConversationParticipantId,
-} from '../../domain/conversation'
-import { ChatSpeakerSelectionError } from '../errors'
-import type { AutoSpeakerSelectorPort } from '../ports/speaker-selector.port'
+} from '../domain/conversation'
+import { ChatSpeakerSelectionError } from './errors'
+import type { AutoSpeakerSelectorPort } from './speaker-selector.port'
 
 export interface SelectChatSpeakerInput {
   readonly conversation: Conversation

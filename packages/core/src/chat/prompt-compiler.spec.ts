@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { AssetId, CharacterLorebookReference } from '../../domain/character'
-import { MessageContent } from '../../domain/conversation'
+import { AssetId, CharacterLorebookReference } from '../domain/character'
+import { MessageContent } from '../domain/conversation'
 import {
   LorebookEntry,
   LorebookRevision,
   LorebookRevisionId,
-} from '../../domain/lorebook'
-import { ChatCharacterContextNotFoundError } from '../errors'
+} from '../domain/lorebook'
+import { ChatCharacterContextNotFoundError } from './errors'
+import { ChatPromptCompiler } from './prompt-compiler'
 import {
   createDirectFixture,
   createRevisionFor,
   text,
-} from '../testing/fixtures'
-import { ChatPromptCompiler } from './chat-prompt-compiler'
+} from './testing/fixtures'
 
 describe('ChatPromptCompiler', () => {
   it('编译角色资料、宏、消息分支、多模态内容和世界书位置', () => {

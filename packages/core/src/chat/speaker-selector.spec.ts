@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ChatSpeakerSelectionError } from '../errors'
+import { ChatSpeakerSelectionError } from './errors'
+import { ChatSpeakerSelector } from './speaker-selector'
 import {
   createDirectFixture,
   createGroupFixture,
   text,
-} from '../testing/fixtures'
-import { ChatSpeakerSelector } from './chat-speaker-selector'
+} from './testing/fixtures'
 
 describe('ChatSpeakerSelector', () => {
   it('一对一会话直接选择唯一活跃角色', async () => {

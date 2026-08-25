@@ -3,7 +3,7 @@ import type {
   ConversationMessage,
   ConversationParticipant,
   ConversationParticipantId,
-} from '../../domain/conversation'
+} from '../domain/conversation'
 
 export interface AutoSpeakerSelectionInput {
   readonly conversation: Conversation

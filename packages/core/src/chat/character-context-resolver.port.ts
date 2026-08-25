@@ -2,8 +2,8 @@ import type {
   CharacterId,
   CharacterRevision,
   CharacterRevisionId,
-} from '../../domain/character'
-import type { LorebookRevision } from '../../domain/lorebook'
+} from '../domain/character'
+import type { LorebookRevision } from '../domain/lorebook'
 
 export interface ResolvedChatCharacterContext {
   readonly revision: CharacterRevision

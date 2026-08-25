@@ -1,14 +1,14 @@
-import type { CharacterRevision } from '../../domain/character'
+import type { CharacterRevision } from '../domain/character'
 import type {
   Conversation,
   ConversationMessage,
   ConversationParticipant,
   MessageContentPart,
-} from '../../domain/conversation'
-import type { LorebookEntry, LorebookRevision } from '../../domain/lorebook'
-import { ChatCharacterContextNotFoundError } from '../errors'
-import type { ChatModelMessage } from '../model/chat-model'
-import type { ResolvedChatCharacterContext } from '../ports/character-context-resolver.port'
+} from '../domain/conversation'
+import type { LorebookEntry, LorebookRevision } from '../domain/lorebook'
+import type { ResolvedChatCharacterContext } from './character-context-resolver.port'
+import type { ChatModelMessage } from './chat-model'
+import { ChatCharacterContextNotFoundError } from './errors'
 import {
   type ChatMacroContext,
   normalizeExtraMacros,

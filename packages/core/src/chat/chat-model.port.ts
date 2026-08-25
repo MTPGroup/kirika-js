@@ -1,7 +1,4 @@
-import type {
-  ChatModelRequest,
-  ChatModelStreamEvent,
-} from '../model/chat-model'
+import type { ChatModelRequest, ChatModelStreamEvent } from './chat-model'
 
 export interface ChatModelPort {
   generate(

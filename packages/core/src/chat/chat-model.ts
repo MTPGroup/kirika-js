@@ -1,7 +1,7 @@
 import type {
   AssetMessageContentPart,
   MessageContentPart,
-} from '../../domain/conversation'
+} from '../domain/conversation'
 import type { TokenUsage } from './token-usage'
 
 export const CHAT_MODEL_ROLES = ['system', 'user', 'assistant'] as const

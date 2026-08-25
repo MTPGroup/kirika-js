@@ -7,21 +7,21 @@ import type {
   TokenUsage as DomainTokenUsage,
 } from '../domain/conversation'
 import { TokenUsage } from '../domain/conversation'
+import type { ChatCharacterContextResolverPort } from './character-context-resolver.port'
+import type {
+  ChatGenerationConfig,
+  ChatModelFinishReason,
+  ChatModelRequest,
+} from './chat-model'
+import type { ChatModelPort } from './chat-model.port'
 import {
   ChatCharacterContextNotFoundError,
   ChatGenerationAbortedError,
 } from './errors'
 import { validateChatHistory } from './history-validator'
-import type {
-  ChatGenerationConfig,
-  ChatModelFinishReason,
-  ChatModelRequest,
-} from './model/chat-model'
-import type { ChatCharacterContextResolverPort } from './ports/character-context-resolver.port'
-import type { ChatModelPort } from './ports/chat-model.port'
-import type { AutoSpeakerSelectorPort } from './ports/speaker-selector.port'
-import { ChatPromptCompiler } from './prompt/chat-prompt-compiler'
-import { ChatSpeakerSelector } from './speaker/chat-speaker-selector'
+import { ChatPromptCompiler } from './prompt-compiler'
+import { ChatSpeakerSelector } from './speaker-selector'
+import type { AutoSpeakerSelectorPort } from './speaker-selector.port'
 
 export interface GenerateChatTurnInput {
   readonly conversation: Conversation

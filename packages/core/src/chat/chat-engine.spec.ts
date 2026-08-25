@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { AssetId } from '../domain/character'
+import type { ChatModelRequest, ChatModelStreamEvent } from './chat-model'
 import {
   ChatEngine,
   type ChatEngineEvent,
   ChatGenerationAbortedError,
   type ChatModelPort,
 } from './index'
-import type { ChatModelRequest, ChatModelStreamEvent } from './model/chat-model'
 import {
   createDirectFixture,
   createRevisionFor,
