@@ -102,6 +102,10 @@ export interface CreateConversationInput {
   readonly characters: readonly CharacterParticipantInput[]
 }
 
+export interface CreateTestConversationInput extends CreateConversationInput {
+  readonly allowDraftCharacterRevision: boolean
+}
+
 export interface ConversationIdInput {
   readonly conversationId: string
 }
@@ -138,6 +142,7 @@ export interface GetConversationHistoryResult {
 export const conversationChannels = {
   list: 'studio:conversations:list',
   create: 'studio:conversations:create',
+  createTest: 'studio:conversations:create-test',
   get: 'studio:conversations:get',
   getHistory: 'studio:conversations:get-history',
   delete: 'studio:conversations:delete',
@@ -155,6 +160,9 @@ export const conversationChannels = {
 export interface ConversationApi {
   listConversations(): Promise<readonly ConversationSummaryDto[]>
   createConversation(input: CreateConversationInput): Promise<ConversationDto>
+  createTestConversation(
+    input: CreateTestConversationInput,
+  ): Promise<ConversationDto>
   getConversation(input: ConversationIdInput): Promise<ConversationDto | null>
   getConversationHistory(
     input: GetConversationHistoryInput,

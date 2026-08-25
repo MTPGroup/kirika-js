@@ -18,6 +18,11 @@ export interface GenerationRequestDto extends ChatGenerationConfigDto {
   readonly messages: readonly GenerationMessageDto[]
 }
 
+export interface GenerationContextOverrideDto {
+  readonly includeCharacterLorebooks: boolean
+  readonly lorebookRevisionIds: readonly string[]
+}
+
 export interface StartGenerationInput {
   readonly requestId: string
   readonly conversationId: string
@@ -25,6 +30,12 @@ export interface StartGenerationInput {
   readonly model?: string
   readonly speakerParticipantId?: string
   readonly generation?: ChatGenerationConfigDto
+}
+
+export interface StartTestGenerationInput extends StartGenerationInput {
+  readonly characterId: string
+  readonly characterRevisionId: string
+  readonly contextOverride: GenerationContextOverrideDto
 }
 
 export interface StartGenerationResult {
@@ -41,6 +52,10 @@ interface GenerationEventBase {
 }
 
 export type GenerationEvent =
+  | (GenerationEventBase & {
+      readonly type: 'preparing'
+      readonly stage: 'provider' | 'conversation' | 'history' | 'context'
+    })
   | (GenerationEventBase & {
       readonly type: 'started'
       readonly speaker: ConversationParticipantDto
@@ -73,12 +88,16 @@ export type GenerationEvent =
 
 export const generationChannels = {
   start: 'studio:generation:start',
+  startTest: 'studio:generation:start-test',
   abort: 'studio:generation:abort',
   event: 'studio:generation:event',
 } as const
 
 export interface GenerationApi {
   startGeneration(input: StartGenerationInput): Promise<StartGenerationResult>
+  startTestGeneration(
+    input: StartTestGenerationInput,
+  ): Promise<StartGenerationResult>
   abortGeneration(input: AbortGenerationInput): Promise<void>
   onGenerationEvent(listener: (event: GenerationEvent) => void): () => void
 }

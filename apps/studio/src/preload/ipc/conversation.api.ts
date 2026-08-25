@@ -13,6 +13,8 @@ export const conversationApi: ConversationApi = {
     invoke<readonly ConversationSummaryDto[]>(conversationChannels.list),
   createConversation: (input) =>
     invoke<ConversationDto>(conversationChannels.create, input),
+  createTestConversation: (input) =>
+    invoke<ConversationDto>(conversationChannels.createTest, input),
   getConversation: (input) =>
     invoke<ConversationDto | null>(conversationChannels.get, input),
   getConversationHistory: (input) =>

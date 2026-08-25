@@ -237,6 +237,11 @@ export function registerStudioIpc(): () => void {
   )
   register(
     channels,
+    conversationChannels.createTest,
+    conversationService.createTestConversation,
+  )
+  register(
+    channels,
     conversationChannels.get,
     conversationService.getConversation,
   )
@@ -297,6 +302,9 @@ export function registerStudioIpc(): () => void {
   )
   registerWithEvent(channels, generationChannels.start, (input, event) =>
     generationService.start(input, event.sender),
+  )
+  registerWithEvent(channels, generationChannels.startTest, (input, event) =>
+    generationService.startTest(input, event.sender),
   )
   registerWithEvent(channels, generationChannels.abort, (input, event) =>
     generationService.abort(input, event.sender),

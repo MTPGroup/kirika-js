@@ -1,5 +1,6 @@
 import { OpenAICompatibleChatModel } from '@kirika-js/adapter-model-openai-compatible'
 import { ChatEngine } from '@kirika-js/chat-engine'
+import { CharacterId, CharacterRevisionId } from '@kirika-js/domain/character'
 import {
   ConversationId,
   ConversationParticipantId,
@@ -11,6 +12,7 @@ import type {
   GenerationMessageDto,
   StartGenerationInput,
   StartGenerationResult,
+  StartTestGenerationInput,
 } from '~/shared/ipc'
 import { generationChannels } from '~/shared/ipc'
 import {
@@ -20,6 +22,7 @@ import {
 } from '../mappers/ipc-dto.mapper'
 import { studioRuntime } from '../studio-runtime'
 import { SqliteCharacterContextResolver } from './character-context-resolver'
+import { TestCharacterContextResolver } from './test-character-context-resolver'
 
 const CHECKPOINT_INTERVAL_MS = 250
 const CHECKPOINT_CHARACTER_COUNT = 512
@@ -33,10 +36,39 @@ interface Task {
 }
 class GenerationService {
   private readonly tasks = new Map<string, Task>()
-  async start(
+  private readonly pendingAborts = new Set<string>()
+  start(
     input: StartGenerationInput,
     owner: WebContents,
   ): Promise<StartGenerationResult> {
+    return this.startInternal(input, owner)
+  }
+  async startTest(
+    input: StartTestGenerationInput,
+    owner: WebContents,
+  ): Promise<StartGenerationResult> {
+    return this.startInternal(input, owner, input.contextOverride)
+  }
+  private sendPreparing(
+    owner: WebContents,
+    requestId: string,
+    stage: Extract<GenerationEvent, { type: 'preparing' }>['stage'],
+  ) {
+    if (!owner.isDestroyed())
+      owner.send(generationChannels.event, {
+        type: 'preparing',
+        requestId,
+        messageId: '',
+        stage,
+      } satisfies GenerationEvent)
+  }
+  private async startInternal(
+    input: StartGenerationInput,
+    owner: WebContents,
+    contextOverride?: StartTestGenerationInput['contextOverride'],
+  ): Promise<StartGenerationResult> {
+    const requestId = input.requestId
+    this.sendPreparing(owner, requestId, 'provider')
     const runtime = studioRuntime.requireActive()
     const stored = runtime.settings.getProvider(input.providerId)
     if (!stored?.enabled) throw new Error('Provider 不存在或未启用')
@@ -47,25 +79,54 @@ class GenerationService {
       )
     )
       throw new Error('该会话已有生成任务')
+    this.sendPreparing(owner, requestId, 'conversation')
     const conversation = await runtime.conversationRepository.findById(
       new ConversationId(input.conversationId),
     )
     if (!conversation) throw new Error('会话不存在')
+    if (!contextOverride) {
+      for (const participant of conversation.activeParticipants) {
+        if (participant.type !== 'character') continue
+        const character = await runtime.characterRepository.findById(
+          new CharacterId(participant.characterId?.value ?? ''),
+        )
+        const revision = character?.findRevision(
+          new CharacterRevisionId(participant.characterRevisionId?.value ?? ''),
+        )
+        if (!revision || revision.isDraft)
+          throw new Error('正式生成只能使用已发布角色版本')
+      }
+    }
+    if ('characterId' in input && 'characterRevisionId' in input) {
+      const speaker = conversation.activeParticipants.find(
+        (participant) => participant.type === 'character',
+      )
+      if (
+        !speaker ||
+        speaker.characterId?.value !== input.characterId ||
+        speaker.characterRevisionId?.value !== input.characterRevisionId
+      )
+        throw new Error('测试会话角色或精确版本与请求不一致')
+    }
+    this.sendPreparing(owner, requestId, 'history')
     const history = conversation.activeLeafMessageId
       ? await runtime.messageRepository.findPathToRoot(
           conversation.id,
           conversation.activeLeafMessageId,
         )
       : []
-    const requestId = input.requestId
+    this.sendPreparing(owner, requestId, 'context')
     if (this.tasks.has(requestId)) throw new Error('生成请求 ID 已存在')
     const controller = new AbortController()
+    if (this.pendingAborts.delete(requestId)) controller.abort()
     const engine = new ChatEngine({
       model: new OpenAICompatibleChatModel({
         baseUrl: stored.baseUrl,
         apiKey,
       }),
-      characterContextResolver: new SqliteCharacterContextResolver(runtime),
+      characterContextResolver: contextOverride
+        ? new TestCharacterContextResolver(runtime, contextOverride)
+        : new SqliteCharacterContextResolver(runtime),
     })
     const done = this.consume(
       requestId,
@@ -90,11 +151,13 @@ class GenerationService {
   }
   async abort(input: AbortGenerationInput, owner?: WebContents): Promise<void> {
     const task = this.tasks.get(input.requestId)
-    if (!task) return
+    if (!task) {
+      this.pendingAborts.add(input.requestId)
+      return
+    }
     if (owner && task.ownerId !== owner.id)
       throw new Error('不能取消其他窗口的生成任务')
     task.controller.abort()
-    await task.done
   }
   async abortByOwner(owner: WebContents | number): Promise<void> {
     const ownerId = typeof owner === 'number' ? owner : owner.id
@@ -149,6 +212,29 @@ class GenerationService {
         signal,
       })) {
         if (event.type === 'started') {
+          if (!owner.isDestroyed())
+            owner.send(generationChannels.event, {
+              type: 'started',
+              requestId,
+              messageId: event.message.id.value,
+              speaker: toParticipantDto(event.speaker),
+              request: {
+                model: event.request.model,
+                messages: event.request.messages.map(
+                  (message) =>
+                    ({
+                      role: message.role,
+                      name: message.name,
+                      content: message.content.map(toMessageContentPartDto),
+                    }) as GenerationMessageDto,
+                ),
+                maxOutputTokens: event.request.maxOutputTokens,
+                temperature: event.request.temperature,
+                topP: event.request.topP,
+                stopSequences: event.request.stopSequences,
+                seed: event.request.seed,
+              },
+            } satisfies GenerationEvent)
           await runtime.conversationUnitOfWork.startGeneration(
             conversation,
             event.message,
@@ -243,7 +329,8 @@ class GenerationService {
             messageId: event.message.id.value,
             message: toConversationMessageDto(event.message),
           }
-        if (!owner.isDestroyed()) owner.send(generationChannels.event, payload)
+        if (event.type !== 'started' && !owner.isDestroyed())
+          owner.send(generationChannels.event, payload)
       }
     } catch (error) {
       const activeId = conversation.activeGenerationMessageId

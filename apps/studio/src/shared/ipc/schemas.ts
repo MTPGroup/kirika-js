@@ -276,6 +276,16 @@ export const studioInputSchemas = {
       characters: z.array(characterParticipant).min(1),
     })
     .strict(),
+  [conversationChannels.createTest]: z
+    .object({
+      title: z.string().nullable().optional(),
+      mode: z.enum(['direct', 'group']).optional(),
+      turnPolicy: z.enum(['manual', 'round_robin', 'auto']).optional(),
+      ownerDisplayName: nonEmpty,
+      characters: z.array(characterParticipant).min(1),
+      allowDraftCharacterRevision: z.boolean(),
+    })
+    .strict(),
   [conversationChannels.get]: conversationId,
   [conversationChannels.getHistory]: z
     .object({ conversationId: id, leafMessageId: id.optional() })
@@ -321,11 +331,30 @@ export const studioInputSchemas = {
       generation: generation.optional(),
     })
     .strict(),
+  [generationChannels.startTest]: z
+    .object({
+      requestId: id,
+      conversationId: id,
+      providerId: id,
+      model: nonEmpty.optional(),
+      speakerParticipantId: id.optional(),
+      generation: generation.optional(),
+      characterId: id,
+      characterRevisionId: id,
+      contextOverride: z
+        .object({
+          includeCharacterLorebooks: z.boolean(),
+          lorebookRevisionIds: z.array(id).max(100),
+        })
+        .strict(),
+    })
+    .strict(),
   [generationChannels.abort]: z.object({ requestId: id }).strict(),
 } satisfies Partial<Record<StudioChannel, z.ZodType>>
 
 export const generationEventSchema = z.looseObject({
   type: z.enum([
+    'preparing',
     'started',
     'text_delta',
     'content_part',

@@ -2,7 +2,6 @@
 import {
   Activity,
   BarChart3,
-  Bot,
   Code2,
   FileText,
   History,
@@ -10,18 +9,15 @@ import {
   Play,
   RotateCcw,
   Sparkles,
+  Square,
   Terminal,
   Wand2,
 } from '@lucide/vue'
 import PageHeader from '@renderer/components/layout/PageHeader.vue'
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@renderer/components/ui/avatar'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
+import { ScrollArea } from '@renderer/components/ui/scroll-area'
 import {
   Select,
   SelectContent,
@@ -32,627 +28,733 @@ import {
 import { Switch } from '@renderer/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { Textarea } from '@renderer/components/ui/textarea'
+import {
+  api,
+  type CharacterDto,
+  type ConversationMessageDto,
+  type GenerationEvent,
+  type GenerationRequestDto,
+  type LorebookDto,
+} from '@renderer/services/api'
 import { useGenerationStore } from '@renderer/stores/generation'
 import { useStudioStore } from '@renderer/stores/studio'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+
+type Tab = 'response' | 'prompt' | 'request' | 'metrics' | 'logs'
+type TerminalEvent = Extract<
+  GenerationEvent,
+  { type: 'completed' | 'failed' | 'cancelled' }
+>
+interface TestRun {
+  id: string
+  createdAt: string
+  character: string
+  revision: string
+  input: string
+  output: string
+  request: GenerationRequestDto | null
+  terminal: TerminalEvent | null
+  durationMs: number
+}
 
 const studio = useStudioStore()
 const generation = useGenerationStore()
-const studioCharacters = computed(() => studio.characters)
-const studioLorebooks = computed(() => studio.lorebooks)
-const studioProviders = computed(() => studio.providers)
-
-type Tab = 'response' | 'prompt' | 'request' | 'metrics' | 'logs'
-
+const characters = ref<CharacterDto[]>([])
+const lorebooks = ref<LorebookDto[]>([])
+const loading = ref(true)
 const activeTab = ref<Tab>('response')
-const selectedCharacter = ref('')
-const selectedModel = ref('')
-const selectedCharacterVersion = ref('draft')
-const selectedLorebook = ref('')
-const selectedLorebookVersion = ref('draft')
-const testInput = ref('你第一次在月光森林遇到她，请主动和她打招呼。')
-const scenario = ref('初次见面')
-const history = ref<
-  {
-    id: number
-    label: string
-    output: string
-    time: string
-    hits: number
-    character: string
-  }[]
->([])
-const compareRun = ref<(typeof history.value)[number] | null>(null)
-const scenarios = [
-  { name: '初次见面', prompt: '你第一次在月光森林遇到她，请主动和她打招呼。' },
-  { name: '触发世界观', prompt: '请告诉我月光森林中最不能触碰的禁忌。' },
-  {
-    name: '角色一致性',
-    prompt: '面对陌生人的请求，你会如何回应？请保持角色口吻。',
-  },
-]
-const hitEntries = [
-  { name: '月光森林', keyword: '月光森林', tokens: 86, position: '角色设定后' },
-  { name: '精灵族礼仪', keyword: '精灵', tokens: 54, position: '历史消息前' },
-]
+const selectedCharacterId = ref('')
+const selectedRevisionId = ref('')
+const selectedLorebookRevisionIds = ref<string[]>([])
+const includeCharacterLorebooks = ref(true)
+const selectedProviderId = ref('')
+const model = ref('')
 const temperature = ref('0.8')
 const maxTokens = ref('1024')
-const useLorebook = ref(true)
-const conversationMode = ref(true)
-const conversationInput = ref('你愿意带我去看看森林深处吗？')
-const localProfile = ref({
-  name: localStorage.getItem('kirika-profile-name') || '我',
-  avatar: localStorage.getItem('kirika-profile-avatar') || '',
-})
-const messages = ref<{ role: 'user' | 'assistant'; content: string }[]>([])
-const running = ref(false)
-const output = ref('')
+const testInput = ref('')
+const conversationMode = ref(false)
+const conversationId = ref<string | null>(null)
+const startedAt = ref<number | null>(null)
+const finishedAt = ref<number | null>(null)
+const clock = ref(Date.now())
+const validationError = ref('')
+let clockTimer: ReturnType<typeof setInterval> | null = null
+const request = ref<GenerationRequestDto | null>(null)
+const terminal = ref<TerminalEvent | null>(null)
 const logs = ref<string[]>([])
-const metrics = ref<{ tokens: string; time: string; rate: string }>({
-  tokens: '0',
-  time: '—',
-  rate: '—',
-})
+const history = ref<TestRun[]>([])
+const conversationMessages = ref<readonly ConversationMessageDto[]>([])
+const compareRun = ref<TestRun | null>(null)
+const activeRunSnapshot = ref<Pick<
+  TestRun,
+  'character' | 'revision' | 'input'
+> | null>(null)
+
+const selectedCharacter = computed(
+  () =>
+    characters.value.find((item) => item.id === selectedCharacterId.value) ??
+    null,
+)
+const selectedRevision = computed(
+  () =>
+    selectedCharacter.value?.revisions.find(
+      (item) => item.id === selectedRevisionId.value,
+    ) ?? null,
+)
+const selectedProvider = computed(
+  () =>
+    studio.providers.find((item) => item.id === selectedProviderId.value) ??
+    null,
+)
+const revisionOptions = computed(() =>
+  [...(selectedCharacter.value?.revisions ?? [])].sort(
+    (a, b) => b.revisionNumber - a.revisionNumber,
+  ),
+)
+const characterBoundLorebookIds = computed(() =>
+  (selectedRevision.value?.lorebooks ?? [])
+    .filter((reference) => reference.enabled)
+    .sort((left, right) => left.ordinal - right.ordinal)
+    .map((reference) => reference.lorebookRevisionId),
+)
+const lorebookRevisionOptions = computed(() =>
+  lorebooks.value.flatMap((book) =>
+    book.revisions.map((revision) => ({
+      ...revision,
+      bookId: book.id,
+      bookName: book.name,
+      label: `${book.name} · v${revision.revisionNumber}${revision.isDraft ? ' 草稿' : ' 已发布'}`,
+    })),
+  ),
+)
+const running = computed(() => generation.running)
+const output = computed(() => generation.output)
+const durationMs = computed(() =>
+  startedAt.value
+    ? Math.max(0, (finishedAt.value ?? clock.value) - startedAt.value)
+    : 0,
+)
+const tokenUsage = computed(() =>
+  terminal.value?.type === 'completed' ? terminal.value.tokenUsage : null,
+)
+const finishLabel = computed(() =>
+  terminal.value?.type === 'completed'
+    ? terminal.value.finishReason
+    : terminal.value?.type === 'failed'
+      ? 'failed'
+      : terminal.value?.type === 'cancelled'
+        ? 'cancelled'
+        : '—',
+)
+const rate = computed(() =>
+  tokenUsage.value && durationMs.value > 0
+    ? `${(tokenUsage.value.completionTokens / (durationMs.value / 1000)).toFixed(1)}/s`
+    : '—',
+)
+const tabs = [
+  { id: 'response' as const, label: '响应', icon: FileText },
+  { id: 'prompt' as const, label: 'Prompt', icon: Wand2 },
+  { id: 'request' as const, label: '请求', icon: Code2 },
+  { id: 'metrics' as const, label: '指标', icon: BarChart3 },
+  { id: 'logs' as const, label: '日志', icon: Terminal },
+]
+
+function now() {
+  return new Date().toLocaleTimeString()
+}
+function log(message: string) {
+  logs.value.push(`[${now()}] ${message}`)
+}
+function messageText(content: ConversationMessageDto['content']) {
+  if (typeof content === 'string') return content
+  return content
+    .map((part) => (part.type === 'text' ? part.text : `[${part.type}]`))
+    .join('')
+}
+function _partText(parts: readonly { type: string; text?: string }[]) {
+  return parts
+    .map((part) =>
+      part.type === 'text' ? (part.text ?? '') : `[${part.type}]`,
+    )
+    .join('')
+}
+function resetRunState() {
+  request.value = null
+  terminal.value = null
+  compareRun.value = null
+  logs.value = []
+  startedAt.value = null
+  finishedAt.value = null
+  validationError.value = ''
+}
+function discardConversation() {
+  const id = conversationId.value
+  conversationId.value = null
+  conversationMessages.value = []
+  if (id)
+    void api.deleteConversation({ conversationId: id }).catch(() => undefined)
+}
+function resetConversation(reason = '配置已变化') {
+  discardConversation()
+  generation.clearRun()
+  resetRunState()
+  log(`${reason}，已重置测试会话`)
+}
 
 onMounted(async () => {
-  await studio.execute(studio.refreshResources)
-  selectedCharacter.value ||= studio.characters[0]?.id ?? ''
-  selectedModel.value ||=
-    studio.providers.find((item) => item.enabled)?.id ?? ''
-  selectedLorebook.value ||= studio.lorebooks[0]?.id ?? ''
+  clockTimer = setInterval(() => {
+    if (running.value) clock.value = Date.now()
+  }, 100)
+  try {
+    await studio.execute(studio.refreshResources)
+    const [loadedCharacters, loadedLorebooks] = await Promise.all([
+      Promise.all(
+        studio.characters.map((item) =>
+          api.getCharacter({ characterId: item.id }),
+        ),
+      ),
+      Promise.all(
+        studio.lorebooks.map((item) =>
+          api.getLorebook({ lorebookId: item.id }),
+        ),
+      ),
+    ])
+    characters.value = loadedCharacters.filter(
+      (item): item is CharacterDto => item !== null,
+    )
+    lorebooks.value = loadedLorebooks.filter(
+      (item): item is LorebookDto => item !== null,
+    )
+    selectedCharacterId.value = characters.value[0]?.id ?? ''
+    selectedProviderId.value =
+      studio.providers.find((item) => item.enabled)?.id ?? ''
+  } finally {
+    loading.value = false
+  }
 })
-watch(
-  () => generation.output,
-  (value) => {
-    output.value = value
-  },
+
+onBeforeUnmount(() => {
+  if (clockTimer) clearInterval(clockTimer)
+  const id = conversationId.value
+  conversationId.value = null
+  conversationMessages.value = []
+  void (async () => {
+    if (running.value) await generation.abort().catch(() => undefined)
+    if (id)
+      await api
+        .deleteConversation({ conversationId: id })
+        .catch(() => undefined)
+  })()
+})
+
+watch(selectedCharacterId, () => {
+  selectedRevisionId.value =
+    selectedCharacter.value?.currentRevisionId ??
+    selectedCharacter.value?.draftRevisionId ??
+    ''
+  resetConversation('角色已变化')
+})
+watch(selectedProviderId, () => {
+  model.value = selectedProvider.value?.defaultModel ?? ''
+  resetConversation('Provider 已变化')
+})
+watch([selectedRevisionId, includeCharacterLorebooks], () =>
+  resetConversation('生成上下文已变化'),
 )
+let processedEventCount = 0
 watch(
-  () => generation.running,
-  (value) => {
-    running.value = value
+  () => generation.events.length,
+  (length) => {
+    if (length < processedEventCount) processedEventCount = 0
+    for (const event of generation.events.slice(processedEventCount, length)) {
+      if (event.type === 'preparing') {
+        log(
+          `准备阶段：${({ provider: '读取 Provider', conversation: '读取会话', history: '读取历史', context: '编译上下文' } as const)[event.stage]}`,
+        )
+      } else if (event.type === 'started') {
+        request.value = event.request
+        log(`请求已开始：${event.request.model}`)
+      } else if (event.type === 'text_delta')
+        log(`收到文本增量：${event.delta.length} 字符`)
+      else if (event.type === 'content_part')
+        log(`收到内容片段：${event.part.type}`)
+      else {
+        terminal.value = event
+        finishedAt.value = Date.now()
+        log(
+          event.type === 'completed'
+            ? `生成完成：${event.finishReason}`
+            : event.type === 'failed'
+              ? `生成失败：${event.reason}`
+              : '生成已取消',
+        )
+        saveRun()
+        if (!conversationMode.value || event.type === 'failed') {
+          const id = generation.conversationId
+          conversationId.value = null
+          conversationMessages.value = []
+          if (id)
+            void api
+              .deleteConversation({ conversationId: id })
+              .catch(() => undefined)
+        } else void refreshConversationHistory()
+      }
+    }
+    processedEventCount = length
   },
 )
 
 async function start() {
-  if (running.value) return
-  const text =
-    messages.value.length === 0
-      ? testInput.value.trim()
-      : conversationInput.value.trim()
-  const provider = studio.providers.find(
-    (item) => item.id === selectedModel.value,
+  validationError.value = ''
+  if (!selectedRevision.value) validationError.value = '请选择可用的角色版本'
+  else if (!selectedProvider.value)
+    validationError.value = '请选择已启用的 Provider'
+  else if (!testInput.value.trim()) validationError.value = '测试消息不能为空'
+  if (
+    validationError.value ||
+    running.value ||
+    !selectedRevision.value ||
+    !selectedProvider.value
   )
-  if (!text || !selectedCharacter.value || !provider) return
-  if (conversationMode.value)
-    messages.value.push({ role: 'user', content: text })
-  output.value = ''
-  logs.value = [
-    '[12:00:01] 开始生成…',
-    `[12:00:01] 已解析角色：${selectedCharacter.value}`,
-    '[12:00:01] 使用模型：' +
-      selectedModel.value +
-      ' · ' +
-      (useLorebook.value ? '世界书已注入' : '未启用世界书'),
-  ]
-  metrics.value = { tokens: '0', time: '0.0s', rate: '—' }
-
+    return
+  const parsedTemperature = Number(temperature.value)
+  const parsedMaxTokens = Number(maxTokens.value)
+  if (
+    !Number.isFinite(parsedTemperature) ||
+    parsedTemperature < 0 ||
+    parsedTemperature > 2
+  )
+    validationError.value = 'Temperature 必须是 0 到 2 的数值'
+  else if (!Number.isSafeInteger(parsedMaxTokens) || parsedMaxTokens < 1)
+    validationError.value = 'Max Tokens 必须是大于 0 的整数'
+  if (validationError.value) return
+  resetRunState()
+  processedEventCount = 0
+  startedAt.value = Date.now()
+  clock.value = startedAt.value
+  activeRunSnapshot.value = {
+    character: selectedRevision.value.name,
+    revision: `v${selectedRevision.value.revisionNumber}`,
+    input: testInput.value.trim(),
+  }
+  log(
+    `使用 ${selectedRevision.value.name} v${selectedRevision.value.revisionNumber}`,
+  )
   await generation.start({
-    characterId: selectedCharacter.value,
-    providerId: provider.id,
-    text,
-    model: provider.defaultModel,
-    temperature: Number(temperature.value),
-    maxOutputTokens: Number(maxTokens.value),
+    characterId: selectedCharacterId.value,
+    characterRevisionId: selectedRevisionId.value,
+    allowDraftCharacterRevision: selectedRevision.value.isDraft,
+    cleanupConversationOnFailure: !conversationId.value,
+    conversationId: conversationMode.value
+      ? (conversationId.value ?? undefined)
+      : undefined,
+    providerId: selectedProvider.value.id,
+    model: model.value || selectedProvider.value.defaultModel,
+    text: testInput.value.trim(),
+    temperature: parsedTemperature,
+    maxOutputTokens: parsedMaxTokens,
+    contextOverride: {
+      includeCharacterLorebooks: includeCharacterLorebooks.value,
+      lorebookRevisionIds: [...selectedLorebookRevisionIds.value],
+    },
   })
+  if (conversationMode.value) conversationId.value = generation.conversationId
 }
-
 async function stop() {
+  log('正在取消生成…')
   await generation.abort()
-  logs.value.push('[手动] 已停止生成')
 }
-
-const tabs: { id: Tab; label: string; icon: unknown }[] = [
-  { id: 'response', label: '响应', icon: FileText },
-  { id: 'prompt', label: 'Prompt', icon: Wand2 },
-  { id: 'request', label: '请求', icon: Code2 },
-  { id: 'metrics', label: '指标', icon: BarChart3 },
-  { id: 'logs', label: '日志', icon: Terminal },
-]
-
-const runningLabel = computed(() => (running.value ? '停止' : '运行生成'))
-const versionLabel = computed(
-  () =>
-    `角色 ${selectedCharacterVersion.value === 'draft' ? '草稿' : '已发布'} · 世界书 ${selectedLorebookVersion.value === 'draft' ? '草稿' : '已发布'}`,
-)
-function chooseScenario(value: unknown) {
-  if (typeof value !== 'string') return
-  scenario.value = value
-  testInput.value = scenarios.find((item) => item.name === value)?.prompt ?? ''
+async function refreshConversationHistory() {
+  if (!generation.conversationId) return
+  const result = await api.getConversationHistory({
+    conversationId: generation.conversationId,
+  })
+  conversationMessages.value = result.path
 }
-function loadRun(run: (typeof history.value)[number]) {
-  output.value = run.output
-  compareRun.value = run
-  activeTab.value = 'response'
-}
-function resetInput() {
-  chooseScenario('初次见面')
+function saveRun() {
+  const snapshot = activeRunSnapshot.value
+  if (!startedAt.value || !snapshot || (!generation.output && !terminal.value))
+    return
+  history.value.unshift({
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    character: snapshot.character,
+    revision: snapshot.revision,
+    input: snapshot.input,
+    output: generation.output,
+    request: request.value,
+    terminal: terminal.value,
+    durationMs: (finishedAt.value ?? Date.now()) - startedAt.value,
+  })
+  history.value = history.value.slice(0, 20)
+  activeRunSnapshot.value = null
 }
 function clearConversation() {
-  messages.value = []
-  conversationInput.value = ''
-  output.value = ''
-  compareRun.value = null
-  logs.value.push('[会话] 已清空上下文')
+  discardConversation()
+  generation.clearRun()
+  resetRunState()
+  log('连续对话上下文和当前响应已清空')
+}
+function toggleLorebook(id: string) {
+  if (running.value) return
+  selectedLorebookRevisionIds.value =
+    selectedLorebookRevisionIds.value.includes(id)
+      ? selectedLorebookRevisionIds.value.filter((value) => value !== id)
+      : [...selectedLorebookRevisionIds.value, id]
+  resetConversation('世界书覆盖已变化')
 }
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-280 px-6 py-7 lg:px-8">
+  <div class="mx-auto w-full max-w-300 px-6 py-7 lg:px-8">
     <PageHeader
       eyebrow="Tests"
-      title="生成预览"
-      description="用真实角色与模型跑一次流式生成，检查提示词、命中与输出质量。"
+      title="生成测试台"
+      description="用精确角色与世界书版本运行真实生成，并检查模型请求、Prompt、指标和事件。"
     >
       <template #actions>
-        <Button
-          :variant="running ? 'outline' : 'default'"
-          @click="running ? stop() : start()"
+        <Button v-if="running" variant="destructive" @click="stop"
+          ><Square :size="15" />停止</Button
         >
-          <Loader2 v-if="running" :size="15" class="animate-spin" />
-          <Play v-else :size="15" />
-          {{ runningLabel }}
-        </Button>
+        <Button v-else @click="start"><Play :size="15" />运行生成</Button>
       </template>
     </PageHeader>
 
-    <div class="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-5">
-      <!-- Config -->
-      <aside class="space-y-4 lg:col-span-2">
-        <div class="rounded-2xl border border-border bg-card p-5">
-          <div class="flex items-center justify-between">
-            <h2 class="text-foreground text-sm font-semibold">生成配置</h2>
-            <Badge variant="outline">{{ versionLabel }}</Badge>
+    <div
+      v-if="validationError"
+      class="mt-5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300"
+    >
+      {{ validationError }}
+    </div>
+    <div
+      v-if="generation.error"
+      class="mt-5 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3"
+    >
+      <p class="text-sm font-semibold text-destructive">生成失败</p>
+      <p class="mt-1 text-sm text-destructive/90">
+        {{ generation.error.message }}
+      </p>
+    </div>
+    <div v-if="loading" class="flex justify-center py-24">
+      <Loader2 class="animate-spin" />
+    </div>
+    <div v-else class="mt-6 flex flex-col items-stretch gap-5 lg:flex-row">
+      <aside class="lg:w-2/5">
+        <div class="h-full space-y-4 rounded-2xl border bg-card p-5">
+          <h2 class="text-sm font-semibold">真实生成配置</h2>
+          <div class="space-y-1.5">
+            <div class="text-sm font-medium">角色</div>
+            <Select v-model="selectedCharacterId" :disabled="running"
+              ><SelectTrigger
+                ><SelectValue placeholder="选择角色" /></SelectTrigger
+              ><SelectContent
+                ><SelectItem
+                  v-for="item in characters"
+                  :key="item.id"
+                  :value="item.id"
+                  >{{ item.revisions.find((r) => r.id === (item.currentRevisionId ?? item.draftRevisionId))?.name ?? '角色' }}</SelectItem
+                ></SelectContent
+              ></Select
+            >
           </div>
-          <div class="mt-4 space-y-4">
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <label for="test-input" class="text-sm font-medium"
-                  >测试场景</label
-                ><Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="重置测试输入"
-                  @click="resetInput"
-                  ><RotateCcw :size="14" /></Button
+          <div class="space-y-1.5">
+            <div class="text-sm font-medium">精确角色版本</div>
+            <Select v-model="selectedRevisionId" :disabled="running"
+              ><SelectTrigger
+                ><SelectValue placeholder="选择版本" /></SelectTrigger
+              ><SelectContent
+                ><SelectItem
+                  v-for="revision in revisionOptions"
+                  :key="revision.id"
+                  :value="revision.id"
+                  >v{{ revision.revisionNumber }}
+                  · {{ revision.isDraft ? '草稿' : '已发布' }} ·
+                  {{ revision.name }}</SelectItem
+                ></SelectContent
+              ></Select
+            >
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium">包含角色绑定世界书</span>
+              <Switch v-model="includeCharacterLorebooks" :disabled="running" />
+            </div>
+            <p class="text-xs text-muted-foreground">
+              关闭后仅使用下方手动选择的精确版本。
+            </p>
+            <div
+              v-if="includeCharacterLorebooks"
+              class="flex flex-wrap gap-1.5"
+            >
+              <Badge
+                v-for="id in characterBoundLorebookIds"
+                :key="id"
+                variant="outline"
+              >
+                {{ lorebookRevisionOptions.find((item) => item.id === id)?.label ?? id }}
+              </Badge>
+              <p
+                v-if="!characterBoundLorebookIds.length"
+                class="text-xs text-muted-foreground"
+              >
+                当前角色版本没有已启用的世界书绑定。
+              </p>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <div class="text-sm font-medium">附加世界书版本</div>
+            <div
+              class="max-h-44 space-y-1 overflow-y-auto rounded-xl border p-2"
+            >
+              <button
+                v-for="revision in lorebookRevisionOptions"
+                :key="revision.id"
+                type="button"
+                class="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="running"
+                :class="selectedLorebookRevisionIds.includes(revision.id) ? 'bg-primary/10 text-primary' : ''"
+                @click="toggleLorebook(revision.id)"
+              >
+                <span class="truncate">{{ revision.label }}</span
+                ><Badge
+                  v-if="selectedLorebookRevisionIds.includes(revision.id)"
+                  variant="soft"
+                  >已选择</Badge
                 >
-              </div>
-              <Select
-                :model-value="scenario"
-                @update:model-value="chooseScenario"
-                ><SelectTrigger
-                  ><SelectValue placeholder="选择场景" /></SelectTrigger
-                ><SelectContent
-                  ><SelectItem
-                    v-for="item in scenarios"
-                    :key="item.name"
-                    :value="item.name"
-                    >{{ item.name }}</SelectItem
-                  ></SelectContent
-                ></Select
-              ><Textarea
-                id="test-input"
-                v-model="testInput"
-                class="min-h-24"
-                placeholder="输入测试消息或场景…"
+              </button>
+              <p
+                v-if="!lorebookRevisionOptions.length"
+                class="p-3 text-center text-xs text-muted-foreground"
+              >
+                暂无世界书版本
+              </p>
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <div class="text-sm font-medium">Provider</div>
+            <Select v-model="selectedProviderId" :disabled="running"
+              ><SelectTrigger
+                ><SelectValue placeholder="选择 Provider" /></SelectTrigger
+              ><SelectContent
+                ><SelectItem
+                  v-for="provider in studio.providers.filter((item) => item.enabled)"
+                  :key="provider.id"
+                  :value="provider.id"
+                  >{{ provider.name }}</SelectItem
+                ></SelectContent
+              ></Select
+            >
+          </div>
+          <div class="space-y-1.5">
+            <div class="text-sm font-medium">模型</div>
+            <Input v-model="model" placeholder="模型名称" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="text-sm font-medium">Temperature</div>
+              <Input
+                v-model="temperature"
+                type="number"
+                min="0"
+                max="2"
+                step="0.1"
               />
             </div>
-            <div class="space-y-1.5">
-              <label for="t-char" class="text-sm font-medium">角色</label>
-              <Select v-model="selectedCharacter">
-                <SelectTrigger id="t-char"
-                  ><SelectValue placeholder="选择角色" /></SelectTrigger
-                >
-                <SelectContent>
-                  <SelectItem
-                    v-for="chr in studioCharacters"
-                    :key="chr.id"
-                    :value="chr.id"
-                    >{{ chr.name }}</SelectItem
-                  >
-                </SelectContent>
-              </Select>
-            </div>
-            <div class="space-y-1.5">
-              <label for="t-lore" class="text-sm font-medium">世界书</label
-              ><Select v-model="selectedLorebook"
-                ><SelectTrigger id="t-lore"
-                  ><SelectValue placeholder="选择世界书" /></SelectTrigger
-                ><SelectContent
-                  ><SelectItem
-                    v-for="book in studioLorebooks"
-                    :key="book.id"
-                    :value="book.id"
-                    >{{ book.name }}</SelectItem
-                  ></SelectContent
-                ></Select
-              >
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-              <Select v-model="selectedCharacterVersion"
-                ><SelectTrigger><SelectValue /></SelectTrigger
-                ><SelectContent
-                  ><SelectItem value="draft">角色草稿</SelectItem
-                  ><SelectItem value="published"
-                    >已发布角色</SelectItem
-                  ></SelectContent
-                ></Select
-              ><Select v-model="selectedLorebookVersion"
-                ><SelectTrigger><SelectValue /></SelectTrigger
-                ><SelectContent
-                  ><SelectItem value="draft">世界书草稿</SelectItem
-                  ><SelectItem value="published"
-                    >已发布世界书</SelectItem
-                  ></SelectContent
-                ></Select
-              >
-            </div>
-            <div class="space-y-1.5">
-              <label for="t-model" class="text-sm font-medium">模型</label>
-              <Select v-model="selectedModel">
-                <SelectTrigger id="t-model"
-                  ><SelectValue placeholder="选择模型" /></SelectTrigger
-                >
-                <SelectContent>
-                  <SelectItem
-                    v-for="p in studioProviders"
-                    :key="p.id"
-                    :value="p.id"
-                    >{{ p.name }}</SelectItem
-                  >
-                </SelectContent>
-              </Select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div class="space-y-1.5">
-                <label for="t-temp" class="text-sm font-medium"
-                  >Temperature</label
-                >
-                <Input
-                  id="t-temp"
-                  v-model="temperature"
-                  type="number"
-                  min="0"
-                  max="2"
-                  step="0.1"
-                />
-              </div>
-              <div class="space-y-1.5">
-                <label for="t-max" class="text-sm font-medium"
-                  >Max Tokens</label
-                >
-                <Input
-                  id="t-max"
-                  v-model="maxTokens"
-                  type="number"
-                  min="1"
-                  step="1"
-                />
-              </div>
-            </div>
-            <div class="rounded-xl border border-border p-3 space-y-3">
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium">注入世界书</span>
-                <Switch v-model="useLorebook" aria-label="注入世界书" />
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <p class="text-sm font-medium">连续对话</p>
-                  <p class="text-xs text-muted-foreground">
-                    保留上下文测试多轮一致性
-                  </p>
-                </div>
-                <Switch v-model="conversationMode" aria-label="连续对话" />
-              </div>
+            <div>
+              <div class="text-sm font-medium">Max Tokens</div>
+              <Input v-model="maxTokens" type="number" min="1" />
             </div>
           </div>
-        </div>
-
-        <div class="rounded-2xl border border-border bg-card p-5">
-          <div class="flex items-center gap-2">
-            <Bot :size="16" class="text-muted-foreground" />
-            <span class="text-foreground text-sm font-semibold">本次运行</span>
+          <div class="space-y-1.5">
+            <div class="text-sm font-medium">测试消息</div>
+            <Textarea
+              v-model="testInput"
+              placeholder="请输入测试文本"
+              rows="6"
+            />
           </div>
-          <div class="mt-3 grid grid-cols-3 gap-3">
-            <div class="rounded-xl bg-muted/60 p-3 text-center">
-              <p class="text-muted-foreground text-[11px]">Tokens</p>
-              <p
-                class="text-foreground mt-1 text-lg font-semibold tabular-nums"
-              >
-                {{ metrics.tokens }}
+          <div class="flex items-center justify-between rounded-xl border p-3">
+            <div>
+              <p class="text-sm font-medium">连续对话</p>
+              <p class="text-xs text-muted-foreground">
+                复用同一个真实会话历史
               </p>
             </div>
-            <div class="rounded-xl bg-muted/60 p-3 text-center">
-              <p class="text-muted-foreground text-[11px]">耗时</p>
-              <p
-                class="text-foreground mt-1 text-lg font-semibold tabular-nums"
-              >
-                {{ metrics.time }}
-              </p>
-            </div>
-            <div class="rounded-xl bg-muted/60 p-3 text-center">
-              <p class="text-muted-foreground text-[11px]">速率</p>
-              <p
-                class="text-foreground mt-1 text-lg font-semibold tabular-nums"
-              >
-                {{ metrics.rate }}
-              </p>
-            </div>
+            <Switch v-model="conversationMode" :disabled="running" />
           </div>
+          <Button
+            v-if="conversationId"
+            variant="outline"
+            size="sm"
+            @click="clearConversation"
+            ><RotateCcw :size="14" />清空测试会话</Button
+          >
         </div>
       </aside>
 
-      <!-- Output -->
-      <Tabs v-model="activeTab" class="lg:col-span-3">
+      <Tabs v-model="activeTab" class="min-h-0 lg:w-3/5">
         <section
-          class="flex min-h-120 flex-col rounded-2xl border border-border bg-card"
+          class="flex h-full min-h-150 flex-col overflow-hidden rounded-2xl border bg-card"
         >
-          <div class="flex items-center gap-1 border-b border-border/70 p-1.5">
-            <TabsList class="bg-transparent h-auto gap-1 p-0">
-              <TabsTrigger v-for="tab in tabs" :key="tab.id" :value="tab.id">
-                <component :is="tab.icon" :size="14" />
-                {{ tab.label }}
-              </TabsTrigger>
-            </TabsList>
-            <div class="ml-auto flex items-center gap-2 px-2">
-              <Badge :variant="running ? 'default' : 'success'" class="gap-1.5">
-                <Activity v-if="running" :size="12" class="animate-pulse" />
-                <Sparkles v-else :size="12" />
-                {{ running ? '生成中' : '就绪' }}
-              </Badge>
-            </div>
+          <div class="flex items-center gap-1 border-b p-1.5">
+            <TabsList class="h-auto bg-transparent"
+              ><TabsTrigger v-for="tab in tabs" :key="tab.id" :value="tab.id"
+                ><component :is="tab.icon" :size="14" />
+                {{ tab.label }}</TabsTrigger
+              ></TabsList
+            ><Badge
+              class="ml-auto"
+              :variant="running ? 'default' : terminal?.type === 'failed' ? 'destructive' : 'outline'"
+              ><Activity v-if="running" :size="12" class="animate-pulse" />
+              {{ running ? '生成中' : finishLabel }}</Badge
+            >
           </div>
-
-          <div class="min-h-0 flex-1 overflow-y-auto p-5">
-            <!-- Response -->
-            <div v-if="activeTab === 'response'" class="space-y-4">
-              <div
-                v-if="!output && !running"
-                class="text-muted-foreground flex min-h-80 items-center justify-center text-sm"
-              >
-                <div class="flex flex-col items-center gap-2 text-center">
-                  <Sparkles :size="22" />
-                  <span>点击「运行生成」查看流式输出</span>
-                </div>
-              </div>
-              <div v-else class="space-y-3">
+          <ScrollArea class="min-h-0 flex-1">
+            <div class="p-5">
+              <div v-if="activeTab === 'response'" class="space-y-4">
                 <div
-                  v-if="conversationMode && messages.length"
-                  class="space-y-3"
+                  v-if="!output && !running"
+                  class="flex min-h-96 flex-col items-center justify-center gap-2 text-sm text-muted-foreground"
                 >
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold"
-                      >对话上下文 · {{ messages.length }} 条消息</span
-                    ><Button
-                      variant="ghost"
-                      size="sm"
-                      @click="clearConversation"
-                      >清空</Button
-                    >
-                  </div>
+                  <Sparkles :size="22" />运行后显示真实流式响应
+                </div>
+                <div
+                  v-if="conversationMode && conversationMessages.length"
+                  class="space-y-2 rounded-xl border bg-muted/20 p-3"
+                >
+                  <p class="text-xs font-semibold text-muted-foreground">
+                    真实会话历史
+                  </p>
                   <div
-                    v-for="(message, index) in messages"
-                    :key="index"
-                    :class="message.role === 'user' ? 'justify-end' : 'justify-start'"
-                    class="flex"
+                    v-for="message in conversationMessages"
+                    :key="message.id"
+                    class="rounded-lg px-3 py-2 text-sm"
+                    :class="message.source === 'human' ? 'ml-12 bg-primary text-primary-foreground' : 'mr-12 bg-muted'"
                   >
-                    <div
-                      class="flex max-w-[78%] flex-row items-start gap-2"
-                      :class="message.role === 'user' ? 'flex-row-reverse' : 'flex-row'"
-                    >
-                      <Avatar class="size-8 shrink-0">
-                        <AvatarImage
-                          v-if="message.role === 'user' && localProfile.avatar"
-                          :src="localProfile.avatar"
-                          :alt="localProfile.name"
-                        />
-                        <AvatarFallback
-                          >{{ (message.role === 'user' ? localProfile.name : selectedCharacter).slice(0, 1) }}</AvatarFallback
-                        >
-                      </Avatar>
-                      <div
-                        :class="message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'"
-                        class="rounded-2xl px-4 py-3 text-sm shadow-sm"
-                      >
-                        <p class="whitespace-pre-wrap">{{ message.content }}</p>
-                      </div>
-                    </div>
+                    <p class="mb-1 text-[10px] uppercase opacity-70">
+                      {{ message.source }}
+                      · {{ message.status }}
+                    </p>
+                    <p class="whitespace-pre-wrap">
+                      {{ messageText(message.content) }}
+                    </p>
                   </div>
                 </div>
+                <p
+                  v-if="output || running"
+                  class="whitespace-pre-wrap text-sm leading-7"
+                >
+                  {{ output }}
+                  <span v-if="running" class="animate-pulse">▍</span>
+                </p>
                 <div
                   v-if="compareRun"
-                  class="rounded-xl border border-dashed border-border p-3 text-xs"
+                  class="rounded-xl border border-dashed p-4"
                 >
-                  <div class="flex items-center justify-between">
-                    <span class="font-semibold"
-                      >对比结果 · {{ compareRun.time }}</span
+                  <div class="mb-2 flex justify-between text-xs font-semibold">
+                    <span
+                      >对比：{{ compareRun.character }}
+                      {{ compareRun.revision }}</span
                     ><Button
-                      variant="ghost"
                       size="sm"
+                      variant="ghost"
                       @click="compareRun = null"
                       >关闭</Button
                     >
                   </div>
-                  <p class="mt-2 whitespace-pre-wrap text-muted-foreground">
+                  <p class="whitespace-pre-wrap text-xs text-muted-foreground">
                     {{ compareRun.output }}
                   </p>
                 </div>
-                <div v-if="running" class="flex justify-start">
-                  <div class="flex max-w-[78%] flex-row items-start gap-2">
-                    <Avatar class="size-8 shrink-0"
-                      ><AvatarFallback
-                        >{{ selectedCharacter.slice(0, 1) }}</AvatarFallback
-                      ></Avatar
-                    >
-                    <div class="rounded-2xl bg-muted px-4 py-3 text-sm">
-                      <p class="whitespace-pre-wrap">{{ output }}</p>
-                    </div>
-                  </div>
-                </div>
-                <div v-if="conversationMode && !running" class="space-y-2">
-                  <Textarea
-                    v-model="conversationInput"
-                    class="min-h-20"
-                    placeholder="继续输入下一轮消息…"
-                    @keydown.enter.exact.prevent="start"
-                  /><Button class="w-full" variant="outline" @click="start"
-                    ><Play :size="14" />发送下一轮</Button
+              </div>
+              <div v-else-if="activeTab === 'prompt'" class="space-y-3">
+                <p v-if="!request" class="text-sm text-muted-foreground">
+                  生成开始后显示 ChatEngine 实际编译的消息。
+                </p>
+                <div
+                  v-for="(message, index) in request?.messages ?? []"
+                  :key="index"
+                  class="rounded-xl border p-3"
+                >
+                  <Badge variant="outline"
+                    >{{ message.role }}
+                    <template v-if="message.name">
+                      · {{ message.name }}</template
+                    ></Badge
                   >
-                </div>
-                <div
-                  v-if="running"
-                  class="flex items-center gap-1.5 text-xs text-muted-foreground"
-                >
-                  <Loader2 :size="13" class="animate-spin" />
-                  <span>正在生成…</span>
+                  <pre
+                    class="mt-2 whitespace-pre-wrap font-mono text-xs"
+                  >{{ _partText(message.content) }}</pre>
                 </div>
               </div>
-            </div>
-            <!-- Prompt -->
-            <div v-else-if="activeTab === 'prompt'" class="space-y-2">
+              <div v-else-if="activeTab === 'request'" class="space-y-3">
+                <pre
+                  class="overflow-x-auto rounded-xl bg-muted/50 p-4 text-xs"
+                >{{ request ? JSON.stringify(request, null, 2) : '生成开始后显示实际模型请求（不包含 API Key）。' }}</pre>
+              </div>
               <div
-                class="rounded-xl bg-muted/50 p-3 font-mono text-xs leading-relaxed text-foreground/90"
+                v-else-if="activeTab === 'metrics'"
+                class="grid grid-cols-2 gap-3 md:grid-cols-3"
               >
-                <p>
-                  <span class="text-success">[system]</span>
-                  你是{{ selectedCharacter }}，请用沉浸式中文扮演。……
-                </p>
-                <p class="mt-2">
-                  <span class="text-primary">[user]</span> {{ testInput }}
-                </p>
-              </div>
-              <div v-if="useLorebook" class="space-y-2">
-                <p class="text-xs font-semibold">
-                  世界书命中 · {{ hitEntries.length }} 条
-                </p>
                 <div
-                  v-for="hit in hitEntries"
-                  :key="hit.name"
-                  class="flex items-center justify-between rounded-lg border border-border p-3 text-xs"
+                  v-for="item in [{ label: 'Prompt Tokens', value: tokenUsage?.promptTokens ?? '—' }, { label: 'Completion Tokens', value: tokenUsage?.completionTokens ?? '—' }, { label: 'Total Tokens', value: tokenUsage?.totalTokens ?? '—' }, { label: '耗时', value: startedAt ? `${(durationMs / 1000).toFixed(2)}s` : '—' }, { label: '吞吐', value: rate }, { label: 'Finish', value: finishLabel }]"
+                  :key="item.label"
+                  class="rounded-xl border p-4"
                 >
-                  <div>
-                    <p class="font-medium">✓ {{ hit.name }}</p>
-                    <p class="text-muted-foreground">
-                      关键词：{{ hit.keyword }}
-                      · 注入：{{ hit.position }}
-                    </p>
-                  </div>
-                  <Badge variant="outline">{{ hit.tokens }} tokens</Badge>
+                  <p class="text-xs text-muted-foreground">{{ item.label }}</p>
+                  <p class="mt-1 text-xl font-semibold">{{ item.value }}</p>
                 </div>
               </div>
-            </div>
-            <!-- Request -->
-            <div
-              v-else-if="activeTab === 'request'"
-              class="grid grid-cols-1 gap-4 md:grid-cols-2"
-            >
-              <div class="rounded-xl bg-muted/40 p-3">
-                <p class="text-muted-foreground mb-1 text-xs font-medium">
-                  Model
+              <div v-else class="flex flex-col gap-1 pr-3">
+                <p
+                  v-for="(line, index) in logs"
+                  :key="index"
+                  class="font-mono text-xs text-muted-foreground"
+                >
+                  {{ line }}
                 </p>
-                <p class="text-foreground text-sm">{{ selectedModel }}</p>
-              </div>
-              <div class="rounded-xl bg-muted/40 p-3">
-                <p class="text-muted-foreground mb-1 text-xs font-medium">
-                  参数
-                </p>
-                <p class="text-muted-foreground text-sm">
-                  T {{ temperature }} · max {{ maxTokens }}
+                <p v-if="!logs.length" class="text-sm text-muted-foreground">
+                  运行后显示真实生成事件日志。
                 </p>
               </div>
             </div>
-            <!-- Metrics -->
-            <div
-              v-else-if="activeTab === 'metrics'"
-              class="grid grid-cols-2 gap-3 md:grid-cols-3"
-            >
-              <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs">生成 Tokens</p>
-                <p
-                  class="text-foreground mt-1 text-xl font-semibold tabular-nums"
-                >
-                  {{ metrics.tokens }}
-                </p>
-              </div>
-              <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs">耗时</p>
-                <p
-                  class="text-foreground mt-1 text-xl font-semibold tabular-nums"
-                >
-                  {{ metrics.time }}
-                </p>
-              </div>
-              <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs">吞吐</p>
-                <p
-                  class="text-foreground mt-1 text-xl font-semibold tabular-nums"
-                >
-                  {{ metrics.rate }}
-                </p>
-              </div>
-              <div class="rounded-xl border border-border p-4">
-                <p class="text-muted-foreground text-xs">Finish</p>
-                <p
-                  class="text-foreground mt-1 text-xl font-semibold tabular-nums"
-                >
-                  stop
-                </p>
-              </div>
-            </div>
-            <!-- Logs -->
-            <div v-else class="space-y-1">
-              <p
-                v-for="(line, idx) in logs"
-                :key="idx"
-                class="text-muted-foreground font-mono text-xs"
-              >
-                {{ line }}
-              </p>
-              <p v-if="!logs.length" class="text-muted-foreground text-sm">
-                暂无日志
-              </p>
-            </div>
-          </div>
+          </ScrollArea>
         </section>
       </Tabs>
     </div>
-    <section class="mt-5 rounded-2xl border border-border bg-card p-5">
+
+    <section class="mt-5 rounded-2xl border bg-card p-5">
       <div class="flex items-center gap-2">
-        <History :size="16" class="text-muted-foreground" />
-        <h2 class="text-sm font-semibold">运行历史</h2>
+        <History :size="16" />
+        <h2 class="text-sm font-semibold">本次会话运行历史</h2>
         <Badge variant="outline">{{ history.length }}</Badge>
       </div>
       <div v-if="history.length" class="mt-3 grid gap-2 md:grid-cols-2">
         <div
           v-for="run in history"
           :key="run.id"
-          class="flex items-center gap-3 rounded-xl border border-border p-3"
+          class="flex items-center gap-3 rounded-xl border p-3"
         >
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium">{{ run.label }}</p>
+            <p class="truncate text-sm font-medium">
+              {{ run.character }} {{ run.revision }}
+            </p>
             <p class="text-xs text-muted-foreground">
-              {{ run.character ?? selectedCharacter }}
-              · 命中 {{ run.hits }} 条 · {{ run.time }}
+              {{ new Date(run.createdAt).toLocaleTimeString() }}
+              · {{ (run.durationMs / 1000).toFixed(2) }}s ·
+              {{ run.terminal?.type ?? 'unknown' }}
             </p>
           </div>
-          <Button variant="outline" size="sm" @click="loadRun(run)">查看</Button
-          ><Button variant="ghost" size="sm" @click="compareRun = run"
+          <Button
+            size="sm"
+            variant="outline"
+            @click="compareRun = run; activeTab = 'response'"
             >对比</Button
           >
         </div>
       </div>
       <p v-else class="mt-3 text-sm text-muted-foreground">
-        运行完成后会自动保存结果，可用于回看和对比。
+        完成或终止一次生成后会记录配置和结果，最多保留 20 次。
       </p>
     </section>
   </div>

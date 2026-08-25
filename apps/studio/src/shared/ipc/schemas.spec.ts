@@ -3,6 +3,7 @@ import {
   characterChannels,
   conversationChannels,
   dialogChannels,
+  generationChannels,
   lorebookChannels,
   providerChannels,
   studioInputSchemas,
@@ -128,6 +129,63 @@ describe('Studio IPC Zod input schemas', () => {
         content: 'hello',
       }).parentMessageId,
     ).toBeNull()
+  })
+
+  it('separates production and test conversation capabilities', () => {
+    const common = {
+      ownerDisplayName: 'User',
+      characters: [
+        {
+          characterId: 'character',
+          characterRevisionId: 'revision',
+          displayName: 'Kirika',
+        },
+      ],
+    }
+    expect(
+      studioInputSchemas[conversationChannels.create].parse(common),
+    ).toEqual(common)
+    expect(() =>
+      studioInputSchemas[conversationChannels.create].parse({
+        ...common,
+        allowDraftCharacterRevision: true,
+      }),
+    ).toThrow()
+    expect(
+      studioInputSchemas[conversationChannels.createTest].parse({
+        ...common,
+        allowDraftCharacterRevision: true,
+      }),
+    ).toMatchObject({ allowDraftCharacterRevision: true })
+  })
+
+  it('separates production and test generation context overrides', () => {
+    const common = {
+      requestId: 'request',
+      conversationId: 'conversation',
+      providerId: 'provider',
+    }
+    const contextOverride = {
+      includeCharacterLorebooks: false,
+      lorebookRevisionIds: ['revision'],
+    }
+    expect(studioInputSchemas[generationChannels.start].parse(common)).toEqual(
+      common,
+    )
+    expect(() =>
+      studioInputSchemas[generationChannels.start].parse({
+        ...common,
+        contextOverride,
+      }),
+    ).toThrow()
+    expect(
+      studioInputSchemas[generationChannels.startTest].parse({
+        ...common,
+        characterId: 'character',
+        characterRevisionId: 'revision',
+        contextOverride,
+      }),
+    ).toMatchObject({ characterRevisionId: 'revision', contextOverride })
   })
 
   it('bounds complete character draft payloads', () => {

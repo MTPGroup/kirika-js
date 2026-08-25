@@ -48,14 +48,78 @@ async function verifyCharacter(
   runtime: ReturnType<typeof studioRuntime.requireActive>,
   characterId: string,
   revisionId: string,
+  allowDraft = false,
 ) {
   const character = await runtime.characterRepository.findById(
     new CharacterId(characterId),
   )
   const revision = character?.findRevision(new CharacterRevisionId(revisionId))
   if (!revision) throw new Error('角色或固定角色版本不存在')
-  if (revision.isDraft) throw new Error('会话只能使用已发布角色版本')
+  if (revision.isDraft && !allowDraft)
+    throw new Error('正式会话只能使用已发布角色版本')
   return revision
+}
+
+async function createConversation(
+  input: Parameters<ConversationApi['createTestConversation']>[0],
+  allowDraft: boolean,
+) {
+  const runtime = studioRuntime.requireActive()
+  const revisions = await Promise.all(
+    input.characters.map((c) =>
+      verifyCharacter(
+        runtime,
+        c.characterId,
+        c.characterRevisionId,
+        allowDraft,
+      ),
+    ),
+  )
+  const ownerId = new UserId(runtime.settings.ownerId)
+  const participants = [
+    ConversationParticipant.createHuman({
+      userId: ownerId,
+      displayName: input.ownerDisplayName,
+      role: 'owner',
+    }),
+    ...input.characters.map((c) =>
+      ConversationParticipant.createCharacter({
+        characterId: new CharacterId(c.characterId),
+        characterRevisionId: new CharacterRevisionId(c.characterRevisionId),
+        displayName: c.displayName,
+      }),
+    ),
+  ]
+  const mode =
+    input.mode ?? (input.characters.length === 1 ? 'direct' : 'group')
+  const conversation = Conversation.create({
+    ownerId,
+    mode,
+    participants,
+    title: input.title,
+    turnPolicy: input.turnPolicy,
+  })
+  if (mode === 'direct') {
+    const revision = revisions[0]
+    const speaker = conversation.activeParticipants.find(
+      (participant) => participant.type === 'character',
+    )
+    const greeting = revision?.greetings[0]
+    if (speaker && greeting) {
+      const message = conversation.createGreetingMessage(
+        speaker.id,
+        MessageContent.fromText(greeting),
+        null,
+      )
+      await runtime.conversationUnitOfWork.createWithMessage(
+        conversation,
+        message,
+      )
+      return toConversationDto(conversation)
+    }
+  }
+  await runtime.conversationRepository.save(conversation)
+  return toConversationDto(conversation)
 }
 
 export const conversationService: ConversationApi = {
@@ -73,58 +137,14 @@ export const conversationService: ConversationApi = {
         ),
     )
   },
-  async createConversation(input) {
-    const runtime = studioRuntime.requireActive()
-    const revisions = await Promise.all(
-      input.characters.map((c) =>
-        verifyCharacter(runtime, c.characterId, c.characterRevisionId),
-      ),
+  createConversation(input) {
+    return createConversation(
+      { ...input, allowDraftCharacterRevision: false },
+      false,
     )
-    const ownerId = new UserId(runtime.settings.ownerId)
-    const participants = [
-      ConversationParticipant.createHuman({
-        userId: ownerId,
-        displayName: input.ownerDisplayName,
-        role: 'owner',
-      }),
-      ...input.characters.map((c) =>
-        ConversationParticipant.createCharacter({
-          characterId: new CharacterId(c.characterId),
-          characterRevisionId: new CharacterRevisionId(c.characterRevisionId),
-          displayName: c.displayName,
-        }),
-      ),
-    ]
-    const mode =
-      input.mode ?? (input.characters.length === 1 ? 'direct' : 'group')
-    const conversation = Conversation.create({
-      ownerId,
-      mode,
-      participants,
-      title: input.title,
-      turnPolicy: input.turnPolicy,
-    })
-    if (mode === 'direct') {
-      const revision = revisions[0]
-      const speaker = conversation.activeParticipants.find(
-        (participant) => participant.type === 'character',
-      )
-      const greeting = revision?.greetings[0]
-      if (speaker && greeting) {
-        const message = conversation.createGreetingMessage(
-          speaker.id,
-          MessageContent.fromText(greeting),
-          null,
-        )
-        await runtime.conversationUnitOfWork.createWithMessage(
-          conversation,
-          message,
-        )
-        return toConversationDto(conversation)
-      }
-    }
-    await runtime.conversationRepository.save(conversation)
-    return toConversationDto(conversation)
+  },
+  createTestConversation(input) {
+    return createConversation(input, input.allowDraftCharacterRevision)
   },
   async getConversation(input) {
     const value = await studioRuntime
