@@ -3,7 +3,7 @@ name: Build Studio Release
 on:
   push:
     tags:
-      - "v*"
+      - "studio-v*"
 
 permissions:
   contents: read
@@ -58,7 +58,7 @@ jobs:
         shell: bash
         working-directory: apps/studio
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${GITHUB_REF_NAME#studio-v}"
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
             echo "Invalid release tag: $GITHUB_REF_NAME" >&2
             exit 1
