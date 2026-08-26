@@ -10,12 +10,7 @@
     }
   ],
   "commit": false,
-  "ignore": [
-    "@kirika-js/studio",
-    "@kirika-js/api",
-    "@kirika-js/typescript-config",
-    "@kirika-js/vitest-config"
-  ],
+  "ignore": [],
   "fixed": [],
   "linked": [],
   "updateInternalDependencies": "patch"
