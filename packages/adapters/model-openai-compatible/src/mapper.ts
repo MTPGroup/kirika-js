@@ -18,7 +18,7 @@ export function mapRequests(
     temperature: request.temperature,
     top_p: request.topP,
     max_tokens: request.maxOutputTokens,
-    stop: request.stopSequences,
+    stop: request.stopSequences ? [...request.stopSequences] : undefined,
     seed: request.seed,
   }
 }
@@ -26,31 +26,46 @@ export function mapRequests(
 export function mapMessages(
   messages: readonly ChatModelMessage[],
 ): OpenAI.ChatCompletionMessageParam[] {
-  return messages.map((message) => ({
-    role: message.role,
-    name: message.name,
-    content: mapMessageContent(message),
-  }))
+  return messages.map((message): OpenAI.ChatCompletionMessageParam => {
+    if (message.role === 'system') {
+      return { role: 'system', content: toTextContent(message) }
+    }
+    if (message.role === 'assistant') {
+      return {
+        role: 'assistant',
+        name: message.name,
+        content: toTextContent(message),
+      }
+    }
+    return {
+      role: 'user',
+      name: message.name,
+      content: toUserContent(message),
+    }
+  })
 }
 
-function mapMessageContent(
+function toTextContent(message: ChatModelMessage): string {
+  return message.content
+    .filter((part) => part.type === 'text')
+    .map((part) => part.text)
+    .join('')
+}
+
+function toUserContent(
   message: ChatModelMessage,
 ): string | OpenAI.Chat.ChatCompletionContentPart[] {
   const hasAsset = message.content.some((part) => part.type === 'asset')
   if (!hasAsset) {
-    return message.content
-      .filter((part) => part.type === 'text')
-      .map((part) => part.text)
-      .join('')
+    return toTextContent(message)
   }
-
   return message.content.map((part) => {
     if (part.type === 'text') {
-      return { type: 'text', text: part.text }
+      return { type: 'text' as const, text: part.text }
     }
     return {
-      type: 'image_url',
-      image_url: { url: part.url ?? '', detail: 'auto' },
+      type: 'image_url' as const,
+      image_url: { url: part.url ?? '', detail: 'auto' as const },
     }
   })
 }
