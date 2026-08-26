@@ -87,4 +87,10 @@ export class PgConversationMessageRepository
         },
       })
   }
+
+  async delete(id: ConversationMessageId): Promise<void> {
+    await this.db
+      .delete(conversationMessages)
+      .where(eq(conversationMessages.id, id.value))
+  }
 }

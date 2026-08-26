@@ -238,6 +238,21 @@ export class ConversationMessage extends AggregateRoot<ConversationMessageId> {
     this.touch()
   }
 
+  editContent(content: MessageContent): void {
+    if (this.source !== 'human') {
+      throw new Error('只能编辑人工消息')
+    }
+    if (this.status !== 'completed') {
+      throw new Error('只能编辑已完成的消息')
+    }
+    if (content.isEmpty) {
+      throw new Error('消息内容不能为空')
+    }
+
+    this._content = content
+    this.touch()
+  }
+
   private static createCompletedMessage(
     props: CreateHumanMessageProps | CreateGreetingMessageProps,
     source: 'human' | 'greeting',

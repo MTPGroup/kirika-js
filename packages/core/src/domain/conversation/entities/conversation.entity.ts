@@ -347,6 +347,19 @@ export class Conversation extends AggregateRoot<ConversationId> {
     this.touch()
   }
 
+  deleteMessage(message: ConversationMessage): void {
+    this.ensureActive()
+    this.ensureNoGenerationInProgress()
+    this.ensureMessageBelongsToConversation(message)
+    if (message.isInProgress) {
+      throw new Error('不能删除生成中的消息')
+    }
+    if (this._activeLeafMessageId?.equals(message.id)) {
+      this._activeLeafMessageId = message.parentMessageId
+    }
+    this.touch()
+  }
+
   archive(): void {
     if (this._status === 'archived') return
     this.ensureNoGenerationInProgress()

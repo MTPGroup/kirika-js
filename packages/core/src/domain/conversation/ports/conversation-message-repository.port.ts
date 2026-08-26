@@ -16,4 +16,5 @@ export interface ConversationMessageRepositoryPort {
   ): Promise<ConversationMessage[]>
   hasChildren(id: ConversationMessageId): Promise<boolean>
   save(message: ConversationMessage): Promise<void>
+  delete(id: ConversationMessageId): Promise<void>
 }
