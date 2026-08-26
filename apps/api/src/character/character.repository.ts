@@ -3,7 +3,7 @@ import type {
   CharacterId,
   CharacterRepositoryPort,
 } from '@kirika-js/core/domain/character'
-import { eq } from 'drizzle-orm'
+import { and, desc, eq, ilike } from 'drizzle-orm'
 import {
   characterRevisionAssets,
   characterRevisionLorebooks,
@@ -123,31 +123,34 @@ export class PgCharacterRepository implements CharacterRepositoryPort {
     return { items, hasMore }
   }
 
-  async listPublic(limit: number, offset: number) {
-    const rows = await this.db.query.characters.findMany({
-      where: { visibility: 'public' },
-      with: {
-        currentRevision: true,
-        revisions: true,
-      },
-      orderBy: (fields, { desc }) => desc(fields.updatedAt),
-      limit: limit + 1,
-      offset,
-    })
+  async listPublic(limit: number, offset: number, query?: string) {
+    const rows = await this.db
+      .select({
+        id: characters.id,
+        alias: characters.alias,
+        name: characterRevisions.name,
+        currentRevisionId: characters.currentRevisionId,
+        createdAt: characters.createdAt,
+        updatedAt: characters.updatedAt,
+      })
+      .from(characters)
+      .innerJoin(
+        characterRevisions,
+        eq(characterRevisions.id, characters.currentRevisionId),
+      )
+      .where(
+        query
+          ? and(
+              eq(characters.visibility, 'public'),
+              ilike(characterRevisions.name, `%${query}%`),
+            )
+          : eq(characters.visibility, 'public'),
+      )
+      .orderBy(desc(characters.updatedAt))
+      .limit(limit + 1)
+      .offset(offset)
 
     const hasMore = rows.length > limit
-    const items = rows.slice(0, limit).map((row) => ({
-      id: row.id,
-      alias: row.alias,
-      name:
-        row.currentRevision?.name ??
-        row.revisions.find((revision) => revision.isDraft)?.name ??
-        null,
-      currentRevisionId: row.currentRevisionId,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }))
-
-    return { items, hasMore }
+    return { items: rows.slice(0, limit), hasMore }
   }
 }

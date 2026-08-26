@@ -15,6 +15,10 @@ const discoverLorebookQuerySchema = listQuerySchema.extend({
   q: z.string().trim().min(1).max(100).optional(),
 })
 
+const discoverCharacterQuerySchema = listQuerySchema.extend({
+  q: z.string().trim().min(1).max(100).optional(),
+})
+
 export function mountDiscoverRoutes(app: Hono<AppEnv>): void {
   app.get(
     '/discover/lorebooks',
@@ -67,12 +71,12 @@ export function mountDiscoverRoutes(app: Hono<AppEnv>): void {
         200: { description: '公开角色分页列表。' },
       },
     }),
-    zValidator('query', listQuerySchema, validationProblemHook()),
+    zValidator('query', discoverCharacterQuerySchema, validationProblemHook()),
     async (c) => {
-      const { limit, offset } = c.req.valid('query')
+      const { limit, offset, q } = c.req.valid('query')
       const result = await c.var.di
         .get('characterRepository')
-        .listPublic(limit, offset)
+        .listPublic(limit, offset, q)
       return c.json(result)
     },
   )

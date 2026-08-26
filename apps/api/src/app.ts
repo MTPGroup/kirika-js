@@ -22,6 +22,7 @@ import { mountCharacterRoutes } from './routes/characters'
 import { mountChatRoutes } from './routes/chat'
 import { mountDiscoverRoutes } from './routes/discover'
 import { mountLorebookRoutes } from './routes/lorebooks'
+import { mountMeRoutes } from './routes/me'
 
 export function createApp() {
   const root = buildRootContainer()
@@ -149,6 +150,7 @@ export function createApp() {
   mountCharacterRoutes(api)
   mountDiscoverRoutes(api)
   mountLorebookRoutes(api)
+  mountMeRoutes(api)
 
   app.route('/api', api)
   mountApiDocumentation(app)

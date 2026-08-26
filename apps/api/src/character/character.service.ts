@@ -14,6 +14,10 @@ export interface CreateCharacterInput {
   readonly content: CharacterRevisionContent
 }
 
+export interface UpdateDraftInput extends CharacterRevisionPatch {
+  readonly greetings?: readonly string[]
+  readonly examples?: readonly string[]
+}
 export class CharacterService {
   constructor(private readonly repo: CharacterRepositoryPort) {}
 
@@ -36,11 +40,18 @@ export class CharacterService {
 
   async updateDraft(
     character: Character,
-    patch: CharacterRevisionPatch,
+    patch: UpdateDraftInput,
   ): Promise<Character> {
     const draft = character.draftRevision
     if (!draft) throw new Error('角色没有草稿版本')
-    character.updateDraftContent(draft.id, patch)
+    const { greetings, examples, ...content } = patch
+    character.updateDraftContent(draft.id, content)
+    if (greetings !== undefined) {
+      character.replaceDraftGreetings(draft.id, greetings)
+    }
+    if (examples !== undefined) {
+      character.replaceDraftExamples(draft.id, examples)
+    }
     await this.repo.save(character)
     return character
   }

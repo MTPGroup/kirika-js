@@ -111,6 +111,8 @@ const updateSchema = z.object({
   scenario: z.string().optional(),
   systemPrompt: z.string().optional(),
   postHistoryInstructions: z.string().optional(),
+  greetings: z.array(z.string().trim().min(1)).optional(),
+  examples: z.array(z.string().trim().min(1)).optional(),
   extensions: z.record(z.string(), z.unknown()).optional(),
 })
 
