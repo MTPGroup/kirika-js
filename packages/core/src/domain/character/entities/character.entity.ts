@@ -10,6 +10,9 @@ import {
   type CharacterRevisionPatch,
 } from './character-revision.entity'
 
+export const CHARACTER_VISIBILITIES = ['private', 'unlisted', 'public'] as const
+export type CharacterVisibility = (typeof CHARACTER_VISIBILITIES)[number]
+
 export class CharacterId extends UuidId {}
 
 export interface CreateCharacterProps {
@@ -23,6 +26,7 @@ export interface ReconstituteCharacterProps {
   ownerId: UserId
   alias: string | null
   currentRevisionId: CharacterRevisionId | null
+  visibility?: CharacterVisibility
   revisions: CharacterRevision[]
   createdAt: Date
   updatedAt: Date
@@ -36,6 +40,7 @@ export class Character extends AggregateRoot<CharacterId> {
     readonly ownerId: UserId,
     private _alias: string | null,
     private _currentRevisionId: CharacterRevisionId | null,
+    private _visibility: CharacterVisibility,
     revisions: CharacterRevision[],
     private readonly _createdAt: Date,
     private _updatedAt: Date,
@@ -49,6 +54,10 @@ export class Character extends AggregateRoot<CharacterId> {
     this._createdAt = new Date(_createdAt)
     this._updatedAt = new Date(_updatedAt)
     this.assertValidRevisionState()
+  }
+
+  get visibility(): CharacterVisibility {
+    return this._visibility
   }
 
   get alias(): string | null {
@@ -85,6 +94,7 @@ export class Character extends AggregateRoot<CharacterId> {
       props.ownerId,
       props.alias ?? null,
       null,
+      'private',
       [initialDraft],
       now,
       now,
@@ -97,6 +107,7 @@ export class Character extends AggregateRoot<CharacterId> {
       props.ownerId,
       props.alias,
       props.currentRevisionId,
+      props.visibility ?? 'private',
       props.revisions,
       props.createdAt,
       props.updatedAt,
@@ -112,6 +123,15 @@ export class Character extends AggregateRoot<CharacterId> {
     if (normalizedAlias === this._alias) return
 
     this._alias = normalizedAlias
+    this.touch()
+  }
+  changeVisibility(visibility: CharacterVisibility): void {
+    if (visibility !== 'private' && !this._currentRevisionId) {
+      throw new Error('没有已发布版本的角色不能对外可见')
+    }
+    if (this._visibility === visibility) return
+
+    this._visibility = visibility
     this.touch()
   }
 
@@ -227,6 +247,9 @@ export class Character extends AggregateRoot<CharacterId> {
       if (currentRevision.isDraft) {
         throw new Error('当前角色版本不能指向草稿')
       }
+    }
+    if (this._visibility !== 'private' && !this._currentRevisionId) {
+      throw new Error('没有已发布版本的角色不能对外可见')
     }
   }
 
