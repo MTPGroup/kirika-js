@@ -1,12 +1,13 @@
-import { zValidator } from '@hono/zod-validator'
 import { type Asset, AssetId } from '@kirika-js/core/domain/character'
 import type { ObjectStoragePort } from '@kirika-js/core/storage'
 import type { Hono } from 'hono'
-import { describeRoute } from 'hono-openapi'
+import { describeRoute, validator as zValidator } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
+import { z } from 'zod'
 import type { AppEnv } from '../container'
 import {
   idParamSchema,
+  jsonResponse,
   listQuerySchema,
   sessionSecurity,
 } from '../http/openapi'
@@ -22,6 +23,28 @@ async function assetToJson(asset: Asset, storage: ObjectStoragePort) {
   }
 }
 
+const assetJsonSchema = z.object({
+  id: z.string(),
+  mediaType: z.string().nullable(),
+  byteSize: z.number().nullable(),
+  sha256: z.string().nullable(),
+  url: z.string().nullable(),
+})
+
+const assetListJsonSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
+      mediaType: z.string().nullable(),
+      byteSize: z.number().nullable(),
+      sha256: z.string().nullable(),
+      createdAt: z.string(),
+      url: z.string().nullable(),
+    }),
+  ),
+  hasMore: z.boolean(),
+})
+
 export function mountAssetRoutes(app: Hono<AppEnv>): void {
   app.get(
     '/assets',
@@ -30,7 +53,7 @@ export function mountAssetRoutes(app: Hono<AppEnv>): void {
       summary: '我的资产列表',
       security: sessionSecurity,
       responses: {
-        200: { description: '资产分页列表。' },
+        200: jsonResponse(assetListJsonSchema, '资产分页列表。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
       },
     }),
@@ -70,7 +93,7 @@ export function mountAssetRoutes(app: Hono<AppEnv>): void {
       summary: '上传资产（头像、背景、立绘等）',
       security: sessionSecurity,
       responses: {
-        201: { description: '资产上传成功。' },
+        201: jsonResponse(assetJsonSchema, '资产上传成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         422: problemDetailsResponseJsonSchema(422, '请求无效'),
       },

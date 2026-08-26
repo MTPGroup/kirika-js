@@ -1,14 +1,13 @@
-import { zValidator } from '@hono/zod-validator'
 import { LorebookEntry, LorebookId } from '@kirika-js/core/domain/lorebook'
 import { UserId } from '@kirika-js/core/domain/shared'
 import type { Hono } from 'hono'
-import { describeRoute } from 'hono-openapi'
+import { describeRoute, validator as zValidator } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import { z } from 'zod'
 import type { AppEnv } from '../container'
 import {
   idParamSchema,
-  jsonRequest,
+  jsonResponse,
   listQuerySchema,
   sessionSecurity,
 } from '../http/openapi'
@@ -51,6 +50,58 @@ const settingsSchema = z.object({
   tokenBudget: z.number().int().min(1),
 })
 
+const lorebookEntryJsonSchema = z.object({
+  id: z.string(),
+  keys: z.array(z.string()),
+  secondaryKeys: z.array(z.string()),
+  title: z.string(),
+  enabled: z.boolean(),
+  content: z.string(),
+  position: z.string(),
+  priority: z.number(),
+  matchMode: z.string(),
+  constant: z.boolean(),
+  caseSensitive: z.boolean(),
+  matchWholeWords: z.boolean(),
+  probability: z.number(),
+  insertionDepth: z.number(),
+})
+
+const lorebookRevisionJsonSchema = z.object({
+  id: z.string(),
+  revisionNumber: z.number(),
+  isDraft: z.boolean(),
+  scanDepth: z.number(),
+  tokenBudget: z.number(),
+  entries: z.array(lorebookEntryJsonSchema),
+})
+
+const lorebookJsonSchema = z.object({
+  id: z.string(),
+  ownerId: z.string(),
+  name: z.string(),
+  description: z.string(),
+  visibility: z.string(),
+  currentRevisionId: z.string().nullable(),
+  revisions: z.array(lorebookRevisionJsonSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+const lorebookListJsonSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      description: z.string(),
+      visibility: z.string(),
+      createdAt: z.string(),
+      updatedAt: z.string(),
+    }),
+  ),
+  hasMore: z.boolean(),
+})
+
 export function mountLorebookRoutes(app: Hono<AppEnv>): void {
   app.get(
     '/lorebooks',
@@ -59,7 +110,7 @@ export function mountLorebookRoutes(app: Hono<AppEnv>): void {
       summary: '世界书列表',
       security: sessionSecurity,
       responses: {
-        200: { description: '世界书分页列表。' },
+        200: jsonResponse(lorebookListJsonSchema, '世界书分页列表。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
       },
     }),
@@ -86,9 +137,8 @@ export function mountLorebookRoutes(app: Hono<AppEnv>): void {
       tags: ['Lorebooks'],
       summary: '创建世界书及初始草稿版本',
       security: sessionSecurity,
-      requestBody: jsonRequest(createSchema),
       responses: {
-        201: { description: '世界书创建成功。' },
+        201: jsonResponse(lorebookJsonSchema, '世界书创建成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
       },
     }),
@@ -117,7 +167,7 @@ export function mountLorebookRoutes(app: Hono<AppEnv>): void {
       summary: '获取世界书及全部版本',
       security: sessionSecurity,
       responses: {
-        200: { description: '世界书详情。' },
+        200: jsonResponse(lorebookJsonSchema, '世界书详情。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该世界书'),
         404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
@@ -153,9 +203,8 @@ export function mountLorebookRoutes(app: Hono<AppEnv>): void {
       tags: ['Lorebooks'],
       summary: '更新世界书元数据或可见性',
       security: sessionSecurity,
-      requestBody: jsonRequest(updateSchema),
       responses: {
-        200: { description: '世界书更新成功。' },
+        200: jsonResponse(lorebookJsonSchema, '世界书更新成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权修改该世界书'),
         404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
@@ -215,9 +264,8 @@ export function mountLorebookRoutes(app: Hono<AppEnv>): void {
       tags: ['Lorebooks'],
       summary: '替换世界书草稿条目',
       security: sessionSecurity,
-      requestBody: jsonRequest(entriesSchema),
       responses: {
-        200: { description: '世界书条目更新成功。' },
+        200: jsonResponse(lorebookJsonSchema, '世界书条目更新成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权修改该世界书'),
         404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
@@ -284,9 +332,8 @@ export function mountLorebookRoutes(app: Hono<AppEnv>): void {
       tags: ['Lorebooks'],
       summary: '更新世界书草稿扫描设置',
       security: sessionSecurity,
-      requestBody: jsonRequest(settingsSchema),
       responses: {
-        200: { description: '扫描设置更新成功。' },
+        200: jsonResponse(lorebookJsonSchema, '扫描设置更新成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权修改该世界书'),
         404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
@@ -335,7 +382,7 @@ export function mountLorebookRoutes(app: Hono<AppEnv>): void {
       summary: '发布世界书草稿版本',
       security: sessionSecurity,
       responses: {
-        200: { description: '世界书版本发布成功。' },
+        200: jsonResponse(lorebookJsonSchema, '世界书版本发布成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权发布该世界书'),
         404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
@@ -382,7 +429,7 @@ export function mountLorebookRoutes(app: Hono<AppEnv>): void {
       summary: '基于当前版本创建新草稿',
       security: sessionSecurity,
       responses: {
-        200: { description: '新草稿已创建。' },
+        200: jsonResponse(lorebookJsonSchema, '新草稿已创建。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权操作该世界书'),
         404: problemDetailsResponseJsonSchema(404, '世界书不存在'),

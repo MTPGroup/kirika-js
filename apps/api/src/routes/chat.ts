@@ -1,4 +1,3 @@
-import { zValidator } from '@hono/zod-validator'
 import { skipInferdiDispose } from '@inferdi/hono'
 import {
   AssetId,
@@ -17,7 +16,7 @@ import { UserId } from '@kirika-js/core/domain/shared'
 import { eq, inArray } from 'drizzle-orm'
 import type { Context, Hono } from 'hono'
 import { streamSSE } from 'hono/streaming'
-import { describeRoute } from 'hono-openapi'
+import { describeRoute, validator as zValidator } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import { z } from 'zod'
 import type { AppEnv } from '../container'
@@ -26,7 +25,7 @@ import { characterRevisions } from '../db/character-schema'
 import { idempotency } from '../http/idempotency-middleware'
 import {
   idParamSchema,
-  jsonRequest,
+  jsonResponse,
   listQuerySchema,
   sessionSecurity,
 } from '../http/openapi'
@@ -123,6 +122,83 @@ const selectBranchParamSchema = z.object({
   messageId: z.uuid(),
 })
 
+const conversationParticipantJsonSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  role: z.string(),
+  status: z.string(),
+  userId: z.string().nullable(),
+  characterId: z.string().nullable(),
+  characterRevisionId: z.string().nullable(),
+  displayName: z.string(),
+  joinedAt: z.string(),
+  leftAt: z.string().nullable(),
+})
+
+const conversationJsonSchema = z.object({
+  id: z.string(),
+  ownerId: z.string(),
+  title: z.string().nullable(),
+  mode: z.string(),
+  status: z.string(),
+  turnPolicy: z.string(),
+  activeLeafMessageId: z.string().nullable(),
+  participants: z.array(conversationParticipantJsonSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+const messageContentPartJsonSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('text'), text: z.string() }),
+  z.object({
+    type: z.literal('asset'),
+    assetId: z.string(),
+    modality: z.string(),
+    mediaType: z.string(),
+    altText: z.string().nullable(),
+    url: z.string().nullable(),
+  }),
+])
+
+const messageJsonSchema = z.object({
+  id: z.string(),
+  conversationId: z.string(),
+  parentMessageId: z.string().nullable(),
+  authorParticipantId: z.string(),
+  source: z.string(),
+  status: z.string(),
+  content: z.array(messageContentPartJsonSchema),
+  model: z.string().nullable(),
+  finishReason: z.string().nullable(),
+  tokenUsage: z
+    .object({
+      promptTokens: z.number(),
+      completionTokens: z.number(),
+    })
+    .nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+const conversationListJsonSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string().nullable(),
+      mode: z.string(),
+      status: z.string(),
+      createdAt: z.string(),
+      updatedAt: z.string(),
+    }),
+  ),
+  hasMore: z.boolean(),
+})
+
+const messageListJsonSchema = z.object({
+  messages: z.array(messageJsonSchema),
+  total: z.number(),
+})
+
 export function mountChatRoutes(app: Hono<AppEnv>): void {
   app.get(
     '/conversations',
@@ -131,7 +207,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       summary: '会话列表',
       security: sessionSecurity,
       responses: {
-        200: { description: '会话分页列表。' },
+        200: jsonResponse(conversationListJsonSchema, '会话分页列表。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
       },
     }),
@@ -159,7 +235,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       summary: '会话详情',
       security: sessionSecurity,
       responses: {
-        200: { description: '会话详情。' },
+        200: jsonResponse(conversationJsonSchema, '会话详情。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话不存在'),
@@ -195,7 +271,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       summary: '会话消息历史（当前活跃分支）',
       security: sessionSecurity,
       responses: {
-        200: { description: '消息列表。' },
+        200: jsonResponse(messageListJsonSchema, '消息列表。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话不存在'),
@@ -245,9 +321,8 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       tags: ['Conversations'],
       summary: '编辑人工消息内容',
       security: sessionSecurity,
-      requestBody: jsonRequest(editMessageSchema),
       responses: {
-        200: { description: '消息已编辑。' },
+        200: jsonResponse(messageJsonSchema, '消息已编辑。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '消息不存在'),
@@ -305,7 +380,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       summary: '删除叶子消息',
       security: sessionSecurity,
       responses: {
-        200: { description: '消息已删除。' },
+        200: jsonResponse(conversationJsonSchema, '消息已删除。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '消息不存在'),
@@ -401,9 +476,8 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       tags: ['Conversations'],
       summary: '更新会话元数据（标题、模式、发言策略）',
       security: sessionSecurity,
-      requestBody: jsonRequest(patchConversationSchema),
       responses: {
-        200: { description: '会话已更新。' },
+        200: jsonResponse(conversationJsonSchema, '会话已更新。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话不存在'),
@@ -461,9 +535,8 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       tags: ['Conversations'],
       summary: '向群聊添加角色参与者',
       security: sessionSecurity,
-      requestBody: jsonRequest(addParticipantSchema),
       responses: {
-        200: { description: '参与者已添加。' },
+        200: jsonResponse(conversationJsonSchema, '参与者已添加。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话或角色版本不存在'),
@@ -535,7 +608,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       summary: '移除会话参与者',
       security: sessionSecurity,
       responses: {
-        200: { description: '参与者已移除。' },
+        200: jsonResponse(conversationJsonSchema, '参与者已移除。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话或参与者不存在'),
@@ -594,9 +667,8 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       tags: ['Conversations'],
       summary: '重命名会话参与者',
       security: sessionSecurity,
-      requestBody: jsonRequest(renameParticipantSchema),
       responses: {
-        200: { description: '参与者已重命名。' },
+        200: jsonResponse(conversationJsonSchema, '参与者已重命名。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话或参与者不存在'),
@@ -657,9 +729,8 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       tags: ['Conversations'],
       summary: '创建角色问候消息',
       security: sessionSecurity,
-      requestBody: jsonRequest(createGreetingSchema),
       responses: {
-        201: { description: '问候消息已创建。' },
+        201: jsonResponse(messageJsonSchema, '问候消息已创建。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话或参与者不存在'),
@@ -725,7 +796,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       summary: '选择消息分支',
       security: sessionSecurity,
       responses: {
-        200: { description: '分支已切换。' },
+        200: jsonResponse(conversationJsonSchema, '分支已切换。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话或消息不存在'),
@@ -782,9 +853,8 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       tags: ['Conversations'],
       summary: '创建会话（一对一或群聊）',
       security: sessionSecurity,
-      requestBody: jsonRequest(createConversationSchema),
       responses: {
-        201: { description: '会话创建成功。' },
+        201: jsonResponse(z.object({ id: z.string() }), '会话创建成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         404: problemDetailsResponseJsonSchema(404, '角色版本不存在'),
       },
@@ -846,7 +916,6 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       tags: ['Conversations'],
       summary: '发送消息并流式生成角色回复',
       security: sessionSecurity,
-      requestBody: jsonRequest(sendMessageSchema),
       responses: {
         200: {
           description: 'SSE 生成事件流。',
@@ -961,7 +1030,6 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       tags: ['Conversations'],
       summary: '重新生成指定消息',
       security: sessionSecurity,
-      requestBody: jsonRequest(regenerateSchema),
       responses: {
         200: { description: 'SSE 生成事件流。' },
         401: problemDetailsResponseJsonSchema(401, '未登录'),
@@ -1055,7 +1123,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       summary: '停止正在进行的生成',
       security: sessionSecurity,
       responses: {
-        200: { description: '停止结果。' },
+        200: jsonResponse(z.object({ stopped: z.boolean() }), '停止结果。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话不存在'),
@@ -1093,7 +1161,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       summary: '归档会话',
       security: sessionSecurity,
       responses: {
-        200: { description: '会话已归档。' },
+        200: jsonResponse(conversationJsonSchema, '会话已归档。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话不存在'),
@@ -1132,7 +1200,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       summary: '恢复归档会话',
       security: sessionSecurity,
       responses: {
-        200: { description: '会话已恢复。' },
+        200: jsonResponse(conversationJsonSchema, '会话已恢复。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
         404: problemDetailsResponseJsonSchema(404, '会话不存在'),

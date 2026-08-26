@@ -1,4 +1,3 @@
-import { zValidator } from '@hono/zod-validator'
 import {
   type EncodedCharacterCard,
   fromCharacterRevision,
@@ -17,7 +16,7 @@ import {
 } from '@kirika-js/core/domain/lorebook'
 import { UserId } from '@kirika-js/core/domain/shared'
 import type { Hono } from 'hono'
-import { describeRoute } from 'hono-openapi'
+import { describeRoute, validator as zValidator } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import { z } from 'zod'
 import { cardCodecRegistry } from '../character/card-codec'
@@ -25,7 +24,7 @@ import { characterToJson } from '../character/serialize'
 import type { AppEnv } from '../container'
 import {
   idParamSchema,
-  jsonRequest,
+  jsonResponse,
   listQuerySchema,
   sessionSecurity,
 } from '../http/openapi'
@@ -126,6 +125,65 @@ const exportCardQuerySchema = z.object({
     .default('kirika-json'),
 })
 
+const characterAssetJsonSchema = z.object({
+  assetId: z.string(),
+  kind: z.string(),
+  name: z.string(),
+  uri: z.string(),
+  ordinal: z.number(),
+  extensions: z.record(z.string(), z.unknown()),
+})
+
+const characterLorebookRefJsonSchema = z.object({
+  lorebookRevisionId: z.string(),
+  ordinal: z.number(),
+  enabled: z.boolean(),
+})
+
+const characterRevisionJsonSchema = z.object({
+  id: z.string(),
+  revisionNumber: z.number(),
+  isDraft: z.boolean(),
+  name: z.string(),
+  description: z.string(),
+  personality: z.string(),
+  scenario: z.string(),
+  systemPrompt: z.string(),
+  postHistoryInstructions: z.string(),
+  greetings: z.array(z.string()),
+  examples: z.array(z.string()),
+  extensions: z.record(z.string(), z.unknown()),
+  assets: z.array(characterAssetJsonSchema),
+  lorebooks: z.array(characterLorebookRefJsonSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+const characterJsonSchema = z.object({
+  id: z.string(),
+  ownerId: z.string(),
+  alias: z.string().nullable(),
+  visibility: z.string(),
+  currentRevisionId: z.string().nullable(),
+  revisions: z.array(characterRevisionJsonSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+const characterListJsonSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
+      alias: z.string().nullable(),
+      name: z.string().nullable(),
+      currentRevisionId: z.string().nullable(),
+      createdAt: z.string(),
+      updatedAt: z.string(),
+    }),
+  ),
+  hasMore: z.boolean(),
+})
+
 export function mountCharacterRoutes(app: Hono<AppEnv>): void {
   app.get(
     '/characters',
@@ -134,7 +192,7 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       summary: '角色列表',
       security: sessionSecurity,
       responses: {
-        200: { description: '角色分页列表。' },
+        200: jsonResponse(characterListJsonSchema, '角色分页列表。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
       },
     }),
@@ -162,7 +220,7 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       summary: '导入角色卡（自动识别 PNG/CharX/Voxta/JSON）',
       security: sessionSecurity,
       responses: {
-        201: { description: '角色导入成功。' },
+        201: jsonResponse(characterJsonSchema, '角色导入成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         422: problemDetailsResponseJsonSchema(422, '导入失败'),
       },
@@ -262,9 +320,8 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       tags: ['Characters'],
       summary: '创建角色及初始草稿版本',
       security: sessionSecurity,
-      requestBody: jsonRequest(createSchema),
       responses: {
-        201: { description: '角色创建成功。' },
+        201: jsonResponse(characterJsonSchema, '角色创建成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
       },
     }),
@@ -323,7 +380,7 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       summary: '获取角色及全部版本',
       security: sessionSecurity,
       responses: {
-        200: { description: '角色详情。' },
+        200: jsonResponse(characterJsonSchema, '角色详情。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权访问该角色'),
         404: problemDetailsResponseJsonSchema(404, '角色不存在'),
@@ -466,9 +523,8 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       tags: ['Characters'],
       summary: '更新角色草稿版本',
       security: sessionSecurity,
-      requestBody: jsonRequest(updateSchema),
       responses: {
-        200: { description: '草稿更新成功。' },
+        200: jsonResponse(characterJsonSchema, '草稿更新成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权修改该角色'),
         404: problemDetailsResponseJsonSchema(404, '角色不存在'),
@@ -514,9 +570,8 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       tags: ['Characters'],
       summary: '修改角色可见性',
       security: sessionSecurity,
-      requestBody: jsonRequest(visibilitySchema),
       responses: {
-        200: { description: '可见性已更新。' },
+        200: jsonResponse(characterJsonSchema, '可见性已更新。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权修改该角色'),
         404: problemDetailsResponseJsonSchema(404, '角色不存在'),
@@ -563,7 +618,7 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       summary: '发布角色草稿版本',
       security: sessionSecurity,
       responses: {
-        200: { description: '角色版本发布成功。' },
+        200: jsonResponse(characterJsonSchema, '角色版本发布成功。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权发布该角色'),
         404: problemDetailsResponseJsonSchema(404, '角色不存在'),
@@ -610,7 +665,7 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       summary: '基于当前版本创建新草稿',
       security: sessionSecurity,
       responses: {
-        200: { description: '新草稿已创建。' },
+        200: jsonResponse(characterJsonSchema, '新草稿已创建。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权操作该角色'),
         404: problemDetailsResponseJsonSchema(404, '角色不存在'),
@@ -656,9 +711,8 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       tags: ['Characters'],
       summary: '替换角色草稿资产',
       security: sessionSecurity,
-      requestBody: jsonRequest(replaceAssetsSchema),
       responses: {
-        200: { description: '草稿资产已替换。' },
+        200: jsonResponse(characterJsonSchema, '草稿资产已替换。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权操作该角色'),
         404: problemDetailsResponseJsonSchema(404, '角色不存在'),
@@ -725,9 +779,8 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       tags: ['Characters'],
       summary: '替换角色草稿世界书引用',
       security: sessionSecurity,
-      requestBody: jsonRequest(replaceLorebooksSchema),
       responses: {
-        200: { description: '草稿世界书引用已替换。' },
+        200: jsonResponse(characterJsonSchema, '草稿世界书引用已替换。'),
         401: problemDetailsResponseJsonSchema(401, '未登录'),
         403: problemDetailsResponseJsonSchema(403, '无权操作该角色'),
         404: problemDetailsResponseJsonSchema(404, '角色不存在'),

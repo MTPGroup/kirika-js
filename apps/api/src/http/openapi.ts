@@ -1,4 +1,4 @@
-import type { DescribeRouteOptions } from 'hono-openapi'
+import { type DescribeRouteOptions, resolver } from 'hono-openapi'
 import { z } from 'zod'
 
 type RequestBody = NonNullable<DescribeRouteOptions['requestBody']>
@@ -23,6 +23,17 @@ export function jsonRequest(schema: z.ZodType): RequestBody {
     content: {
       'application/json': {
         schema: jsonSchema,
+      },
+    },
+  }
+}
+
+export function jsonResponse(schema: z.ZodType, description: string) {
+  return {
+    description,
+    content: {
+      'application/json': {
+        schema: resolver(schema),
       },
     },
   }

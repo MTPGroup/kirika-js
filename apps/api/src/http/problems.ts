@@ -42,23 +42,22 @@ export const problems = createProblemTypeRegistry(
   { autoCode: true },
 )
 
-export interface ValidationIssue {
-  readonly path: readonly PropertyKey[]
+type StandardIssue = {
   readonly message: string
-  readonly code: string
+  readonly path?: readonly (PropertyKey | { key: PropertyKey })[]
+}
+
+function isValidationFailure(
+  result: unknown,
+): result is { error: readonly StandardIssue[] } {
+  if (typeof result !== 'object' || result === null) return false
+  if (!('success' in result) || result.success !== false) return false
+  return 'error' in result && Array.isArray(result.error)
 }
 
 export function validationProblemHook() {
-  return (
-    result:
-      | { success: true; data: unknown }
-      | {
-          success: false
-          error: { issues: readonly ValidationIssue[] }
-        },
-    c: Context,
-  ): Response | undefined => {
-    if (result.success) return undefined
+  return (result: unknown, c: Context): Response | undefined => {
+    if (!isValidationFailure(result)) return undefined
 
     return c.json(
       {
@@ -66,10 +65,16 @@ export function validationProblemHook() {
         status: 422,
         title: 'Validation Error',
         detail: '请求参数校验失败',
-        errors: result.error.issues.map((issue) => ({
-          field: issue.path.join('.'),
+        errors: result.error.map((issue) => ({
+          field:
+            issue.path
+              ?.map((segment) =>
+                typeof segment === 'object'
+                  ? String(segment.key)
+                  : String(segment),
+              )
+              .join('.') ?? '',
           message: issue.message,
-          code: issue.code,
         })),
       },
       422,
