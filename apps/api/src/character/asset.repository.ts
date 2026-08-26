@@ -121,6 +121,12 @@ export class PgAssetRepository implements AssetRepositoryPort {
       .limit(limit + 1)
       .offset(offset)
 
+    const [totalRow] = await this.db
+      .select({ total: count() })
+      .from(assetOwners)
+      .innerJoin(assets, eq(assets.id, assetOwners.assetId))
+      .where(eq(assetOwners.ownerId, ownerId))
+
     const hasMore = rows.length > limit
     return {
       items: rows.slice(0, limit).map((row) => ({
@@ -131,6 +137,7 @@ export class PgAssetRepository implements AssetRepositoryPort {
         sha256: row.sha256 ? Buffer.from(row.sha256).toString('hex') : null,
         createdAt: row.createdAt,
       })),
+      total: totalRow?.total ?? 0,
       hasMore,
     }
   }

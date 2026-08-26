@@ -38,3 +38,11 @@ export function jsonResponse(schema: z.ZodType, description: string) {
     },
   }
 }
+
+export function paginatedListSchema(itemSchema: z.ZodType) {
+  return z.object({
+    items: z.array(itemSchema),
+    total: z.number(),
+    hasMore: z.boolean(),
+  })
+}

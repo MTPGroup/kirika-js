@@ -3,7 +3,7 @@ import type {
   CharacterId,
   CharacterRepositoryPort,
 } from '@kirika-js/core/domain/character'
-import { and, desc, eq, ilike } from 'drizzle-orm'
+import { and, count, desc, eq, ilike } from 'drizzle-orm'
 import {
   characterRevisionAssets,
   characterRevisionLorebooks,
@@ -106,6 +106,10 @@ export class PgCharacterRepository implements CharacterRepositoryPort {
       limit: limit + 1,
       offset,
     })
+    const [totalRow] = await this.db
+      .select({ total: count() })
+      .from(characters)
+      .where(eq(characters.ownerId, ownerId))
 
     const hasMore = rows.length > limit
     const items = rows.slice(0, limit).map((row) => ({
@@ -120,10 +124,17 @@ export class PgCharacterRepository implements CharacterRepositoryPort {
       updatedAt: row.updatedAt,
     }))
 
-    return { items, hasMore }
+    return { items, total: totalRow?.total ?? 0, hasMore }
   }
 
   async listPublic(limit: number, offset: number, query?: string) {
+    const where = query
+      ? and(
+          eq(characters.visibility, 'public'),
+          ilike(characterRevisions.name, `%${query}%`),
+        )
+      : eq(characters.visibility, 'public')
+
     const rows = await this.db
       .select({
         id: characters.id,
@@ -138,19 +149,21 @@ export class PgCharacterRepository implements CharacterRepositoryPort {
         characterRevisions,
         eq(characterRevisions.id, characters.currentRevisionId),
       )
-      .where(
-        query
-          ? and(
-              eq(characters.visibility, 'public'),
-              ilike(characterRevisions.name, `%${query}%`),
-            )
-          : eq(characters.visibility, 'public'),
-      )
+      .where(where)
       .orderBy(desc(characters.updatedAt))
       .limit(limit + 1)
       .offset(offset)
 
+    const [totalRow] = await this.db
+      .select({ total: count() })
+      .from(characters)
+      .innerJoin(
+        characterRevisions,
+        eq(characterRevisions.id, characters.currentRevisionId),
+      )
+      .where(where)
+
     const hasMore = rows.length > limit
-    return { items: rows.slice(0, limit), hasMore }
+    return { items: rows.slice(0, limit), total: totalRow?.total ?? 0, hasMore }
   }
 }

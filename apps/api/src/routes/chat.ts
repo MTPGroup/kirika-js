@@ -191,6 +191,7 @@ const conversationListJsonSchema = z.object({
       updatedAt: z.string(),
     }),
   ),
+  total: z.number(),
   hasMore: z.boolean(),
 })
 

@@ -3,7 +3,7 @@ import type {
   ConversationId,
   ConversationRepositoryPort,
 } from '@kirika-js/core/domain/conversation'
-import { desc, eq } from 'drizzle-orm'
+import { count, desc, eq } from 'drizzle-orm'
 import {
   conversationParticipants,
   conversations,
@@ -90,7 +90,12 @@ export class PgConversationRepository implements ConversationRepositoryPort {
       .limit(limit + 1)
       .offset(offset)
 
+    const [totalRow] = await this.db
+      .select({ total: count() })
+      .from(conversations)
+      .where(eq(conversations.ownerId, ownerId))
+
     const hasMore = rows.length > limit
-    return { items: rows.slice(0, limit), hasMore }
+    return { items: rows.slice(0, limit), total: totalRow?.total ?? 0, hasMore }
   }
 }

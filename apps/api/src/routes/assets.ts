@@ -42,6 +42,7 @@ const assetListJsonSchema = z.object({
       url: z.string().nullable(),
     }),
   ),
+  total: z.number(),
   hasMore: z.boolean(),
 })
 
@@ -82,7 +83,7 @@ export function mountAssetRoutes(app: Hono<AppEnv>): void {
             : null,
         })),
       )
-      return c.json({ items, hasMore: result.hasMore })
+      return c.json({ items, total: result.total, hasMore: result.hasMore })
     },
   )
 

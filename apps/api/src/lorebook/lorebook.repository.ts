@@ -3,7 +3,7 @@ import type {
   LorebookId,
   LorebookRepositoryPort,
 } from '@kirika-js/core/domain/lorebook'
-import { and, desc, eq, ilike, notInArray, sql } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, notInArray, sql } from 'drizzle-orm'
 import {
   lorebookEntries,
   lorebookRevisions,
@@ -123,9 +123,15 @@ export class PgLorebookRepository implements LorebookRepositoryPort {
       .limit(limit + 1)
       .offset(offset)
 
+    const [totalRow] = await this.db
+      .select({ total: count() })
+      .from(lorebooks)
+      .where(eq(lorebooks.ownerId, ownerId))
+
     const hasMore = rows.length > limit
-    return { items: rows.slice(0, limit), hasMore }
+    return { items: rows.slice(0, limit), total: totalRow?.total ?? 0, hasMore }
   }
+
   async listPublic(limit: number, offset: number, query?: string) {
     const where = query
       ? and(
@@ -149,7 +155,12 @@ export class PgLorebookRepository implements LorebookRepositoryPort {
       .limit(limit + 1)
       .offset(offset)
 
+    const [totalRow] = await this.db
+      .select({ total: count() })
+      .from(lorebooks)
+      .where(where)
+
     const hasMore = rows.length > limit
-    return { items: rows.slice(0, limit), hasMore }
+    return { items: rows.slice(0, limit), total: totalRow?.total ?? 0, hasMore }
   }
 }

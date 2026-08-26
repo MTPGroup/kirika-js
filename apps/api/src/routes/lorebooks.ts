@@ -99,6 +99,7 @@ const lorebookListJsonSchema = z.object({
       updatedAt: z.string(),
     }),
   ),
+  total: z.number(),
   hasMore: z.boolean(),
 })
 

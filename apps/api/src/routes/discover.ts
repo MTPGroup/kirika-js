@@ -29,6 +29,7 @@ const discoverLorebookListItemJsonSchema = z.object({
 
 const discoverLorebookListJsonSchema = z.object({
   items: z.array(discoverLorebookListItemJsonSchema),
+  total: z.number(),
   hasMore: z.boolean(),
 })
 
@@ -81,6 +82,7 @@ const discoverCharacterListItemJsonSchema = z.object({
 
 const discoverCharacterListJsonSchema = z.object({
   items: z.array(discoverCharacterListItemJsonSchema),
+  total: z.number(),
   hasMore: z.boolean(),
 })
 
