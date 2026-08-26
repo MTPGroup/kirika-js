@@ -139,6 +139,7 @@ export class ConversationMapper {
           modality: part.modality,
           mediaType: part.mediaType,
           altText: part.altText,
+          url: part.url ?? null,
         }
       },
     )

@@ -19,6 +19,7 @@ export interface AssetMessageContentPart {
   readonly modality: MessageAssetModality
   readonly mediaType: string
   readonly altText: string | null
+  readonly url?: string | null
 }
 
 export type MessageContentPart =
@@ -30,6 +31,7 @@ export interface CreateAssetContentPartProps {
   modality: MessageAssetModality
   mediaType: string
   altText?: string | null
+  url?: string | null
 }
 
 export class MessageContent {
@@ -72,6 +74,7 @@ export class MessageContent {
         modality: props.modality,
         mediaType: props.mediaType,
         altText: props.altText ?? null,
+        url: props.url ?? null,
       },
     ])
   }
@@ -111,7 +114,8 @@ export class MessageContent {
           part.assetId.equals(otherPart.assetId) &&
           part.modality === otherPart.modality &&
           part.mediaType === otherPart.mediaType &&
-          part.altText === otherPart.altText
+          part.altText === otherPart.altText &&
+          part.url === otherPart.url
         )
       }
       return false
@@ -133,6 +137,7 @@ export class MessageContent {
       modality: part.modality,
       mediaType,
       altText: MessageContent.normalizeOptionalText(part.altText),
+      url: MessageContent.normalizeOptionalText(part.url ?? null),
     }
   }
 

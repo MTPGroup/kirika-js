@@ -18,6 +18,8 @@ export function mapRequests(
     temperature: request.temperature,
     top_p: request.topP,
     max_tokens: request.maxOutputTokens,
+    stop: request.stopSequences,
+    seed: request.seed,
   }
 }
 
@@ -27,11 +29,30 @@ export function mapMessages(
   return messages.map((message) => ({
     role: message.role,
     name: message.name,
-    content: message.content
+    content: mapMessageContent(message),
+  }))
+}
+
+function mapMessageContent(
+  message: ChatModelMessage,
+): string | OpenAI.Chat.ChatCompletionContentPart[] {
+  const hasAsset = message.content.some((part) => part.type === 'asset')
+  if (!hasAsset) {
+    return message.content
       .filter((part) => part.type === 'text')
       .map((part) => part.text)
-      .join(''),
-  }))
+      .join('')
+  }
+
+  return message.content.map((part) => {
+    if (part.type === 'text') {
+      return { type: 'text', text: part.text }
+    }
+    return {
+      type: 'image_url',
+      image_url: { url: part.url ?? '', detail: 'auto' },
+    }
+  })
 }
 
 export function mapFinishReason(

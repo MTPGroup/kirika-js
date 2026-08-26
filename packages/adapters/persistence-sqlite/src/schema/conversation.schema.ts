@@ -60,6 +60,7 @@ export type PersistedMessageContentPart =
       modality: 'image' | 'audio' | 'video' | 'file'
       mediaType: string
       altText: string | null
+      url: string | null
     }
 
 export interface PersistedTokenUsage {

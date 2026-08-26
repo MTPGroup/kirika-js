@@ -46,6 +46,7 @@ export function messageToJson(message: ConversationMessage) {
             modality: part.modality,
             mediaType: part.mediaType,
             altText: part.altText,
+            url: part.url ?? null,
           },
     ),
     model: message.model,
