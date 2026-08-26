@@ -81,6 +81,7 @@ export class CharacterMapper {
       currentRevisionId: raw.currentRevisionId
         ? new CharacterRevisionId(raw.currentRevisionId)
         : null,
+      visibility: raw.visibility,
       revisions,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
@@ -92,6 +93,7 @@ export class CharacterMapper {
       id: character.id.value,
       ownerId: character.ownerId.value,
       alias: character.alias,
+      visibility: character.visibility,
       currentRevisionId: character.currentRevision?.id.value ?? null,
       createdAt: character.createdAt,
       updatedAt: character.updatedAt,

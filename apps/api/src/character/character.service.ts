@@ -1,6 +1,8 @@
 import type {
   CharacterId,
+  CharacterLorebookReference,
   CharacterRepositoryPort,
+  CharacterRevisionAsset,
   CharacterRevisionContent,
   CharacterRevisionPatch,
 } from '@kirika-js/core/domain/character'
@@ -39,6 +41,34 @@ export class CharacterService {
     const draft = character.draftRevision
     if (!draft) throw new Error('角色没有草稿版本')
     character.updateDraftContent(draft.id, patch)
+    await this.repo.save(character)
+    return character
+  }
+
+  async createNewDraft(character: Character): Promise<Character> {
+    character.createNewDraftRevision()
+    await this.repo.save(character)
+    return character
+  }
+
+  async replaceDraftAssets(
+    character: Character,
+    assets: readonly CharacterRevisionAsset[],
+  ): Promise<Character> {
+    const draft = character.draftRevision
+    if (!draft) throw new Error('角色没有草稿版本')
+    character.replaceDraftAssets(draft.id, assets)
+    await this.repo.save(character)
+    return character
+  }
+
+  async replaceDraftLorebooks(
+    character: Character,
+    lorebooks: readonly CharacterLorebookReference[],
+  ): Promise<Character> {
+    const draft = character.draftRevision
+    if (!draft) throw new Error('角色没有草稿版本')
+    character.replaceDraftLorebooks(draft.id, lorebooks)
     await this.repo.save(character)
     return character
   }

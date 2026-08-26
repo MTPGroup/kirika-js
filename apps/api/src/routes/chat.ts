@@ -13,7 +13,7 @@ import {
   MessageContent,
 } from '@kirika-js/core/domain/conversation'
 import { UserId } from '@kirika-js/core/domain/shared'
-import { inArray } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import type { Hono } from 'hono'
 import { streamSSE } from 'hono/streaming'
 import { describeRoute } from 'hono-openapi'
@@ -40,7 +40,7 @@ const createConversationSchema = z.object({
   characterRevisionIds: z.array(z.uuid()).min(1),
   mode: z.enum(['direct', 'group']).optional(),
   title: z.string().trim().min(1).max(200).optional(),
-  turnPolicy: z.enum(['manual', 'round_robin', 'auto']).optional(),
+  turnPolicy: z.enum(['manual', 'round_robin']).optional(),
 })
 
 const sendMessageSchema = z.object({
@@ -57,6 +57,31 @@ const regenerateParamSchema = z.object({
 const regenerateSchema = z.object({
   model: z.string().trim().min(1).optional(),
   speakerParticipantId: z.uuid().optional(),
+})
+
+const patchConversationSchema = z.object({
+  title: z.string().trim().min(1).max(200).nullable().optional(),
+  mode: z.enum(['direct', 'group']).optional(),
+  turnPolicy: z.enum(['manual', 'round_robin']).optional(),
+})
+
+const addParticipantSchema = z.object({
+  characterRevisionId: z.uuid(),
+  displayName: z.string().trim().min(1).optional(),
+})
+
+const renameParticipantSchema = z.object({
+  displayName: z.string().trim().min(1),
+})
+
+const createGreetingSchema = z.object({
+  characterParticipantId: z.uuid(),
+  content: z.string().trim().min(1),
+})
+
+const selectBranchParamSchema = z.object({
+  id: z.uuid(),
+  messageId: z.uuid(),
 })
 
 export function mountChatRoutes(app: Hono<AppEnv>): void {
@@ -202,6 +227,386 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
 
       await c.var.di.get('conversationRepository').delete(conversation.id)
       return c.body(null, 204)
+    },
+  )
+  app.patch(
+    '/conversations/:id',
+    describeRoute({
+      tags: ['Conversations'],
+      summary: '更新会话元数据（标题、模式、发言策略）',
+      security: sessionSecurity,
+      requestBody: jsonRequest(patchConversationSchema),
+      responses: {
+        200: { description: '会话已更新。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
+        404: problemDetailsResponseJsonSchema(404, '会话不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法更新会话'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', patchConversationSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const conversation = await c.var.di
+        .get('conversationRepository')
+        .findById(new ConversationId(id))
+      if (!conversation) {
+        throw problems.create('NOT_FOUND', { detail: '会话不存在' })
+      }
+      if (conversation.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该会话' })
+      }
+
+      const body = c.req.valid('json')
+      try {
+        if (body.title !== undefined) conversation.rename(body.title)
+        if (body.mode === 'group' && conversation.mode === 'direct') {
+          conversation.convertToGroup(
+            body.turnPolicy ?? conversation.turnPolicy,
+          )
+        } else if (body.mode === 'direct' && conversation.mode === 'group') {
+          throw new Error('群聊不能转换回一对一会话')
+        }
+        if (body.turnPolicy !== undefined) {
+          conversation.changeTurnPolicy(body.turnPolicy)
+        }
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      await c.var.di.get('conversationRepository').save(conversation)
+      return c.json(conversationToJson(conversation))
+    },
+  )
+
+  app.post(
+    '/conversations/:id/participants',
+    describeRoute({
+      tags: ['Conversations'],
+      summary: '向群聊添加角色参与者',
+      security: sessionSecurity,
+      requestBody: jsonRequest(addParticipantSchema),
+      responses: {
+        200: { description: '参与者已添加。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
+        404: problemDetailsResponseJsonSchema(404, '会话或角色版本不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法添加参与者'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', addParticipantSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const conversation = await c.var.di
+        .get('conversationRepository')
+        .findById(new ConversationId(id))
+      if (!conversation) {
+        throw problems.create('NOT_FOUND', { detail: '会话不存在' })
+      }
+      if (conversation.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该会话' })
+      }
+
+      const { characterRevisionId, displayName } = c.req.valid('json')
+      const [revision] = await c.var.di
+        .get('db')
+        .select({
+          id: characterRevisions.id,
+          characterId: characterRevisions.characterId,
+          name: characterRevisions.name,
+        })
+        .from(characterRevisions)
+        .where(eq(characterRevisions.id, characterRevisionId))
+        .limit(1)
+      if (!revision) {
+        throw problems.create('NOT_FOUND', { detail: '角色版本不存在' })
+      }
+
+      try {
+        if (conversation.mode === 'direct') {
+          conversation.convertToGroup(conversation.turnPolicy)
+        }
+        conversation.addParticipant(
+          ConversationParticipant.createCharacter({
+            characterId: new CharacterId(revision.characterId),
+            characterRevisionId: new CharacterRevisionId(revision.id),
+            displayName: displayName ?? revision.name,
+          }),
+        )
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      await c.var.di.get('conversationRepository').save(conversation)
+      return c.json(conversationToJson(conversation))
+    },
+  )
+
+  app.delete(
+    '/conversations/:id/participants/:participantId',
+    describeRoute({
+      tags: ['Conversations'],
+      summary: '移除会话参与者',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '参与者已移除。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
+        404: problemDetailsResponseJsonSchema(404, '会话或参与者不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法移除参与者'),
+      },
+    }),
+    zValidator(
+      'param',
+      z.object({ id: z.uuid(), participantId: z.uuid() }),
+      validationProblemHook(),
+    ),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id, participantId } = c.req.valid('param')
+      const conversation = await c.var.di
+        .get('conversationRepository')
+        .findById(new ConversationId(id))
+      if (!conversation) {
+        throw problems.create('NOT_FOUND', { detail: '会话不存在' })
+      }
+      if (conversation.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该会话' })
+      }
+      if (
+        !conversation.findParticipant(
+          new ConversationParticipantId(participantId),
+        )
+      ) {
+        throw problems.create('NOT_FOUND', { detail: '参与者不存在' })
+      }
+
+      try {
+        conversation.removeParticipant(
+          new ConversationParticipantId(participantId),
+        )
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      await c.var.di.get('conversationRepository').save(conversation)
+      return c.json(conversationToJson(conversation))
+    },
+  )
+
+  app.patch(
+    '/conversations/:id/participants/:participantId',
+    describeRoute({
+      tags: ['Conversations'],
+      summary: '重命名会话参与者',
+      security: sessionSecurity,
+      requestBody: jsonRequest(renameParticipantSchema),
+      responses: {
+        200: { description: '参与者已重命名。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
+        404: problemDetailsResponseJsonSchema(404, '会话或参与者不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法重命名参与者'),
+      },
+    }),
+    zValidator(
+      'param',
+      z.object({ id: z.uuid(), participantId: z.uuid() }),
+      validationProblemHook(),
+    ),
+    zValidator('json', renameParticipantSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id, participantId } = c.req.valid('param')
+      const conversation = await c.var.di
+        .get('conversationRepository')
+        .findById(new ConversationId(id))
+      if (!conversation) {
+        throw problems.create('NOT_FOUND', { detail: '会话不存在' })
+      }
+      if (conversation.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该会话' })
+      }
+      if (
+        !conversation.findParticipant(
+          new ConversationParticipantId(participantId),
+        )
+      ) {
+        throw problems.create('NOT_FOUND', { detail: '参与者不存在' })
+      }
+
+      try {
+        conversation.renameParticipant(
+          new ConversationParticipantId(participantId),
+          c.req.valid('json').displayName,
+        )
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      await c.var.di.get('conversationRepository').save(conversation)
+      return c.json(conversationToJson(conversation))
+    },
+  )
+
+  app.post(
+    '/conversations/:id/greeting',
+    describeRoute({
+      tags: ['Conversations'],
+      summary: '创建角色问候消息',
+      security: sessionSecurity,
+      requestBody: jsonRequest(createGreetingSchema),
+      responses: {
+        201: { description: '问候消息已创建。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
+        404: problemDetailsResponseJsonSchema(404, '会话或参与者不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法创建问候消息'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', createGreetingSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const conversation = await c.var.di
+        .get('conversationRepository')
+        .findById(new ConversationId(id))
+      if (!conversation) {
+        throw problems.create('NOT_FOUND', { detail: '会话不存在' })
+      }
+      if (conversation.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该会话' })
+      }
+
+      const { characterParticipantId, content } = c.req.valid('json')
+      const participant = conversation.findParticipant(
+        new ConversationParticipantId(characterParticipantId),
+      )
+      if (!participant || participant.type !== 'character') {
+        throw problems.create('NOT_FOUND', { detail: '角色参与者不存在' })
+      }
+
+      const parent = conversation.activeLeafMessageId
+        ? await c.var.di
+            .get('conversationMessageRepository')
+            .findById(conversation.activeLeafMessageId)
+        : null
+
+      try {
+        const greeting = conversation.createGreetingMessage(
+          participant.id,
+          MessageContent.fromText(content),
+          parent,
+        )
+        await c.var.di.get('conversationMessageRepository').save(greeting)
+        await c.var.di.get('conversationRepository').save(conversation)
+        return c.json(messageToJson(greeting), 201)
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
+
+  app.post(
+    '/conversations/:id/branches/:messageId/select',
+    describeRoute({
+      tags: ['Conversations'],
+      summary: '选择消息分支',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '分支已切换。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
+        404: problemDetailsResponseJsonSchema(404, '会话或消息不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法切换分支'),
+      },
+    }),
+    zValidator('param', selectBranchParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id, messageId } = c.req.valid('param')
+      const conversation = await c.var.di
+        .get('conversationRepository')
+        .findById(new ConversationId(id))
+      if (!conversation) {
+        throw problems.create('NOT_FOUND', { detail: '会话不存在' })
+      }
+      if (conversation.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该会话' })
+      }
+
+      const messageRepository = c.var.di.get('conversationMessageRepository')
+      const message = await messageRepository.findById(
+        new ConversationMessageId(messageId),
+      )
+      if (!message?.conversationId.equals(conversation.id)) {
+        throw problems.create('NOT_FOUND', { detail: '消息不存在' })
+      }
+
+      try {
+        conversation.selectMessageBranch(
+          message,
+          await messageRepository.hasChildren(message.id),
+        )
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      await c.var.di.get('conversationRepository').save(conversation)
+      return c.json(conversationToJson(conversation))
     },
   )
 

@@ -31,6 +31,37 @@ import {
 } from '../http/openapi'
 import { problems, validationProblemHook } from '../http/problems'
 
+const assetInputSchema = z.object({
+  assetId: z.uuid(),
+  kind: z.enum([
+    'avatar',
+    'background',
+    'emotion',
+    'audio',
+    'video',
+    'model',
+    'other',
+  ]),
+  name: z.string().trim().min(1),
+  uri: z.string().trim().min(1),
+  ordinal: z.number().int().min(0),
+  extensions: z.record(z.string(), z.unknown()).optional(),
+})
+
+const lorebookInputSchema = z.object({
+  lorebookRevisionId: z.uuid(),
+  ordinal: z.number().int().min(0),
+  enabled: z.boolean().optional(),
+})
+
+const replaceAssetsSchema = z.object({
+  assets: z.array(assetInputSchema),
+})
+
+const replaceLorebooksSchema = z.object({
+  lorebooks: z.array(lorebookInputSchema),
+})
+
 const createSchema = z.object({
   alias: z.string().trim().min(1).max(200).optional(),
   name: z.string().trim().min(1),
@@ -81,6 +112,10 @@ const updateSchema = z.object({
   systemPrompt: z.string().optional(),
   postHistoryInstructions: z.string().optional(),
   extensions: z.record(z.string(), z.unknown()).optional(),
+})
+
+const visibilitySchema = z.object({
+  visibility: z.enum(['private', 'unlisted', 'public']),
 })
 
 const exportCardQuerySchema = z.object({
@@ -160,7 +195,7 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
             if (!asset.data) {
               throw new Error(`资产 ${asset.name} 缺少内嵌数据`)
             }
-            const uploaded = await assetService.upload({
+            const uploaded = await assetService.upload(session.user.id, {
               data: asset.data,
               mediaType: asset.mediaType ?? 'application/octet-stream',
             })
@@ -241,10 +276,14 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       }
 
       const { alias, assets, lorebooks, ...content } = c.req.valid('json')
+      const assetRepository = c.var.di.get('assetRepository')
+      const assetIds = assets?.map((asset) => asset.assetId) ?? []
+      if (!(await assetRepository.areOwnedBy(assetIds, session.user.id))) {
+        throw problems.create('FORBIDDEN', { detail: '引用了不属于你的资产' })
+      }
       const character = await c.var.di
         .get('characterService')
         .create(new UserId(session.user.id), {
-          alias: alias ?? null,
           content: {
             ...content,
             assets: assets?.map(
@@ -467,6 +506,53 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
       }
     },
   )
+  app.patch(
+    '/characters/:id/visibility',
+    describeRoute({
+      tags: ['Characters'],
+      summary: '修改角色可见性',
+      security: sessionSecurity,
+      requestBody: jsonRequest(visibilitySchema),
+      responses: {
+        200: { description: '可见性已更新。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权修改该角色'),
+        404: problemDetailsResponseJsonSchema(404, '角色不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法修改可见性'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', visibilitySchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const character = await c.var.di
+        .get('characterService')
+        .get(new CharacterId(id))
+      if (!character) {
+        throw problems.create('NOT_FOUND', { detail: '角色不存在' })
+      }
+      if (character.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权修改该角色' })
+      }
+
+      try {
+        character.changeVisibility(c.req.valid('json').visibility)
+        await c.var.di.get('characterRepository').save(character)
+        return c.json(characterToJson(character))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
 
   app.post(
     '/characters/:id/publish',
@@ -515,6 +601,183 @@ export function mountCharacterRoutes(app: Hono<AppEnv>): void {
     },
   )
 
+  app.post(
+    '/characters/:id/drafts',
+    describeRoute({
+      tags: ['Characters'],
+      summary: '基于当前版本创建新草稿',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '新草稿已创建。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权操作该角色'),
+        404: problemDetailsResponseJsonSchema(404, '角色不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法创建草稿'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const character = await c.var.di
+        .get('characterService')
+        .get(new CharacterId(id))
+      if (!character) {
+        throw problems.create('NOT_FOUND', { detail: '角色不存在' })
+      }
+      if (character.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权操作该角色' })
+      }
+
+      try {
+        const updated = await c.var.di
+          .get('characterService')
+          .createNewDraft(character)
+        return c.json(characterToJson(updated))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
+
+  app.put(
+    '/characters/:id/draft/assets',
+    describeRoute({
+      tags: ['Characters'],
+      summary: '替换角色草稿资产',
+      security: sessionSecurity,
+      requestBody: jsonRequest(replaceAssetsSchema),
+      responses: {
+        200: { description: '草稿资产已替换。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权操作该角色'),
+        404: problemDetailsResponseJsonSchema(404, '角色不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法替换草稿资产'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', replaceAssetsSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const character = await c.var.di
+        .get('characterService')
+        .get(new CharacterId(id))
+      if (!character) {
+        throw problems.create('NOT_FOUND', { detail: '角色不存在' })
+      }
+      if (character.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权操作该角色' })
+      }
+
+      const { assets } = c.req.valid('json')
+      const assetRepository = c.var.di.get('assetRepository')
+      const assetIds = assets.map((asset) => asset.assetId)
+      if (!(await assetRepository.areOwnedBy(assetIds, session.user.id))) {
+        throw problems.create('FORBIDDEN', { detail: '引用了不属于你的资产' })
+      }
+
+      try {
+        const updated = await c.var.di
+          .get('characterService')
+          .replaceDraftAssets(
+            character,
+            assets.map(
+              (asset) =>
+                new CharacterRevisionAsset({
+                  assetId: new AssetId(asset.assetId),
+                  kind: asset.kind,
+                  name: asset.name,
+                  uri: asset.uri,
+                  ordinal: asset.ordinal,
+                  extensions: asset.extensions,
+                }),
+            ),
+          )
+        return c.json(characterToJson(updated))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
+
+  app.put(
+    '/characters/:id/draft/lorebooks',
+    describeRoute({
+      tags: ['Characters'],
+      summary: '替换角色草稿世界书引用',
+      security: sessionSecurity,
+      requestBody: jsonRequest(replaceLorebooksSchema),
+      responses: {
+        200: { description: '草稿世界书引用已替换。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权操作该角色'),
+        404: problemDetailsResponseJsonSchema(404, '角色不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法替换草稿世界书'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('json', replaceLorebooksSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const character = await c.var.di
+        .get('characterService')
+        .get(new CharacterId(id))
+      if (!character) {
+        throw problems.create('NOT_FOUND', { detail: '角色不存在' })
+      }
+      if (character.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权操作该角色' })
+      }
+
+      const { lorebooks } = c.req.valid('json')
+      try {
+        const updated = await c.var.di
+          .get('characterService')
+          .replaceDraftLorebooks(
+            character,
+            lorebooks.map(
+              (reference) =>
+                new CharacterLorebookReference({
+                  lorebookRevisionId: new LorebookRevisionId(
+                    reference.lorebookRevisionId,
+                  ),
+                  ordinal: reference.ordinal,
+                  enabled: reference.enabled,
+                }),
+            ),
+          )
+        return c.json(characterToJson(updated))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
   app.delete(
     '/characters/:id',
     describeRoute({

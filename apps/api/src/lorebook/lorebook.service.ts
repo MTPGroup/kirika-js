@@ -43,6 +43,11 @@ export class LorebookService {
     return lorebook
   }
 
+  async createNewDraft(lorebook: Lorebook): Promise<Lorebook> {
+    lorebook.createNewDraftRevision()
+    await this.repo.save(lorebook)
+    return lorebook
+  }
   async replaceEntries(
     lorebook: Lorebook,
     entries: LorebookEntry[],

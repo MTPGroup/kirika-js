@@ -3,8 +3,12 @@ import {
   AssetId,
   type AssetRepositoryPort,
 } from '@kirika-js/core/domain/character'
-import { eq } from 'drizzle-orm'
-import { assets } from '../db/character-schema'
+import { and, count, eq, inArray } from 'drizzle-orm'
+import {
+  assetOwners,
+  assets,
+  characterRevisionAssets,
+} from '../db/character-schema'
 import type { Db } from '../lib/db'
 
 type AssetRow = typeof assets.$inferSelect
@@ -53,6 +57,97 @@ export class PgAssetRepository implements AssetRepositoryPort {
 
   async delete(id: AssetId): Promise<void> {
     await this.db.delete(assets).where(eq(assets.id, id.value))
+  }
+
+  async grantOwnership(assetId: string, ownerId: string): Promise<void> {
+    await this.db
+      .insert(assetOwners)
+      .values({ assetId, ownerId })
+      .onConflictDoNothing()
+  }
+
+  async revokeOwnership(assetId: string, ownerId: string): Promise<void> {
+    await this.db
+      .delete(assetOwners)
+      .where(
+        and(eq(assetOwners.assetId, assetId), eq(assetOwners.ownerId, ownerId)),
+      )
+  }
+
+  async isOwnedBy(assetId: string, ownerId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ assetId: assetOwners.assetId })
+      .from(assetOwners)
+      .where(
+        and(eq(assetOwners.assetId, assetId), eq(assetOwners.ownerId, ownerId)),
+      )
+      .limit(1)
+    return row !== undefined
+  }
+
+  async areOwnedBy(
+    assetIds: readonly string[],
+    ownerId: string,
+  ): Promise<boolean> {
+    const uniqueIds = [...new Set(assetIds)]
+    if (uniqueIds.length === 0) return true
+
+    const rows = await this.db
+      .select({ assetId: assetOwners.assetId })
+      .from(assetOwners)
+      .where(
+        and(
+          eq(assetOwners.ownerId, ownerId),
+          inArray(assetOwners.assetId, uniqueIds),
+        ),
+      )
+    return rows.length === uniqueIds.length
+  }
+
+  async listByOwner(ownerId: string, limit: number, offset: number) {
+    const rows = await this.db
+      .select({
+        id: assets.id,
+        mediaType: assets.mediaType,
+        byteSize: assets.byteSize,
+        sha256: assets.sha256,
+        createdAt: assetOwners.createdAt,
+      })
+      .from(assetOwners)
+      .innerJoin(assets, eq(assets.id, assetOwners.assetId))
+      .where(eq(assetOwners.ownerId, ownerId))
+      .orderBy(assetOwners.createdAt)
+      .limit(limit + 1)
+      .offset(offset)
+
+    const hasMore = rows.length > limit
+    return {
+      items: rows.slice(0, limit).map((row) => ({
+        id: row.id,
+        mediaType: row.mediaType,
+        byteSize: row.byteSize,
+        sha256: row.sha256 ? Buffer.from(row.sha256).toString('hex') : null,
+        createdAt: row.createdAt,
+      })),
+      hasMore,
+    }
+  }
+
+  async hasOwners(assetId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ total: count() })
+      .from(assetOwners)
+      .where(eq(assetOwners.assetId, assetId))
+    return (row?.total ?? 0) > 0
+  }
+
+  async isReferenced(assetId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ assetId: characterRevisionAssets.assetId })
+      .from(characterRevisionAssets)
+      .where(eq(characterRevisionAssets.assetId, assetId))
+      .limit(1)
+    return row !== undefined
   }
 }
 

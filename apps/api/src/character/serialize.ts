@@ -5,6 +5,7 @@ export function characterToJson(character: Character) {
     id: character.id.value,
     ownerId: character.ownerId.value,
     alias: character.alias,
+    visibility: character.visibility,
     currentRevisionId: character.currentRevision?.id.value ?? null,
     revisions: character.revisions.map((revision) => ({
       id: revision.id.value,

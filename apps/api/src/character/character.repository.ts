@@ -34,6 +34,7 @@ export class PgCharacterRepository implements CharacterRepositoryPort {
           target: characters.id,
           set: {
             alias: characterModel.alias,
+            visibility: characterModel.visibility,
             currentRevisionId: characterModel.currentRevisionId,
             updatedAt: characterModel.updatedAt,
           },
@@ -97,6 +98,34 @@ export class PgCharacterRepository implements CharacterRepositoryPort {
   async listByOwner(ownerId: string, limit: number, offset: number) {
     const rows = await this.db.query.characters.findMany({
       where: { ownerId },
+      with: {
+        currentRevision: true,
+        revisions: true,
+      },
+      orderBy: (fields, { desc }) => desc(fields.updatedAt),
+      limit: limit + 1,
+      offset,
+    })
+
+    const hasMore = rows.length > limit
+    const items = rows.slice(0, limit).map((row) => ({
+      id: row.id,
+      alias: row.alias,
+      name:
+        row.currentRevision?.name ??
+        row.revisions.find((revision) => revision.isDraft)?.name ??
+        null,
+      currentRevisionId: row.currentRevisionId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }))
+
+    return { items, hasMore }
+  }
+
+  async listPublic(limit: number, offset: number) {
+    const rows = await this.db.query.characters.findMany({
+      where: { visibility: 'public' },
       with: {
         currentRevision: true,
         revisions: true,

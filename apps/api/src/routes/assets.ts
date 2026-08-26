@@ -4,7 +4,11 @@ import type { Hono } from 'hono'
 import { describeRoute } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import type { AppEnv } from '../container'
-import { idParamSchema, sessionSecurity } from '../http/openapi'
+import {
+  idParamSchema,
+  listQuerySchema,
+  sessionSecurity,
+} from '../http/openapi'
 import { problems, validationProblemHook } from '../http/problems'
 
 function assetToJson(asset: Asset) {
@@ -17,6 +21,34 @@ function assetToJson(asset: Asset) {
 }
 
 export function mountAssetRoutes(app: Hono<AppEnv>): void {
+  app.get(
+    '/assets',
+    describeRoute({
+      tags: ['Assets'],
+      summary: '我的资产列表',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '资产分页列表。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+      },
+    }),
+    zValidator('query', listQuerySchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { limit, offset } = c.req.valid('query')
+      const result = await c.var.di
+        .get('assetRepository')
+        .listByOwner(session.user.id, limit, offset)
+      return c.json(result)
+    },
+  )
+
   app.post(
     '/assets',
     describeRoute({
@@ -45,10 +77,9 @@ export function mountAssetRoutes(app: Hono<AppEnv>): void {
 
       const bytes = new Uint8Array(await file.arrayBuffer())
       const mediaType = file.type || 'application/octet-stream'
-
       const asset = await c.var.di
         .get('assetService')
-        .upload({ data: bytes, mediaType })
+        .upload(session.user.id, { data: bytes, mediaType })
 
       return c.json(assetToJson(asset), 201)
     },
@@ -58,7 +89,7 @@ export function mountAssetRoutes(app: Hono<AppEnv>): void {
     '/assets/:id',
     describeRoute({
       tags: ['Assets'],
-      summary: '获取资产内容',
+      summary: '获取自己的资产内容',
       security: sessionSecurity,
       responses: {
         200: { description: '资产二进制内容。' },
@@ -76,14 +107,14 @@ export function mountAssetRoutes(app: Hono<AppEnv>): void {
       }
 
       const { id } = c.req.valid('param')
-      const asset = await c.var.di
-        .get('assetRepository')
-        .findById(new AssetId(id))
-      if (!asset) {
+      const repository = c.var.di.get('assetRepository')
+      if (!(await repository.isOwnedBy(id, session.user.id))) {
         throw problems.create('NOT_FOUND', { detail: '资产不存在' })
       }
-      if (!asset.storageKey) {
-        throw problems.create('INVALID_STATE', { detail: '资产缺少存储键' })
+
+      const asset = await repository.findById(new AssetId(id))
+      if (!asset?.storageKey) {
+        throw problems.create('NOT_FOUND', { detail: '资产不存在' })
       }
 
       const data = await c.var.di.get('objectStorage').get(asset.storageKey)
@@ -92,6 +123,52 @@ export function mountAssetRoutes(app: Hono<AppEnv>): void {
           'content-type': asset.mediaType ?? 'application/octet-stream',
         },
       })
+    },
+  )
+
+  app.delete(
+    '/assets/:id',
+    describeRoute({
+      tags: ['Assets'],
+      summary: '删除自己的未引用资产',
+      security: sessionSecurity,
+      responses: {
+        204: { description: '资产已删除。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        404: problemDetailsResponseJsonSchema(404, '资产不存在'),
+        409: problemDetailsResponseJsonSchema(409, '资产仍被角色引用'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const repository = c.var.di.get('assetRepository')
+      if (!(await repository.isOwnedBy(id, session.user.id))) {
+        throw problems.create('NOT_FOUND', { detail: '资产不存在' })
+      }
+      if (await repository.isReferenced(id)) {
+        throw problems.create('CONFLICT', {
+          detail: '资产仍被角色版本引用，无法删除',
+        })
+      }
+
+      const asset = await repository.findById(new AssetId(id))
+      await repository.revokeOwnership(id, session.user.id)
+      if (!(await repository.hasOwners(id))) {
+        if (asset?.storageKey) {
+          await c.var.di.get('objectStorage').delete(asset.storageKey)
+        }
+        if (asset) await repository.delete(asset.id)
+      }
+
+      return c.body(null, 204)
     },
   )
 }

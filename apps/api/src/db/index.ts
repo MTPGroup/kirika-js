@@ -7,6 +7,7 @@ import {
 } from './auth-schema'
 import {
   assetKindEnum,
+  assetOwners,
   assets,
   characterRelations,
   characterRevisionAssets,
@@ -30,6 +31,7 @@ import {
 export {
   accounts,
   assetKindEnum,
+  assetOwners,
   assets,
   authRelations,
   characterRelations,
@@ -59,6 +61,7 @@ export const schema = {
   characters,
   characterRevisions,
   assets,
+  assetOwners,
   characterRevisionAssets,
   characterRevisionLorebooks,
   conversations,

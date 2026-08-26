@@ -17,6 +17,8 @@ import {
 import { users } from './auth-schema'
 import { lorebookRevisions } from './lorebook-schema'
 
+export const CHARACTER_VISIBILITIES = ['private', 'unlisted', 'public'] as const
+
 export const assetKindEnum = pgEnum('asset_kind', [
   'avatar',
   'background',
@@ -36,6 +38,9 @@ export const characters = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     currentRevisionId: uuid('current_revision_id'),
     alias: text('alias'),
+    visibility: text('visibility', { enum: CHARACTER_VISIBILITIES })
+      .notNull()
+      .default('private'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
       .defaultNow()
@@ -44,6 +49,11 @@ export const characters = pgTable(
   },
   (t) => [
     index('characters_owner_updated_at_idx').on(t.ownerId, t.updatedAt, t.id),
+    index('characters_visibility_updated_at_idx').on(
+      t.visibility,
+      t.updatedAt,
+      t.id,
+    ),
   ],
 )
 
@@ -97,6 +107,23 @@ export const assets = pgTable(
     sha256: bytea('sha256'),
   },
   (t) => [uniqueIndex('assets_sha256_uq').on(t.sha256)],
+)
+
+export const assetOwners = pgTable(
+  'asset_owners',
+  {
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => assets.id, { onDelete: 'cascade' }),
+    ownerId: uuid('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.assetId, t.ownerId] }),
+    index('asset_owners_owner_created_at_idx').on(t.ownerId, t.createdAt),
+  ],
 )
 
 export const characterRevisionAssets = pgTable(

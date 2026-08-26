@@ -375,6 +375,52 @@ export function mountLorebookRoutes(app: Hono<AppEnv>): void {
     },
   )
 
+  app.post(
+    '/lorebooks/:id/drafts',
+    describeRoute({
+      tags: ['Lorebooks'],
+      summary: '基于当前版本创建新草稿',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '新草稿已创建。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权操作该世界书'),
+        404: problemDetailsResponseJsonSchema(404, '世界书不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法创建草稿'),
+      },
+    }),
+    zValidator('param', idParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id } = c.req.valid('param')
+      const lorebook = await c.var.di
+        .get('lorebookService')
+        .get(new LorebookId(id))
+      if (!lorebook) {
+        throw problems.create('NOT_FOUND', { detail: '世界书不存在' })
+      }
+      if (lorebook.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权操作该世界书' })
+      }
+
+      try {
+        const updated = await c.var.di
+          .get('lorebookService')
+          .createNewDraft(lorebook)
+        return c.json(lorebookToJson(updated))
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+  )
   app.delete(
     '/lorebooks/:id',
     describeRoute({
