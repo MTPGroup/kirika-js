@@ -12,4 +12,7 @@ export interface ObjectStoragePort {
   delete(key: string): Promise<void>
 
   exists(key: string): Promise<boolean>
+
+  /** 公开读场景下的可访问 URL；无公开访问能力时返回 null。 */
+  getPublicUrl(key: string): Promise<string | null>
 }

@@ -12,6 +12,14 @@ baseUrl = "https://api.openai.com/v1"
 apiKey = "replace-me"
 defaultModel = "gpt-4o-mini"
 
+[storage]
+provider = "s3"
+bucket = "kirika_dev"
+endpoint = "https://localhost:9000"
+forcePathStyle = true
+accessKeyId = "kirika_dev"
+secretAccessKey = "kirika_dev"
+
 [auth]
 baseUrl = "http://localhost:3000"
 secret = "38arkh3SaabbgJ6o30QNMmlPmRUKZkKtR4k2jCoUBkM="

@@ -108,6 +108,7 @@ export class PgAssetRepository implements AssetRepositoryPort {
     const rows = await this.db
       .select({
         id: assets.id,
+        storageKey: assets.storageKey,
         mediaType: assets.mediaType,
         byteSize: assets.byteSize,
         sha256: assets.sha256,
@@ -124,6 +125,7 @@ export class PgAssetRepository implements AssetRepositoryPort {
     return {
       items: rows.slice(0, limit).map((row) => ({
         id: row.id,
+        storageKey: row.storageKey,
         mediaType: row.mediaType,
         byteSize: row.byteSize,
         sha256: row.sha256 ? Buffer.from(row.sha256).toString('hex') : null,

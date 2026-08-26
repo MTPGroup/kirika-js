@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator'
 import { type Asset, AssetId } from '@kirika-js/core/domain/character'
+import type { ObjectStoragePort } from '@kirika-js/core/storage'
 import type { Hono } from 'hono'
 import { describeRoute } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
@@ -11,12 +12,13 @@ import {
 } from '../http/openapi'
 import { problems, validationProblemHook } from '../http/problems'
 
-function assetToJson(asset: Asset) {
+async function assetToJson(asset: Asset, storage: ObjectStoragePort) {
   return {
     id: asset.id.value,
     mediaType: asset.mediaType,
     byteSize: asset.byteSize,
     sha256: asset.sha256,
+    url: asset.storageKey ? await storage.getPublicUrl(asset.storageKey) : null,
   }
 }
 
@@ -40,12 +42,24 @@ export function mountAssetRoutes(app: Hono<AppEnv>): void {
       if (!session) {
         throw problems.create('UNAUTHORIZED', { detail: '未登录' })
       }
-
       const { limit, offset } = c.req.valid('query')
+      const storage = c.var.di.get('objectStorage')
       const result = await c.var.di
         .get('assetRepository')
         .listByOwner(session.user.id, limit, offset)
-      return c.json(result)
+      const items = await Promise.all(
+        result.items.map(async (item) => ({
+          id: item.id,
+          mediaType: item.mediaType,
+          byteSize: item.byteSize,
+          sha256: item.sha256,
+          createdAt: item.createdAt,
+          url: item.storageKey
+            ? await storage.getPublicUrl(item.storageKey)
+            : null,
+        })),
+      )
+      return c.json({ items, hasMore: result.hasMore })
     },
   )
 
@@ -81,7 +95,10 @@ export function mountAssetRoutes(app: Hono<AppEnv>): void {
         .get('assetService')
         .upload(session.user.id, { data: bytes, mediaType })
 
-      return c.json(assetToJson(asset), 201)
+      return c.json(
+        await assetToJson(asset, c.var.di.get('objectStorage')),
+        201,
+      )
     },
   )
 

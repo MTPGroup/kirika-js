@@ -16,9 +16,15 @@ import type { S3ObjectStorageConfig } from './config'
 export class S3ObjectStorage implements ObjectStoragePort {
   private readonly client: S3Client
   private readonly bucket: string
+  private readonly endpoint: string | undefined
+  private readonly region: string
+  private readonly forcePathStyle: boolean
 
   constructor(config: S3ObjectStorageConfig) {
     const bucket = config.bucket.trim()
+    const endpoint = normalizeOptionalString(config.endpoint)
+    const region = config.region ?? 'us-east-1'
+    const forcePathStyle = config.forcePathStyle ?? false
 
     if (!bucket) {
       throw new Error('S3 bucket 不能为空')
@@ -27,14 +33,14 @@ export class S3ObjectStorage implements ObjectStoragePort {
     assertCredentialConfig(config)
 
     this.bucket = bucket
+    this.endpoint = endpoint
+    this.region = region
+    this.forcePathStyle = forcePathStyle
 
     this.client = new S3Client({
-      region: config.region ?? 'us-east-1',
-
-      endpoint: normalizeOptionalString(config.endpoint),
-
-      forcePathStyle: config.forcePathStyle ?? false,
-
+      region,
+      endpoint,
+      forcePathStyle,
       credentials:
         config.accessKeyId && config.secretAccessKey
           ? {
@@ -126,6 +132,17 @@ export class S3ObjectStorage implements ObjectStoragePort {
     }
   }
 
+  async getPublicUrl(key: string): Promise<string | null> {
+    const normalizedKey = normalizeKey(key)
+    return buildPublicUrl(
+      this.endpoint,
+      this.region,
+      this.forcePathStyle,
+      this.bucket,
+      normalizedKey,
+    )
+  }
+
   dispose(): void {
     this.client.destroy()
   }
@@ -139,6 +156,32 @@ function normalizeKey(key: string): string {
   }
 
   return normalized
+}
+
+function buildPublicUrl(
+  endpoint: string | undefined,
+  region: string,
+  forcePathStyle: boolean,
+  bucket: string,
+  key: string,
+): string {
+  const encodedKey = key.split('/').map(encodeURIComponent).join('/')
+
+  if (endpoint) {
+    const base = endpoint.replace(/\/+$/, '')
+    if (forcePathStyle) {
+      return `${base}/${bucket}/${encodedKey}`
+    }
+    const url = new URL(endpoint)
+    return `${url.protocol}//${bucket}.${url.host}/${encodedKey}`
+  }
+
+  const host =
+    region === 'us-east-1' ? 's3.amazonaws.com' : `s3.${region}.amazonaws.com`
+  if (forcePathStyle) {
+    return `https://${host}/${bucket}/${encodedKey}`
+  }
+  return `https://${bucket}.${host}/${encodedKey}`
 }
 
 function normalizeOptionalString(

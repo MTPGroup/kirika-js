@@ -9,6 +9,22 @@ baseUrl = "https://api.openai.com/v1"
 apiKey = "sk-..."
 defaultModel = "gpt-4o-mini"
 
+[storage]
+# 本地文件存储（默认）
+provider = "filesystem"
+rootDir = "./data/assets"
+
+# 自建 S3 / MinIO（公开读，客户端直接用返回的 url 访问）：
+# 把上面 [storage] 段替换为以下内容，并确保 bucket 允许匿名 GetObject。
+# [storage]
+# provider = "s3"
+# bucket = "kirika"
+# endpoint = "https://s3.example.com"   # 自建 S3 必填；AWS 可省略
+# region = "us-east-1"                  # AWS 时生效
+# forcePathStyle = true                 # MinIO/自建 S3 建议 true
+# accessKeyId = "your-access-key"
+# secretAccessKey = "your-secret-key"
+
 [auth]
 baseUrl = "http://localhost:3000"
 secret = "replace-with-a-secure-random-secret"

@@ -1190,6 +1190,17 @@ async function resolveMessageContent(
       if (!asset?.storageKey) {
         throw problems.create('NOT_FOUND', { detail: '资产不存在' })
       }
+      const publicUrl = await objectStorage.getPublicUrl(asset.storageKey)
+      if (publicUrl) {
+        return {
+          type: 'asset' as const,
+          assetId: new AssetId(part.assetId),
+          modality: part.modality,
+          mediaType: part.mediaType,
+          altText: part.altText ?? null,
+          url: publicUrl,
+        }
+      }
       const data = await objectStorage.get(asset.storageKey)
       return {
         type: 'asset' as const,

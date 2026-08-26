@@ -59,16 +59,18 @@ export class FilesystemObjectStorage implements ObjectStoragePort {
     const filePath = this.resolveKey(key)
 
     try {
-      const info = await stat(filePath)
-
-      return info.isFile()
+      await stat(filePath)
+      return true
     } catch (error) {
       if (isNotFoundError(error)) {
         return false
       }
-
       throw error
     }
+  }
+
+  async getPublicUrl(_key: string): Promise<null> {
+    return null
   }
 
   private resolveKey(key: string): string {
