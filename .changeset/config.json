@@ -16,15 +16,7 @@
     "@kirika-js/typescript-config",
     "@kirika-js/vitest-config"
   ],
-  "fixed": [
-    [
-      "@kirika-js/core",
-      "@kirika-js/adapter-model-openai-compatible",
-      "@kirika-js/adapter-persistence-sqlite",
-      "@kirika-js/adapter-storage-filesystem",
-      "@kirika-js/adapter-storage-s3"
-    ]
-  ],
+  "fixed": [],
   "linked": [],
   "updateInternalDependencies": "patch"
 }

@@ -63,6 +63,8 @@ jobs:
           --filter=@kirika-js/adapter-persistence-sqlite
           --filter=@kirika-js/adapter-storage-filesystem
           --filter=@kirika-js/adapter-storage-s3
+          --filter=@kirika-js/adapter-character-card-kirika
+          --filter=@kirika-js/adapter-character-card-external
 
       - name: Publish packages
         run: pnpm changeset publish
