@@ -1,6 +1,7 @@
 import { zValidator } from '@hono/zod-validator'
 import { skipInferdiDispose } from '@inferdi/hono'
 import {
+  AssetId,
   CharacterId,
   CharacterRevisionId,
 } from '@kirika-js/core/domain/character'
@@ -14,7 +15,7 @@ import {
 } from '@kirika-js/core/domain/conversation'
 import { UserId } from '@kirika-js/core/domain/shared'
 import { eq, inArray } from 'drizzle-orm'
-import type { Hono } from 'hono'
+import type { Context, Hono } from 'hono'
 import { streamSSE } from 'hono/streaming'
 import { describeRoute } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
@@ -43,10 +44,33 @@ const createConversationSchema = z.object({
   turnPolicy: z.enum(['manual', 'round_robin', 'auto']).optional(),
 })
 
+const generationSchema = z.object({
+  maxOutputTokens: z.number().int().min(1).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  topP: z.number().min(0).max(1).optional(),
+  stopSequences: z.array(z.string().min(1)).max(4).optional(),
+  seed: z.number().int().optional(),
+})
+
+const messageContentPartSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('text'), text: z.string().trim().min(1) }),
+  z.object({
+    type: z.literal('asset'),
+    assetId: z.uuid(),
+    modality: z.enum(['image', 'audio', 'video', 'file']),
+    mediaType: z.string().trim().min(1),
+    altText: z.string().trim().min(1).optional(),
+  }),
+])
+
 const sendMessageSchema = z.object({
-  content: z.string().trim().min(1),
+  content: z.union([
+    z.string().trim().min(1),
+    z.array(messageContentPartSchema).min(1),
+  ]),
   model: z.string().trim().min(1).optional(),
   speakerParticipantId: z.uuid().optional(),
+  generation: generationSchema.optional(),
 })
 
 const regenerateParamSchema = z.object({
@@ -57,6 +81,21 @@ const regenerateParamSchema = z.object({
 const regenerateSchema = z.object({
   model: z.string().trim().min(1).optional(),
   speakerParticipantId: z.uuid().optional(),
+  generation: generationSchema.optional(),
+})
+
+const messageListQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+})
+
+const messageParamSchema = z.object({
+  id: z.uuid(),
+  messageId: z.uuid(),
+})
+
+const editMessageSchema = z.object({
+  content: z.string().trim().min(1),
 })
 
 const patchConversationSchema = z.object({
@@ -149,7 +188,6 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       return c.json(conversationToJson(conversation))
     },
   )
-
   app.get(
     '/conversations/:id/messages',
     describeRoute({
@@ -164,6 +202,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       },
     }),
     zValidator('param', idParamSchema, validationProblemHook()),
+    zValidator('query', messageListQuerySchema, validationProblemHook()),
     async (c) => {
       const session = await c.var.di.get('auth').api.getSession({
         headers: c.req.raw.headers,
@@ -183,12 +222,139 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
         throw problems.create('FORBIDDEN', { detail: '无权访问该会话' })
       }
 
-      const messages = conversation.activeLeafMessageId
+      const full = conversation.activeLeafMessageId
         ? await c.var.di
             .get('conversationMessageRepository')
             .findPathToRoot(conversation.id, conversation.activeLeafMessageId)
         : []
-      return c.json({ messages: messages.map(messageToJson) })
+      const { limit, offset } = c.req.valid('query')
+      const start = offset ?? 0
+      const messages = limit
+        ? full.slice(start, start + limit)
+        : full.slice(start)
+      return c.json({
+        messages: messages.map(messageToJson),
+        total: full.length,
+      })
+    },
+  )
+
+  app.patch(
+    '/conversations/:id/messages/:messageId',
+    describeRoute({
+      tags: ['Conversations'],
+      summary: '编辑人工消息内容',
+      security: sessionSecurity,
+      requestBody: jsonRequest(editMessageSchema),
+      responses: {
+        200: { description: '消息已编辑。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
+        404: problemDetailsResponseJsonSchema(404, '消息不存在'),
+        422: problemDetailsResponseJsonSchema(422, '无法编辑该消息'),
+      },
+    }),
+    zValidator('param', messageParamSchema, validationProblemHook()),
+    zValidator('json', editMessageSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id, messageId } = c.req.valid('param')
+      const conversation = await c.var.di
+        .get('conversationRepository')
+        .findById(new ConversationId(id))
+      if (!conversation) {
+        throw problems.create('NOT_FOUND', { detail: '会话不存在' })
+      }
+      if (conversation.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该会话' })
+      }
+
+      const messageRepository = c.var.di.get('conversationMessageRepository')
+      const message = await messageRepository.findById(
+        new ConversationMessageId(messageId),
+      )
+      if (!message?.conversationId.equals(conversation.id)) {
+        throw problems.create('NOT_FOUND', { detail: '消息不存在' })
+      }
+
+      try {
+        message.editContent(
+          MessageContent.fromText(c.req.valid('json').content),
+        )
+        await messageRepository.save(message)
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      return c.json(messageToJson(message))
+    },
+  )
+
+  app.delete(
+    '/conversations/:id/messages/:messageId',
+    describeRoute({
+      tags: ['Conversations'],
+      summary: '删除叶子消息',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '消息已删除。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+        403: problemDetailsResponseJsonSchema(403, '无权访问该会话'),
+        404: problemDetailsResponseJsonSchema(404, '消息不存在'),
+        409: problemDetailsResponseJsonSchema(409, '只能删除叶子消息'),
+        422: problemDetailsResponseJsonSchema(422, '无法删除该消息'),
+      },
+    }),
+    zValidator('param', messageParamSchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { id, messageId } = c.req.valid('param')
+      const conversation = await c.var.di
+        .get('conversationRepository')
+        .findById(new ConversationId(id))
+      if (!conversation) {
+        throw problems.create('NOT_FOUND', { detail: '会话不存在' })
+      }
+      if (conversation.ownerId.value !== session.user.id) {
+        throw problems.create('FORBIDDEN', { detail: '无权访问该会话' })
+      }
+
+      const messageRepository = c.var.di.get('conversationMessageRepository')
+      const message = await messageRepository.findById(
+        new ConversationMessageId(messageId),
+      )
+      if (!message?.conversationId.equals(conversation.id)) {
+        throw problems.create('NOT_FOUND', { detail: '消息不存在' })
+      }
+      if (await messageRepository.hasChildren(message.id)) {
+        throw problems.create('CONFLICT', { detail: '只能删除叶子消息' })
+      }
+
+      try {
+        conversation.deleteMessage(message)
+        await c.var.di.get('conversationRepository').save(conversation)
+        await messageRepository.delete(message.id)
+      } catch (error) {
+        throw problems.create('INVALID_STATE', {
+          detail: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      return c.json(conversationToJson(conversation))
     },
   )
 
@@ -728,6 +894,11 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
             .findPathToRoot(conversation.id, conversation.activeLeafMessageId)
         : []
       const body = c.req.valid('json')
+      const content = await resolveMessageContent(
+        c,
+        body.content,
+        session.user.id,
+      )
 
       skipInferdiDispose(c)
       const scope = c.var.di
@@ -743,9 +914,10 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
             conversation,
             history,
             humanParticipantId: owner.id,
-            content: MessageContent.fromText(body.content),
+            content,
             model: body.model,
             signal: controller.signal,
+            generation: body.generation,
             speakerParticipantId: body.speakerParticipantId
               ? new ConversationParticipantId(body.speakerParticipantId)
               : undefined,
@@ -850,6 +1022,7 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
             history,
             model: body.model,
             signal: controller.signal,
+            generation: body.generation,
             speakerParticipantId: body.speakerParticipantId
               ? new ConversationParticipantId(body.speakerParticipantId)
               : undefined,
@@ -990,4 +1163,43 @@ export function mountChatRoutes(app: Hono<AppEnv>): void {
       return c.json(conversationToJson(conversation))
     },
   )
+}
+
+type SendMessageContent = z.infer<typeof sendMessageSchema>['content']
+
+async function resolveMessageContent(
+  c: Context<AppEnv>,
+  input: SendMessageContent,
+  ownerId: string,
+): Promise<MessageContent> {
+  if (typeof input === 'string') {
+    return MessageContent.fromText(input)
+  }
+
+  const assetRepository = c.var.di.get('assetRepository')
+  const objectStorage = c.var.di.get('objectStorage')
+  const parts = await Promise.all(
+    input.map(async (part) => {
+      if (part.type === 'text') {
+        return { type: 'text' as const, text: part.text }
+      }
+      if (!(await assetRepository.isOwnedBy(part.assetId, ownerId))) {
+        throw problems.create('FORBIDDEN', { detail: '引用了不属于你的资产' })
+      }
+      const asset = await assetRepository.findById(new AssetId(part.assetId))
+      if (!asset?.storageKey) {
+        throw problems.create('NOT_FOUND', { detail: '资产不存在' })
+      }
+      const data = await objectStorage.get(asset.storageKey)
+      return {
+        type: 'asset' as const,
+        assetId: new AssetId(part.assetId),
+        modality: part.modality,
+        mediaType: part.mediaType,
+        altText: part.altText ?? null,
+        url: `data:${part.mediaType};base64,${Buffer.from(data).toString('base64')}`,
+      }
+    }),
+  )
+  return MessageContent.create(parts)
 }

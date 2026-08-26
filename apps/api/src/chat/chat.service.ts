@@ -1,6 +1,7 @@
 import type {
   AutoSpeakerSelectorPort,
   ChatCharacterContextResolverPort,
+  ChatGenerationConfig,
   ChatModelPort,
 } from '@kirika-js/core/chat'
 import {
@@ -25,6 +26,7 @@ export interface SendMessageInput {
   readonly model?: string
   readonly signal?: AbortSignal
   readonly speakerParticipantId?: ConversationParticipantId
+  readonly generation?: ChatGenerationConfig
 }
 
 export interface GenerateInput {
@@ -33,6 +35,7 @@ export interface GenerateInput {
   readonly model?: string
   readonly signal?: AbortSignal
   readonly speakerParticipantId?: ConversationParticipantId
+  readonly generation?: ChatGenerationConfig
 }
 
 export interface ChatServiceDependencies {
@@ -75,6 +78,7 @@ export class ChatService {
       model: input.model,
       signal: input.signal,
       speakerParticipantId: input.speakerParticipantId,
+      generation: input.generation,
     })
   }
 
@@ -89,6 +93,7 @@ export class ChatService {
       model: input.model?.trim() || this.deps.defaultModel,
       signal: input.signal,
       speakerParticipantId: input.speakerParticipantId,
+      generation: input.generation,
     })) {
       yield event
 
