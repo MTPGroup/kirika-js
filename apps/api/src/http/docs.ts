@@ -17,7 +17,9 @@ export function mountApiDocumentation(app: Hono<AppEnv>): void {
         tags: [
           { name: 'System', description: '服务状态。' },
           { name: 'Characters', description: '角色与角色版本生命周期。' },
+          { name: 'Assets', description: '角色资产上传与读取。' },
           { name: 'Lorebooks', description: '世界书、条目与版本生命周期。' },
+          { name: 'Discover', description: '公开内容发现与搜索。' },
           { name: 'Conversations', description: '会话创建与流式生成。' },
         ],
         components: {

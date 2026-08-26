@@ -1,7 +1,11 @@
 import type { InferdiHonoEnv } from '@inferdi/hono'
 import { Container } from '@inferdi/inferdi'
 import { OpenAICompatibleChatModel } from '@kirika-js/adapter-model-openai-compatible'
+import { FilesystemObjectStorage } from '@kirika-js/adapter-storage-filesystem'
+import { S3ObjectStorage } from '@kirika-js/adapter-storage-s3'
 import type { HonoLogLayerVariables } from '@loglayer/hono'
+import { PgAssetRepository } from './character/asset.repository'
+import { AssetService } from './character/asset.service'
 import { PgCharacterRepository } from './character/character.repository'
 import { CharacterService } from './character/character.service'
 import { PgCharacterContextResolver } from './character/context-resolver'
@@ -38,9 +42,7 @@ export function buildRootContainer() {
         apiKey: config.model.apiKey,
       })
     })
-    .registerClass('conversationRepository', PgConversationRepository, [
-      'db',
-    ])
+    .registerClass('conversationRepository', PgConversationRepository, ['db'])
     .registerClass(
       'conversationMessageRepository',
       PgConversationMessageRepository,
@@ -52,6 +54,25 @@ export function buildRootContainer() {
       'db',
     ])
     .registerClass('idempotencyStore', PgIdempotencyStore, ['db'])
+    .registerFactory('objectStorage', (container) => {
+      const storage = container.get('config').storage
+      if (storage.provider === 's3') {
+        return new S3ObjectStorage({
+          bucket: storage.bucket ?? '',
+          region: storage.region,
+          endpoint: storage.endpoint,
+          accessKeyId: storage.accessKeyId,
+          secretAccessKey: storage.secretAccessKey,
+          forcePathStyle: storage.forcePathStyle,
+        })
+      }
+      return new FilesystemObjectStorage({ rootDir: storage.rootDir })
+    })
+    .registerClass('assetRepository', PgAssetRepository, ['db'])
+    .registerClass('assetService', AssetService, [
+      'assetRepository',
+      'objectStorage',
+    ])
     .registerFactory('chatService', (container) => {
       const config = container.get('config')
       return new ChatService({
