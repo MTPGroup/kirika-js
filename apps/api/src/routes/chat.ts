@@ -40,7 +40,7 @@ const createConversationSchema = z.object({
   characterRevisionIds: z.array(z.uuid()).min(1),
   mode: z.enum(['direct', 'group']).optional(),
   title: z.string().trim().min(1).max(200).optional(),
-  turnPolicy: z.enum(['manual', 'round_robin']).optional(),
+  turnPolicy: z.enum(['manual', 'round_robin', 'auto']).optional(),
 })
 
 const sendMessageSchema = z.object({
@@ -62,7 +62,7 @@ const regenerateSchema = z.object({
 const patchConversationSchema = z.object({
   title: z.string().trim().min(1).max(200).nullable().optional(),
   mode: z.enum(['direct', 'group']).optional(),
-  turnPolicy: z.enum(['manual', 'round_robin']).optional(),
+  turnPolicy: z.enum(['manual', 'round_robin', 'auto']).optional(),
 })
 
 const addParticipantSchema = z.object({

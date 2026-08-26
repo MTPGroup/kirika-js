@@ -9,6 +9,7 @@ import { AssetService } from './character/asset.service'
 import { PgCharacterRepository } from './character/character.repository'
 import { CharacterService } from './character/character.service'
 import { PgCharacterContextResolver } from './character/context-resolver'
+import { LlmAutoSpeakerSelector } from './chat/auto-speaker-selector'
 import { ChatService } from './chat/chat.service'
 import { loadConfiguration } from './config/loader'
 import { PgConversationRepository } from './conversation/conversation.repository'
@@ -81,6 +82,10 @@ export function buildRootContainer() {
         conversationRepository: container.get('conversationRepository'),
         messageRepository: container.get('conversationMessageRepository'),
         defaultModel: config.model.defaultModel,
+        autoSpeakerSelector: new LlmAutoSpeakerSelector(
+          container.get('model'),
+          config.model.defaultModel,
+        ),
       })
     })
     .registerClass('characterService', CharacterService, [

@@ -1,4 +1,5 @@
 import type {
+  AutoSpeakerSelectorPort,
   ChatCharacterContextResolverPort,
   ChatModelPort,
 } from '@kirika-js/core/chat'
@@ -40,6 +41,7 @@ export interface ChatServiceDependencies {
   readonly conversationRepository: ConversationRepositoryPort
   readonly messageRepository: ConversationMessageRepositoryPort
   readonly defaultModel: string
+  readonly autoSpeakerSelector?: AutoSpeakerSelectorPort
 }
 
 export class ChatService {
@@ -49,6 +51,7 @@ export class ChatService {
     this.engine = new ChatEngine({
       model: deps.model,
       characterContextResolver: deps.characterContextResolver,
+      autoSpeakerSelector: deps.autoSpeakerSelector,
     })
   }
 
