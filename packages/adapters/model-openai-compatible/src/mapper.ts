@@ -55,21 +55,29 @@ function toTextContent(message: ChatModelMessage): string {
 function toUserContent(
   message: ChatModelMessage,
 ): string | OpenAI.Chat.ChatCompletionContentPart[] {
-  const hasAsset = message.content.some((part) => part.type === 'asset')
-  if (!hasAsset) {
+  const hasVisualAsset = message.content.some(
+    (part) => part.type === 'asset' && part.url,
+  )
+  if (!hasVisualAsset) {
     return toTextContent(message)
   }
-  return message.content.map((part) => {
-    if (part.type === 'text') {
-      return { type: 'text' as const, text: part.text }
-    }
-    return {
-      type: 'image_url' as const,
-      image_url: { url: part.url ?? '', detail: 'auto' as const },
-    }
-  })
+  return message.content.flatMap(
+    (part): OpenAI.Chat.ChatCompletionContentPart[] => {
+      if (part.type === 'text') {
+        return [{ type: 'text' as const, text: part.text }]
+      }
+      if (!part.url) {
+        return []
+      }
+      return [
+        {
+          type: 'image_url' as const,
+          image_url: { url: part.url, detail: 'auto' as const },
+        },
+      ]
+    },
+  )
 }
-
 export function mapFinishReason(
   reason: OpenAI.Chat.Completions.ChatCompletionChunk.Choice['finish_reason'],
 ): ChatModelFinishReason {

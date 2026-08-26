@@ -122,7 +122,7 @@ describe('OpenAI Compatible Mapper', () => {
       ])
     })
 
-    it('应该忽略 OpenAI 暂不支持的非文本内容片段', () => {
+    it('应该忽略没有 url 的资产内容片段', () => {
       const result = mapMessages([
         {
           role: 'user',
@@ -147,6 +147,45 @@ describe('OpenAI Compatible Mapper', () => {
           role: 'user',
           name: undefined,
           content: '图片如下',
+        },
+      ])
+    })
+
+    it('应该将带 url 的图片资产转换为 vision image_url', () => {
+      const result = mapMessages([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: '图片如下',
+            },
+            {
+              type: 'asset',
+              assetId: AssetId.generate(),
+              mediaType: 'image/png',
+              modality: 'image',
+              altText: '示例图',
+              url: 'https://example.com/image.png',
+            },
+          ],
+        },
+      ])
+
+      expect(result).toEqual([
+        {
+          role: 'user',
+          name: undefined,
+          content: [
+            { type: 'text', text: '图片如下' },
+            {
+              type: 'image_url',
+              image_url: {
+                url: 'https://example.com/image.png',
+                detail: 'auto',
+              },
+            },
+          ],
         },
       ])
     })
