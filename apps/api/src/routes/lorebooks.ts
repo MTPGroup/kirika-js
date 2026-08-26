@@ -6,7 +6,12 @@ import { describeRoute } from 'hono-openapi'
 import { problemDetailsResponseJsonSchema } from 'hono-problem-details/openapi-json-schema'
 import { z } from 'zod'
 import type { AppEnv } from '../container'
-import { idParamSchema, jsonRequest, sessionSecurity } from '../http/openapi'
+import {
+  idParamSchema,
+  jsonRequest,
+  listQuerySchema,
+  sessionSecurity,
+} from '../http/openapi'
 import { problems, validationProblemHook } from '../http/problems'
 import { lorebookToJson } from '../lorebook/serialize'
 
@@ -47,6 +52,34 @@ const settingsSchema = z.object({
 })
 
 export function mountLorebookRoutes(app: Hono<AppEnv>): void {
+  app.get(
+    '/lorebooks',
+    describeRoute({
+      tags: ['Lorebooks'],
+      summary: '世界书列表',
+      security: sessionSecurity,
+      responses: {
+        200: { description: '世界书分页列表。' },
+        401: problemDetailsResponseJsonSchema(401, '未登录'),
+      },
+    }),
+    zValidator('query', listQuerySchema, validationProblemHook()),
+    async (c) => {
+      const session = await c.var.di.get('auth').api.getSession({
+        headers: c.req.raw.headers,
+      })
+      if (!session) {
+        throw problems.create('UNAUTHORIZED', { detail: '未登录' })
+      }
+
+      const { limit, offset } = c.req.valid('query')
+      const result = await c.var.di
+        .get('lorebookRepository')
+        .listByOwner(session.user.id, limit, offset)
+      return c.json(result)
+    },
+  )
+
   app.post(
     '/lorebooks',
     describeRoute({

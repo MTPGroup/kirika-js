@@ -3,7 +3,7 @@ import type {
   ConversationId,
   ConversationRepositoryPort,
 } from '@kirika-js/core/domain/conversation'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import {
   conversationParticipants,
   conversations,
@@ -72,5 +72,25 @@ export class PgConversationRepository implements ConversationRepositoryPort {
 
   async delete(id: ConversationId): Promise<void> {
     await this.db.delete(conversations).where(eq(conversations.id, id.value))
+  }
+
+  async listByOwner(ownerId: string, limit: number, offset: number) {
+    const rows = await this.db
+      .select({
+        id: conversations.id,
+        title: conversations.title,
+        mode: conversations.mode,
+        status: conversations.status,
+        createdAt: conversations.createdAt,
+        updatedAt: conversations.updatedAt,
+      })
+      .from(conversations)
+      .where(eq(conversations.ownerId, ownerId))
+      .orderBy(desc(conversations.updatedAt))
+      .limit(limit + 1)
+      .offset(offset)
+
+    const hasMore = rows.length > limit
+    return { items: rows.slice(0, limit), hasMore }
   }
 }

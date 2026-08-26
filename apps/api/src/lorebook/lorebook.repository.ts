@@ -3,7 +3,7 @@ import type {
   LorebookId,
   LorebookRepositoryPort,
 } from '@kirika-js/core/domain/lorebook'
-import { and, eq, notInArray, sql } from 'drizzle-orm'
+import { and, desc, eq, ilike, notInArray, sql } from 'drizzle-orm'
 import {
   lorebookEntries,
   lorebookRevisions,
@@ -105,5 +105,51 @@ export class PgLorebookRepository implements LorebookRepositoryPort {
 
   async delete(id: LorebookId): Promise<void> {
     await this.db.delete(lorebooks).where(eq(lorebooks.id, id.value))
+  }
+
+  async listByOwner(ownerId: string, limit: number, offset: number) {
+    const rows = await this.db
+      .select({
+        id: lorebooks.id,
+        name: lorebooks.name,
+        description: lorebooks.description,
+        visibility: lorebooks.visibility,
+        createdAt: lorebooks.createdAt,
+        updatedAt: lorebooks.updatedAt,
+      })
+      .from(lorebooks)
+      .where(eq(lorebooks.ownerId, ownerId))
+      .orderBy(desc(lorebooks.updatedAt))
+      .limit(limit + 1)
+      .offset(offset)
+
+    const hasMore = rows.length > limit
+    return { items: rows.slice(0, limit), hasMore }
+  }
+  async listPublic(limit: number, offset: number, query?: string) {
+    const where = query
+      ? and(
+          eq(lorebooks.visibility, 'public'),
+          ilike(lorebooks.name, `%${query}%`),
+        )
+      : eq(lorebooks.visibility, 'public')
+
+    const rows = await this.db
+      .select({
+        id: lorebooks.id,
+        name: lorebooks.name,
+        description: lorebooks.description,
+        visibility: lorebooks.visibility,
+        createdAt: lorebooks.createdAt,
+        updatedAt: lorebooks.updatedAt,
+      })
+      .from(lorebooks)
+      .where(where)
+      .orderBy(desc(lorebooks.updatedAt))
+      .limit(limit + 1)
+      .offset(offset)
+
+    const hasMore = rows.length > limit
+    return { items: rows.slice(0, limit), hasMore }
   }
 }

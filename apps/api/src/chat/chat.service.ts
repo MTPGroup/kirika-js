@@ -23,6 +23,15 @@ export interface SendMessageInput {
   readonly content: MessageContent
   readonly model?: string
   readonly signal?: AbortSignal
+  readonly speakerParticipantId?: ConversationParticipantId
+}
+
+export interface GenerateInput {
+  readonly conversation: Conversation
+  readonly history: readonly ConversationMessage[]
+  readonly model?: string
+  readonly signal?: AbortSignal
+  readonly speakerParticipantId?: ConversationParticipantId
 }
 
 export interface ChatServiceDependencies {
@@ -56,13 +65,27 @@ export class ChatService {
     await this.deps.conversationRepository.save(input.conversation)
 
     const history = [...input.history, humanMessage]
+
+    return yield* this.generate({
+      conversation: input.conversation,
+      history,
+      model: input.model,
+      signal: input.signal,
+      speakerParticipantId: input.speakerParticipantId,
+    })
+  }
+
+  async *generate(
+    input: GenerateInput,
+  ): AsyncGenerator<ChatEngineEvent, ChatTerminalEvent | null, void> {
     let terminal: ChatTerminalEvent | null = null
 
     for await (const event of this.engine.generateTurn({
       conversation: input.conversation,
-      history,
+      history: input.history,
       model: input.model?.trim() || this.deps.defaultModel,
       signal: input.signal,
+      speakerParticipantId: input.speakerParticipantId,
     })) {
       yield event
 
