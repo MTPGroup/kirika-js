@@ -1,0 +1,39 @@
+{
+  "name": "@kirika-js/adapter-character-card-external",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MTPGroup/kirika-js.git",
+    "directory": "packages/adapters/character-card-external"
+  },
+  "homepage": "https://github.com/MTPGroup/kirika-js/tree/master/packages/adapters/character-card-external#readme",
+  "scripts": {
+    "build": "tsdown",
+    "check-types": "tsc --noEmit",
+    "dev": "tsdown --watch"
+  },
+  "dependencies": {
+    "@character-foundry/character-foundry": "^0.5.0",
+    "@kirika-js/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@kirika-js/typescript-config": "workspace:*",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.mts"
+}

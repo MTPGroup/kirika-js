@@ -1,0 +1,9 @@
+{
+  "extends": "@kirika-js/typescript-config/bundler.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

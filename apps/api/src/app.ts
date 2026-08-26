@@ -16,9 +16,11 @@ import { type AppEnv, buildRootContainer } from './container'
 import { mountApiDocumentation } from './http/docs'
 import { problems } from './http/problems'
 import { log } from './lib/logger'
+import { mountAssetRoutes } from './routes/assets'
 import { mountAuth } from './routes/auth'
 import { mountCharacterRoutes } from './routes/characters'
 import { mountChatRoutes } from './routes/chat'
+import { mountDiscoverRoutes } from './routes/discover'
 import { mountLorebookRoutes } from './routes/lorebooks'
 
 export function createApp() {
@@ -27,6 +29,7 @@ export function createApp() {
   const app = new Hono<AppEnv>()
   const api = new Hono<AppEnv>()
   const authRoutes = new Hono<AppEnv>()
+
   app.use('*', requestId())
   app.use('*', secureHeaders())
   app.use(
@@ -85,17 +88,14 @@ export function createApp() {
   app.onError((err, c) => {
     const status =
       err instanceof ProblemDetailsError ? err.problemDetails.status : 500
-
     const logger = c.var.logger
       .withError(err)
       .withMetadata({ statusCode: status })
-
     if (status >= 500) {
       logger.error('Request error')
     } else {
       logger.warn('Request rejected')
     }
-
     return problemHandler(err, c)
   })
 
@@ -144,8 +144,10 @@ export function createApp() {
 
   mountAuth(authRoutes)
   api.route('/auth', authRoutes)
+  mountAssetRoutes(api)
   mountChatRoutes(api)
   mountCharacterRoutes(api)
+  mountDiscoverRoutes(api)
   mountLorebookRoutes(api)
 
   app.route('/api', api)

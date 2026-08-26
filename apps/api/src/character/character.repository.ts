@@ -93,4 +93,32 @@ export class PgCharacterRepository implements CharacterRepositoryPort {
   async delete(id: CharacterId): Promise<void> {
     await this.db.delete(characters).where(eq(characters.id, id.value))
   }
+
+  async listByOwner(ownerId: string, limit: number, offset: number) {
+    const rows = await this.db.query.characters.findMany({
+      where: { ownerId },
+      with: {
+        currentRevision: true,
+        revisions: true,
+      },
+      orderBy: (fields, { desc }) => desc(fields.updatedAt),
+      limit: limit + 1,
+      offset,
+    })
+
+    const hasMore = rows.length > limit
+    const items = rows.slice(0, limit).map((row) => ({
+      id: row.id,
+      alias: row.alias,
+      name:
+        row.currentRevision?.name ??
+        row.revisions.find((revision) => revision.isDraft)?.name ??
+        null,
+      currentRevisionId: row.currentRevisionId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }))
+
+    return { items, hasMore }
+  }
 }
