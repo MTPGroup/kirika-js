@@ -46,9 +46,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Update npm for trusted publishing
-        run: npm install --global npm@latest
-
       - name: Check formatting and linting
         run: pnpm format-and-lint
 
