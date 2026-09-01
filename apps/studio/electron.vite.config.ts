@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'electron-vite'
 import VueRouter from 'vue-router/vite'
+import pkg from './package.json' with { type: 'json' }
 
 const srcDir = resolve(import.meta.dirname, 'src')
 
@@ -22,6 +23,10 @@ export default defineConfig({
     },
   },
   renderer: {
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      __ELECTRON_VERSION__: JSON.stringify(pkg.devDependencies.electron),
+    },
     resolve: {
       alias: {
         '@renderer': resolve(import.meta.dirname, 'src/renderer/src'),

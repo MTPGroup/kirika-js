@@ -4,7 +4,8 @@ import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import appIcon from '../../../../../resources/icon.png'
 
-const version = '0.1.0'
+const version = __APP_VERSION__
+const electronVersion = __ELECTRON_VERSION__.replace('^', '')
 </script>
 
 <template>
@@ -19,7 +20,7 @@ const version = '0.1.0'
       <div class="grid w-full grid-cols-2 gap-3">
         <div class="rounded-xl border p-3">
           <p class="text-xs text-muted-foreground">Electron</p>
-          <p class="mt-1 text-sm font-medium">43.4.1</p>
+          <p class="mt-1 text-sm font-medium">{{ electronVersion }}</p>
         </div>
         <div class="rounded-xl border p-3">
           <p class="text-xs text-muted-foreground">License</p>
