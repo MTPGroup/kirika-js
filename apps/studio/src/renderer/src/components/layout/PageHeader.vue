@@ -10,9 +10,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <header
-    class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-  >
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
     <div class="flex min-w-0 items-start gap-3.5">
       <div
         v-if="props.icon"
@@ -49,10 +47,7 @@ const props = defineProps<{
       </div>
     </div>
 
-    <div
-      v-if="$slots.actions"
-      class="flex shrink-0 flex-wrap items-center gap-2"
-    >
+    <div v-if="$slots.actions" class="flex shrink-0 flex-wrap items-center gap-2">
       <slot name="actions" />
     </div>
   </header>

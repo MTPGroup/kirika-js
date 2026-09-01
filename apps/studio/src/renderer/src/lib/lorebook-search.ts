@@ -42,10 +42,8 @@ export function searchLorebooks<T extends SearchableLorebook>(
       const scoreDifference = right.score - left.score
       if (scoreDifference !== 0) return scoreDifference
 
-      const updatedDifference =
-        Date.parse(right.item.updatedAt) - Date.parse(left.item.updatedAt)
-      if (Number.isFinite(updatedDifference) && updatedDifference !== 0)
-        return updatedDifference
+      const updatedDifference = Date.parse(right.item.updatedAt) - Date.parse(left.item.updatedAt)
+      if (Number.isFinite(updatedDifference) && updatedDifference !== 0) return updatedDifference
 
       const nameDifference = left.item.name.localeCompare(right.item.name)
       return nameDifference !== 0 ? nameDifference : left.index - right.index
@@ -54,11 +52,7 @@ export function searchLorebooks<T extends SearchableLorebook>(
 }
 
 export function normalizeSearchText(value: string): string {
-  return value
-    .normalize('NFKC')
-    .toLocaleLowerCase()
-    .replace(/\s+/gu, ' ')
-    .trim()
+  return value.normalize('NFKC').toLocaleLowerCase().replace(/\s+/gu, ' ').trim()
 }
 
 export function tokenizeSearchQuery(query: string): string[] {
@@ -84,8 +78,7 @@ function containsWordPrefix(value: string, term: string): boolean {
 function hasCloseWord(value: string, term: string): boolean {
   if (!/^[\p{Letter}\p{Number}]+$/u.test(term) || term.length < 4) return false
   return words(value).some(
-    (word) =>
-      Math.abs(word.length - term.length) <= 1 && isWithinOneEdit(word, term),
+    (word) => Math.abs(word.length - term.length) <= 1 && isWithinOneEdit(word, term),
   )
 }
 
@@ -115,9 +108,7 @@ function isWithinOneEdit(left: string, right: string): boolean {
       rightIndex += 1
     }
   }
-  return (
-    edits + Number(leftIndex < left.length || rightIndex < right.length) <= 1
-  )
+  return edits + Number(leftIndex < left.length || rightIndex < right.length) <= 1
 }
 
 export type SearchableLorebookSummary = Pick<

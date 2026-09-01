@@ -17,8 +17,7 @@ interface CredentialCipher {
 const electronCipher: CredentialCipher = {
   isAvailable: () => safeStorage.isEncryptionAvailable(),
   isSecureBackend: () =>
-    process.platform !== 'linux' ||
-    safeStorage.getSelectedStorageBackend() !== 'basic_text',
+    process.platform !== 'linux' || safeStorage.getSelectedStorageBackend() !== 'basic_text',
   encrypt: (value) => safeStorage.encryptString(value),
   decrypt: (value) => safeStorage.decryptString(value),
 }
@@ -92,22 +91,14 @@ export class ProviderCredentialStore {
 
   private async read(): Promise<CredentialFile> {
     try {
-      const parsed = JSON.parse(
-        await readFile(this.filePath, 'utf8'),
-      ) as Partial<CredentialFile>
+      const parsed = JSON.parse(await readFile(this.filePath, 'utf8')) as Partial<CredentialFile>
       return {
         version: 1,
         credentials:
-          parsed.credentials && typeof parsed.credentials === 'object'
-            ? parsed.credentials
-            : {},
+          parsed.credentials && typeof parsed.credentials === 'object' ? parsed.credentials : {},
       }
     } catch (error) {
-      if (
-        error instanceof Error &&
-        'code' in error &&
-        error.code === 'ENOENT'
-      ) {
+      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
         return { version: 1, credentials: {} }
       }
       throw error

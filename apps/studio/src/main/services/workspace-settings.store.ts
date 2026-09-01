@@ -28,8 +28,7 @@ interface WorkspaceManifest {
   providers: StoredProvider[]
 }
 
-interface LegacyWorkspaceManifest
-  extends Omit<WorkspaceManifest, 'version' | 'providers'> {
+interface LegacyWorkspaceManifest extends Omit<WorkspaceManifest, 'version' | 'providers'> {
   version?: 1 | 2
   providers?: LegacyStoredProvider[]
 }
@@ -49,14 +48,9 @@ export class WorkspaceSettingsStore {
     const filePath = join(workspaceDir, 'workspace.json')
     let raw: LegacyWorkspaceManifest
     try {
-      raw = JSON.parse(
-        await readFile(filePath, 'utf8'),
-      ) as LegacyWorkspaceManifest
+      raw = JSON.parse(await readFile(filePath, 'utf8')) as LegacyWorkspaceManifest
     } catch (error) {
-      if (
-        !(error instanceof Error && 'code' in error && error.code === 'ENOENT')
-      )
-        throw error
+      if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error
       raw = {
         version: 2,
         name: name?.trim() || 'Kirika Workspace',
@@ -91,9 +85,7 @@ export class WorkspaceSettingsStore {
   }
 
   async listProviders(): Promise<readonly ProviderDto[]> {
-    return await Promise.all(
-      this.data.providers.map((value) => this.toProviderDto(value)),
-    )
+    return await Promise.all(this.data.providers.map((value) => this.toProviderDto(value)))
   }
 
   getProvider(id: string): StoredProvider | null {

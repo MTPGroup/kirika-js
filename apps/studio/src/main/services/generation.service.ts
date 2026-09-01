@@ -1,13 +1,7 @@
 import { OpenAICompatibleChatModel } from '@kirika-js/adapter-model-openai-compatible'
 import { ChatEngine } from '@kirika-js/core/chat'
-import {
-  CharacterId,
-  CharacterRevisionId,
-} from '@kirika-js/core/domain/character'
-import {
-  ConversationId,
-  ConversationParticipantId,
-} from '@kirika-js/core/domain/conversation'
+import { CharacterId, CharacterRevisionId } from '@kirika-js/core/domain/character'
+import { ConversationId, ConversationParticipantId } from '@kirika-js/core/domain/conversation'
 import type { WebContents } from 'electron'
 import type {
   AbortGenerationInput,
@@ -40,10 +34,7 @@ interface Task {
 class GenerationService {
   private readonly tasks = new Map<string, Task>()
   private readonly pendingAborts = new Set<string>()
-  start(
-    input: StartGenerationInput,
-    owner: WebContents,
-  ): Promise<StartGenerationResult> {
+  start(input: StartGenerationInput, owner: WebContents): Promise<StartGenerationResult> {
     return this.startInternal(input, owner)
   }
   async startTest(
@@ -76,11 +67,7 @@ class GenerationService {
     const stored = runtime.settings.getProvider(input.providerId)
     if (!stored?.enabled) throw new Error('Provider 不存在或未启用')
     const apiKey = await runtime.settings.getProviderApiKey(stored.id)
-    if (
-      [...this.tasks.values()].some(
-        (t) => t.conversationId === input.conversationId,
-      )
-    )
+    if ([...this.tasks.values()].some((t) => t.conversationId === input.conversationId))
       throw new Error('该会话已有生成任务')
     this.sendPreparing(owner, requestId, 'conversation')
     const conversation = await runtime.conversationRepository.findById(
@@ -96,8 +83,7 @@ class GenerationService {
         const revision = character?.findRevision(
           new CharacterRevisionId(participant.characterRevisionId?.value ?? ''),
         )
-        if (!revision || revision.isDraft)
-          throw new Error('正式生成只能使用已发布角色版本')
+        if (!revision || revision.isDraft) throw new Error('正式生成只能使用已发布角色版本')
       }
     }
     if ('characterId' in input && 'characterRevisionId' in input) {
@@ -158,8 +144,7 @@ class GenerationService {
       this.pendingAborts.add(input.requestId)
       return
     }
-    if (owner && task.ownerId !== owner.id)
-      throw new Error('不能取消其他窗口的生成任务')
+    if (owner && task.ownerId !== owner.id) throw new Error('不能取消其他窗口的生成任务')
     task.controller.abort()
   }
   async abortByOwner(owner: WebContents | number): Promise<void> {
@@ -171,9 +156,7 @@ class GenerationService {
     )
   }
   async abortAll(): Promise<void> {
-    await Promise.all(
-      [...this.tasks.keys()].map((requestId) => this.abort({ requestId })),
-    )
+    await Promise.all([...this.tasks.keys()].map((requestId) => this.abort({ requestId })))
   }
   private async consume(
     requestId: string,
@@ -182,17 +165,13 @@ class GenerationService {
     conversation: NonNullable<
       Awaited<
         ReturnType<
-          ReturnType<
-            typeof studioRuntime.requireActive
-          >['conversationRepository']['findById']
+          ReturnType<typeof studioRuntime.requireActive>['conversationRepository']['findById']
         >
       >
     >,
     history: Awaited<
       ReturnType<
-        ReturnType<
-          typeof studioRuntime.requireActive
-        >['messageRepository']['findPathToRoot']
+        ReturnType<typeof studioRuntime.requireActive>['messageRepository']['findPathToRoot']
       >
     >,
     engine: ChatEngine,
@@ -238,31 +217,19 @@ class GenerationService {
                 seed: event.request.seed,
               },
             } satisfies GenerationEvent)
-          await runtime.conversationUnitOfWork.startGeneration(
-            conversation,
-            event.message,
-          )
-        } else if (
-          event.type === 'text_delta' ||
-          event.type === 'content_part'
-        ) {
-          charactersSinceCheckpoint +=
-            event.type === 'text_delta' ? event.delta.length : 1
+          await runtime.conversationUnitOfWork.startGeneration(conversation, event.message)
+        } else if (event.type === 'text_delta' || event.type === 'content_part') {
+          charactersSinceCheckpoint += event.type === 'text_delta' ? event.delta.length : 1
           if (
             Date.now() - lastCheckpointAt >= CHECKPOINT_INTERVAL_MS ||
             charactersSinceCheckpoint >= CHECKPOINT_CHARACTER_COUNT
           ) {
-            await runtime.conversationUnitOfWork.checkpointGeneration(
-              event.message,
-            )
+            await runtime.conversationUnitOfWork.checkpointGeneration(event.message)
             lastCheckpointAt = Date.now()
             charactersSinceCheckpoint = 0
           }
         } else {
-          await runtime.conversationUnitOfWork.finishGeneration(
-            conversation,
-            event.message,
-          )
+          await runtime.conversationUnitOfWork.finishGeneration(conversation, event.message)
         }
         let payload: GenerationEvent
         if (event.type === 'started')
@@ -337,16 +304,11 @@ class GenerationService {
       }
     } catch (error) {
       const activeId = conversation.activeGenerationMessageId
-      const message = activeId
-        ? await runtime.messageRepository.findById(activeId)
-        : null
+      const message = activeId ? await runtime.messageRepository.findById(activeId) : null
       const reason = error instanceof Error ? error.message : String(error)
       if (message?.isInProgress) {
         conversation.failGeneratedMessage(message, reason)
-        await runtime.conversationUnitOfWork.finishGeneration(
-          conversation,
-          message,
-        )
+        await runtime.conversationUnitOfWork.finishGeneration(conversation, message)
       }
       if (!owner.isDestroyed())
         owner.send(generationChannels.event, {

@@ -1,17 +1,10 @@
-import type {
-  Character,
-  CharacterRevision,
-} from '@kirika-js/core/domain/character'
+import type { Character, CharacterRevision } from '@kirika-js/core/domain/character'
 import type {
   Conversation,
   ConversationMessage,
   ConversationParticipant,
 } from '@kirika-js/core/domain/conversation'
-import type {
-  Lorebook,
-  LorebookEntry,
-  LorebookRevision,
-} from '@kirika-js/core/domain/lorebook'
+import type { Lorebook, LorebookEntry, LorebookRevision } from '@kirika-js/core/domain/lorebook'
 import type {
   CharacterDto,
   CharacterRevisionDto,
@@ -28,9 +21,7 @@ import type {
   TokenUsageDto,
 } from '~/shared/ipc'
 
-export function toCharacterRevisionDto(
-  revision: CharacterRevision,
-): CharacterRevisionDto {
+export function toCharacterRevisionDto(revision: CharacterRevision): CharacterRevisionDto {
   return {
     id: revision.id.value,
     revisionNumber: revision.revisionNumber,
@@ -75,9 +66,7 @@ export function toCharacterDto(character: Character): CharacterDto {
   }
 }
 
-export function toCharacterSummaryDto(
-  character: Character,
-): CharacterSummaryDto {
+export function toCharacterSummaryDto(character: Character): CharacterSummaryDto {
   const display = character.currentRevision ?? character.draftRevision
   return {
     id: character.id.value,
@@ -109,9 +98,7 @@ function toLorebookEntryDto(entry: LorebookEntry): LorebookEntryDto {
     probability: entry.probability,
   }
 }
-function toLorebookRevisionDto(
-  revision: LorebookRevision,
-): LorebookRevisionDto {
+function toLorebookRevisionDto(revision: LorebookRevision): LorebookRevisionDto {
   return {
     id: revision.id.value,
     revisionNumber: revision.revisionNumber,
@@ -150,9 +137,7 @@ export function toLorebookSummaryDto(lorebook: Lorebook): LorebookSummaryDto {
   }
 }
 
-export function toParticipantDto(
-  participant: ConversationParticipant,
-): ConversationParticipantDto {
+export function toParticipantDto(participant: ConversationParticipant): ConversationParticipantDto {
   return {
     id: participant.id.value,
     type: participant.type,
@@ -176,8 +161,7 @@ export function toConversationDto(conversation: Conversation): ConversationDto {
     turnPolicy: conversation.turnPolicy,
     participants: conversation.participants.map(toParticipantDto),
     activeLeafMessageId: conversation.activeLeafMessageId?.value ?? null,
-    activeGenerationMessageId:
-      conversation.activeGenerationMessageId?.value ?? null,
+    activeGenerationMessageId: conversation.activeGenerationMessageId?.value ?? null,
     createdAt: conversation.createdAt.toISOString(),
     updatedAt: conversation.updatedAt.toISOString(),
     archivedAt: conversation.archivedAt?.toISOString() ?? null,
@@ -225,9 +209,7 @@ export function toMessageContentPartDto(
         altText: part.altText,
       }
 }
-export function toConversationMessageDto(
-  message: ConversationMessage,
-): ConversationMessageDto {
+export function toConversationMessageDto(message: ConversationMessage): ConversationMessageDto {
   return {
     id: message.id.value,
     conversationId: message.conversationId.value,

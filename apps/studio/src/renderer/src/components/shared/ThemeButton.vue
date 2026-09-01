@@ -12,11 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@renderer/components/ui/dropdown-menu'
 
-import {
-  type Appearance,
-  type CharacterTheme,
-  useThemeStore,
-} from '@renderer/stores/theme'
+import { type Appearance, type CharacterTheme, useThemeStore } from '@renderer/stores/theme'
 
 const theme = useThemeStore()
 
@@ -95,11 +91,7 @@ const characterItems: {
         :model-value="theme.characterTheme"
         @update:model-value="theme.setCharacterTheme($event as CharacterTheme)"
       >
-        <DropdownMenuRadioItem
-          v-for="item in characterItems"
-          :key="item.value"
-          :value="item.value"
-        >
+        <DropdownMenuRadioItem v-for="item in characterItems" :key="item.value" :value="item.value">
           <component :is="item.icon" />
           <span>{{ item.label }}</span>
         </DropdownMenuRadioItem>

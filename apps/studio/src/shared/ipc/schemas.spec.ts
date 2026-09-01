@@ -12,9 +12,7 @@ import {
 
 describe('Studio IPC Zod input schemas', () => {
   it('validates optional dialog input and file filters', () => {
-    expect(
-      studioInputSchemas[dialogChannels.selectDirectory].parse(undefined),
-    ).toBeUndefined()
+    expect(studioInputSchemas[dialogChannels.selectDirectory].parse(undefined)).toBeUndefined()
     expect(() =>
       studioInputSchemas[dialogChannels.selectFile].parse({
         filters: [{ name: 'JSON', extensions: [] }],
@@ -28,9 +26,7 @@ describe('Studio IPC Zod input schemas', () => {
         path: ' /tmp/workspace ',
       }),
     ).toEqual({ path: '/tmp/workspace' })
-    expect(() =>
-      studioInputSchemas[workspaceChannels.open].parse({ path: '' }),
-    ).toThrow()
+    expect(() => studioInputSchemas[workspaceChannels.open].parse({ path: '' })).toThrow()
   })
 
   it('rejects malformed providers and validates API Key mutations', () => {
@@ -54,9 +50,10 @@ describe('Studio IPC Zod input schemas', () => {
         apiKey: { action: 'clear' },
       }),
     ).toThrow()
-    expect(
-      schema.parse({ ...valid, apiKey: { action: 'replace', value: ' key ' } }),
-    ).toEqual({ ...valid, apiKey: { action: 'replace', value: 'key' } })
+    expect(schema.parse({ ...valid, apiKey: { action: 'replace', value: ' key ' } })).toEqual({
+      ...valid,
+      apiKey: { action: 'replace', value: 'key' },
+    })
     expect(() =>
       schema.parse({
         ...valid,
@@ -119,9 +116,7 @@ describe('Studio IPC Zod input schemas', () => {
 
   it('keeps null and undefined parent message semantics distinct', () => {
     const schema = studioInputSchemas[conversationChannels.sendHumanMessage]
-    expect(
-      schema.parse({ conversationId: 'c', content: 'hello' }).parentMessageId,
-    ).toBeUndefined()
+    expect(schema.parse({ conversationId: 'c', content: 'hello' }).parentMessageId).toBeUndefined()
     expect(
       schema.parse({
         conversationId: 'c',
@@ -142,9 +137,7 @@ describe('Studio IPC Zod input schemas', () => {
         },
       ],
     }
-    expect(
-      studioInputSchemas[conversationChannels.create].parse(common),
-    ).toEqual(common)
+    expect(studioInputSchemas[conversationChannels.create].parse(common)).toEqual(common)
     expect(() =>
       studioInputSchemas[conversationChannels.create].parse({
         ...common,
@@ -169,9 +162,7 @@ describe('Studio IPC Zod input schemas', () => {
       includeCharacterLorebooks: false,
       lorebookRevisionIds: ['revision'],
     }
-    expect(studioInputSchemas[generationChannels.start].parse(common)).toEqual(
-      common,
-    )
+    expect(studioInputSchemas[generationChannels.start].parse(common)).toEqual(common)
     expect(() =>
       studioInputSchemas[generationChannels.start].parse({
         ...common,

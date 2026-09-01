@@ -3,13 +3,7 @@ import { readFile, stat } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { FilesystemObjectStorage } from '@kirika-js/adapter-storage-filesystem'
 import type { ObjectStoragePort } from '@kirika-js/core/storage'
-import {
-  app,
-  BrowserWindow,
-  dialog,
-  type OpenDialogOptions,
-  protocol,
-} from 'electron'
+import { app, BrowserWindow, dialog, type OpenDialogOptions, protocol } from 'electron'
 import type { ProfileApi } from '~/shared/ipc'
 
 const PROFILE_SCHEME = 'kirika-profile'
@@ -46,10 +40,7 @@ function requireGlobalObjectStorage(): ObjectStoragePort {
 }
 
 function avatarUrl(key: string) {
-  return `${PROFILE_SCHEME}://object/${key
-    .split('/')
-    .map(encodeURIComponent)
-    .join('/')}`
+  return `${PROFILE_SCHEME}://object/${key.split('/').map(encodeURIComponent).join('/')}`
 }
 
 export function registerProfileProtocol(): void {
@@ -92,9 +83,7 @@ export const profileService: ProfileApi = {
     const options: OpenDialogOptions = {
       title: '选择头像',
       properties: ['openFile'],
-      filters: [
-        { name: '图片', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] },
-      ],
+      filters: [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }],
     }
     const focusedWindow = BrowserWindow.getFocusedWindow()
     const result = focusedWindow
@@ -106,8 +95,7 @@ export const profileService: ProfileApi = {
     const extension = extname(sourcePath).toLowerCase()
     if (!allowedExtensions.has(extension)) throw new Error('不支持的头像格式')
     const sourceStat = await stat(sourcePath)
-    if (sourceStat.size > MAX_SOURCE_BYTES)
-      throw new Error('头像文件不能超过 10 MB')
+    if (sourceStat.size > MAX_SOURCE_BYTES) throw new Error('头像文件不能超过 10 MB')
 
     const content = await readFile(sourcePath)
     return {

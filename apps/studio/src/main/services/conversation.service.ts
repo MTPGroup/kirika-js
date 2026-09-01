@@ -1,8 +1,4 @@
-import {
-  AssetId,
-  CharacterId,
-  CharacterRevisionId,
-} from '@kirika-js/core/domain/character'
+import { AssetId, CharacterId, CharacterRevisionId } from '@kirika-js/core/domain/character'
 import {
   Conversation,
   ConversationId,
@@ -22,9 +18,7 @@ import { studioRuntime } from '../studio-runtime'
 
 async function load(id: string) {
   const runtime = studioRuntime.requireActive()
-  const conversation = await runtime.conversationRepository.findById(
-    new ConversationId(id),
-  )
+  const conversation = await runtime.conversationRepository.findById(new ConversationId(id))
   if (!conversation) throw new Error('会话不存在')
   return { runtime, conversation }
 }
@@ -39,9 +33,7 @@ function content(input: MessageContentInput): MessageContent {
   return typeof input === 'string'
     ? MessageContent.fromText(input)
     : MessageContent.create(
-        input.map((p) =>
-          p.type === 'text' ? p : { ...p, assetId: new AssetId(p.assetId) },
-        ),
+        input.map((p) => (p.type === 'text' ? p : { ...p, assetId: new AssetId(p.assetId) })),
       )
 }
 async function verifyCharacter(
@@ -50,13 +42,10 @@ async function verifyCharacter(
   revisionId: string,
   allowDraft = false,
 ) {
-  const character = await runtime.characterRepository.findById(
-    new CharacterId(characterId),
-  )
+  const character = await runtime.characterRepository.findById(new CharacterId(characterId))
   const revision = character?.findRevision(new CharacterRevisionId(revisionId))
   if (!revision) throw new Error('角色或固定角色版本不存在')
-  if (revision.isDraft && !allowDraft)
-    throw new Error('正式会话只能使用已发布角色版本')
+  if (revision.isDraft && !allowDraft) throw new Error('正式会话只能使用已发布角色版本')
   return revision
 }
 
@@ -67,12 +56,7 @@ async function createConversation(
   const runtime = studioRuntime.requireActive()
   const revisions = await Promise.all(
     input.characters.map((c) =>
-      verifyCharacter(
-        runtime,
-        c.characterId,
-        c.characterRevisionId,
-        allowDraft,
-      ),
+      verifyCharacter(runtime, c.characterId, c.characterRevisionId, allowDraft),
     ),
   )
   const ownerId = new UserId(runtime.settings.ownerId)
@@ -90,8 +74,7 @@ async function createConversation(
       }),
     ),
   ]
-  const mode =
-    input.mode ?? (input.characters.length === 1 ? 'direct' : 'group')
+  const mode = input.mode ?? (input.characters.length === 1 ? 'direct' : 'group')
   const conversation = Conversation.create({
     ownerId,
     mode,
@@ -111,10 +94,7 @@ async function createConversation(
         MessageContent.fromText(greeting),
         null,
       )
-      await runtime.conversationUnitOfWork.createWithMessage(
-        conversation,
-        message,
-      )
+      await runtime.conversationUnitOfWork.createWithMessage(conversation, message)
       return toConversationDto(conversation)
     }
   }
@@ -130,18 +110,12 @@ export const conversationService: ConversationApi = {
       values
         .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
         .map(async (v) =>
-          toConversationSummaryDto(
-            v,
-            await runtime.messageRepository.countByConversation(v.id),
-          ),
+          toConversationSummaryDto(v, await runtime.messageRepository.countByConversation(v.id)),
         ),
     )
   },
   createConversation(input) {
-    return createConversation(
-      { ...input, allowDraftCharacterRevision: false },
-      false,
-    )
+    return createConversation({ ...input, allowDraftCharacterRevision: false }, false)
   },
   createTestConversation(input) {
     return createConversation(input, input.allowDraftCharacterRevision)
@@ -159,9 +133,9 @@ export const conversationService: ConversationApi = {
       : conversation.activeLeafMessageId
     if (!leaf) return { path: [] }
     return {
-      path: (
-        await runtime.messageRepository.findPathToRoot(conversation.id, leaf)
-      ).map(toConversationMessageDto),
+      path: (await runtime.messageRepository.findPathToRoot(conversation.id, leaf)).map(
+        toConversationMessageDto,
+      ),
     }
   },
   async deleteConversation(input) {
@@ -190,9 +164,7 @@ export const conversationService: ConversationApi = {
     conversation.addParticipant(
       ConversationParticipant.createCharacter({
         characterId: new CharacterId(input.participant.characterId),
-        characterRevisionId: new CharacterRevisionId(
-          input.participant.characterRevisionId,
-        ),
+        characterRevisionId: new CharacterRevisionId(input.participant.characterRevisionId),
         displayName: input.participant.displayName,
       }),
     )
@@ -200,9 +172,7 @@ export const conversationService: ConversationApi = {
   },
   async removeConversationParticipant(input) {
     const { runtime, conversation } = await load(input.conversationId)
-    conversation.removeParticipant(
-      new ConversationParticipantId(input.participantId),
-    )
+    conversation.removeParticipant(new ConversationParticipantId(input.participantId))
     return save(runtime, conversation)
   },
   async renameConversationParticipant(input) {
@@ -225,14 +195,8 @@ export const conversationService: ConversationApi = {
         : input.parentMessageId
           ? new ConversationMessageId(input.parentMessageId)
           : null
-    const parent = parentId
-      ? await runtime.messageRepository.findById(parentId)
-      : null
-    const message = conversation.createHumanMessage(
-      author.id,
-      content(input.content),
-      parent,
-    )
+    const parent = parentId ? await runtime.messageRepository.findById(parentId) : null
+    const message = conversation.createHumanMessage(author.id, content(input.content), parent)
     await runtime.conversationUnitOfWork.appendMessage(conversation, message)
     return toConversationMessageDto(message)
   },
@@ -241,10 +205,7 @@ export const conversationService: ConversationApi = {
     const id = new ConversationMessageId(input.leafMessageId)
     const message = await runtime.messageRepository.findById(id)
     if (!message) throw new Error('消息不存在')
-    conversation.selectMessageBranch(
-      message,
-      await runtime.messageRepository.hasChildren(id),
-    )
+    conversation.selectMessageBranch(message, await runtime.messageRepository.hasChildren(id))
     return save(runtime, conversation)
   },
   async archiveConversation(input) {

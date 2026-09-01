@@ -46,22 +46,14 @@ describe('WorkspaceSettingsStore provider credentials', () => {
     const store = await WorkspaceSettingsStore.open(directory, credentials)
 
     expect(await store.getProviderApiKey('provider')).toBe('legacy-secret')
-    expect(
-      await readFile(join(directory, 'workspace.json'), 'utf8'),
-    ).not.toContain('legacy-secret')
-    expect(await readFile(credentialsPath, 'utf8')).not.toContain(
-      'legacy-secret',
-    )
+    expect(await readFile(join(directory, 'workspace.json'), 'utf8')).not.toContain('legacy-secret')
+    expect(await readFile(credentialsPath, 'utf8')).not.toContain('legacy-secret')
     expect((await store.listProviders())[0]?.hasApiKey).toBe(true)
   })
 
   it('supports explicit replace, retain, and clear operations', async () => {
     const { directory, credentials } = await setup()
-    const store = await WorkspaceSettingsStore.open(
-      directory,
-      credentials,
-      'Test',
-    )
+    const store = await WorkspaceSettingsStore.open(directory, credentials, 'Test')
     const created = await store.saveProvider({
       name: 'Provider',
       baseUrl: 'https://example.com/v1',
@@ -91,11 +83,7 @@ describe('WorkspaceSettingsStore provider credentials', () => {
 
   it('rejects sending a retained key to a changed Base URL', async () => {
     const { directory, credentials } = await setup()
-    const store = await WorkspaceSettingsStore.open(
-      directory,
-      credentials,
-      'Test',
-    )
+    const store = await WorkspaceSettingsStore.open(directory, credentials, 'Test')
     const created = await store.saveProvider({
       name: 'Provider',
       baseUrl: 'https://example.com/v1',
@@ -116,11 +104,7 @@ describe('WorkspaceSettingsStore provider credentials', () => {
 
   it('persists enabled changes and deletes provider credentials', async () => {
     const { directory, credentials } = await setup()
-    const store = await WorkspaceSettingsStore.open(
-      directory,
-      credentials,
-      'Test',
-    )
+    const store = await WorkspaceSettingsStore.open(directory, credentials, 'Test')
     const created = await store.saveProvider({
       name: 'Provider',
       baseUrl: 'https://example.com/v1',
@@ -148,11 +132,7 @@ describe('WorkspaceSettingsStore provider credentials', () => {
 
   it('rejects retain for a new provider', async () => {
     const { directory, credentials } = await setup()
-    const store = await WorkspaceSettingsStore.open(
-      directory,
-      credentials,
-      'Test',
-    )
+    const store = await WorkspaceSettingsStore.open(directory, credentials, 'Test')
 
     await expect(
       store.saveProvider({

@@ -10,7 +10,7 @@
     ]
   },
   "formatter": {
-    "lineWidth": 80
+    "lineWidth": 100
   },
   "css": {
     "parser": {

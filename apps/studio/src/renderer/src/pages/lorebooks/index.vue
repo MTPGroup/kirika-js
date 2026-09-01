@@ -105,17 +105,11 @@ const metadata = reactive({
 })
 
 const books = computed(() => studio.lorebooks)
-const draftRevision = computed(() =>
-  book.value?.revisions.find((revision) => revision.isDraft),
-)
+const draftRevision = computed(() => book.value?.revisions.find((revision) => revision.isDraft))
 const currentRevision = computed(() =>
-  book.value?.revisions.find(
-    (revision) => revision.id === book.value?.currentRevisionId,
-  ),
+  book.value?.revisions.find((revision) => revision.id === book.value?.currentRevisionId),
 )
-const selectedEntry = computed(
-  () => entries.value[selectedEntryIndex.value] ?? null,
-)
+const selectedEntry = computed(() => entries.value[selectedEntryIndex.value] ?? null)
 const deleteDialogOpen = computed({
   get: () => pendingDelete.value !== null,
   set: (open) => {
@@ -263,9 +257,7 @@ function entryInput(value: EntryDraft): LorebookEntryInput {
     content: value.content.trim(),
     position: value.position,
     insertionDepth:
-      value.position === 'at_depth'
-        ? positiveInteger(value.insertionDepth, '插入深度')
-        : 0,
+      value.position === 'at_depth' ? positiveInteger(value.insertionDepth, '插入深度') : 0,
     priority: Number(value.priority),
     matchMode: value.matchMode,
     caseSensitive: value.caseSensitive,
@@ -379,16 +371,13 @@ async function confirmDelete() {
     </p>
     <div class="mt-6 flex items-center justify-between gap-3">
       <div class="relative w-full max-w-xs">
-        <Search
-          class="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
-          :size="15"
-        />
+        <Search class="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground" :size="15" />
         <Input v-model="query" class="pl-9" placeholder="搜索世界书…" />
       </div>
-      <span class="text-xs text-muted-foreground"
-        >{{ filtered.length }}
-        本世界书</span
-      >
+      <span class="text-xs text-muted-foreground">
+        {{ filtered.length }}
+        本世界书
+      </span>
     </div>
 
     <div v-if="filtered.length" class="mt-5 space-y-3">
@@ -402,45 +391,41 @@ async function confirmDelete() {
         >
           <BookMarked :size="20" />
         </div>
-        <button
-          type="button"
-          class="min-w-0 flex-1 text-left"
-          @click="openEditor(item)"
-        >
+        <button type="button" class="min-w-0 flex-1 text-left" @click="openEditor(item)">
           <div class="flex flex-wrap items-center gap-2">
             <h3 class="truncate text-sm font-semibold">{{ item.name }}</h3>
-            <Badge variant="outline"
-              >{{ item.visibility === 'private' ? '私有' : item.visibility === 'unlisted' ? '不公开' : '公开' }}</Badge
-            ><Badge v-if="item.draftRevisionId" variant="soft"
-              ><Clock :size="12" />草稿</Badge
-            ><Badge v-else variant="success"><Check :size="12" />已发布</Badge>
+            <Badge variant="outline">
+              {{ item.visibility === 'private' ? '私有' : item.visibility === 'unlisted' ? '不公开' : '公开' }}
+            </Badge>
+            <Badge v-if="item.draftRevisionId" variant="soft"> <Clock :size="12" />草稿 </Badge>
+            <Badge v-else variant="success"> <Check :size="12" />已发布 </Badge>
           </div>
           <p class="mt-1 line-clamp-1 text-sm text-muted-foreground">
             {{ item.description || '暂无描述' }}
           </p>
           <div class="mt-2 flex gap-4 text-xs text-muted-foreground">
-            <span>{{ item.entryCount }} 条目</span
-            ><span>{{ item.revisionCount }} 个版本</span
-            ><span>{{ timeAgo(item.updatedAt) }}更新</span>
+            <span>{{ item.entryCount }} 条目</span>
+            <span>{{ item.revisionCount }} 个版本</span>
+            <span>{{ timeAgo(item.updatedAt) }}更新</span>
           </div>
         </button>
-        <DropdownMenu
-          ><DropdownMenuTrigger as-child
-            ><Button variant="ghost" size="icon-sm"
-              ><MoreVertical :size="16" /></Button
-            ></DropdownMenuTrigger
-          ><DropdownMenuContent align="end"
-            ><DropdownMenuLabel>操作</DropdownMenuLabel
-            ><DropdownMenuItem @select="openEditor(item)"
-              ><Pencil :size="14" />编辑</DropdownMenuItem
-            ><DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              @select="pendingDelete = item"
-              ><Trash2 :size="14" />删除</DropdownMenuItem
-            ></DropdownMenuContent
-          ></DropdownMenu
-        >
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button variant="ghost" size="icon-sm">
+              <MoreVertical :size="16" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>操作</DropdownMenuLabel>
+            <DropdownMenuItem @select="openEditor(item)">
+              <Pencil :size="14" />编辑
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" @select="pendingDelete = item">
+              <Trash2 :size="14" />删除
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
     <EmptyState
@@ -449,23 +434,20 @@ async function confirmDelete() {
       :icon="BookOpen"
       title="没有找到世界书"
       description="新建一本世界书来组织角色可引用的设定。"
-      ><Button @click="createLorebook"
-        ><Plus :size="15" />新建世界书</Button
-      ></EmptyState
     >
+      <Button @click="createLorebook"> <Plus :size="15" />新建世界书 </Button>
+    </EmptyState>
 
     <Sheet v-model:open="editorOpen">
       <SheetContent side="right" class="w-full overflow-y-auto sm:max-w-5xl">
-        <SheetHeader
-          ><SheetTitle>{{ book?.name || '世界书编辑器' }}</SheetTitle
-          ><SheetDescription
-            >编辑草稿并发布不可变版本，角色可绑定具体已发布版本。</SheetDescription
-          ></SheetHeader
-        >
-        <div
-          v-if="loadingEditor"
-          class="flex flex-1 items-center justify-center"
-        >
+        <SheetHeader>
+          <SheetTitle>
+            {{ book?.name || '世界书编辑器' }}
+            <Badge class="rounded-full">{{ `v${currentRevision?.revisionNumber}` }}</Badge>
+          </SheetTitle>
+          <SheetDescription>编辑草稿并发布不可变版本，角色可绑定具体已发布版本。</SheetDescription>
+        </SheetHeader>
+        <div v-if="loadingEditor" class="flex flex-1 items-center justify-center">
           <Loader2 class="animate-spin" />
         </div>
         <div
@@ -474,11 +456,8 @@ async function confirmDelete() {
         >
           <aside class="flex min-h-0 flex-col gap-3 rounded-xl border p-3">
             <div class="flex items-center justify-between">
-              <span class="text-sm font-medium"
-                >条目 · {{ entries.length }}</span
-              ><Button size="icon-sm" variant="ghost" @click="addEntry"
-                ><Plus :size="15" /></Button
-              >
+              <span class="text-sm font-medium">条目 · {{ entries.length }}</span>
+              <Button size="icon-sm" variant="ghost" @click="addEntry"><Plus :size="15" /></Button>
             </div>
             <div class="space-y-1 overflow-y-auto">
               <button
@@ -504,15 +483,17 @@ async function confirmDelete() {
                 <Input v-model="metadata.name" />
               </div>
               <div class="space-y-1.5">
-                <span class="text-sm font-medium">可见性</span
-                ><Select v-model="metadata.visibility"
-                  ><SelectTrigger><SelectValue /></SelectTrigger
-                  ><SelectContent
-                    ><SelectItem value="private">私有</SelectItem
-                    ><SelectItem value="unlisted">不公开</SelectItem
-                    ><SelectItem value="public">公开</SelectItem></SelectContent
-                  ></Select
-                >
+                <span class="text-sm font-medium">可见性</span>
+                <Select v-model="metadata.visibility">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="private">私有</SelectItem>
+                    <SelectItem value="unlisted">不公开</SelectItem>
+                    <SelectItem value="public">公开</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div class="space-y-1.5 sm:col-span-2">
                 <span class="text-sm font-medium">描述</span>
@@ -520,33 +501,23 @@ async function confirmDelete() {
               </div>
               <div class="space-y-1.5">
                 <span class="text-sm font-medium">扫描最近消息数</span>
-                <Input
-                  v-model="metadata.scanDepth"
-                  type="number"
-                  min="1"
-                  max="1000"
-                />
+                <Input v-model="metadata.scanDepth" type="number" min="1" max="1000" />
               </div>
               <div class="space-y-1.5">
                 <span class="text-sm font-medium">Token 预算</span>
                 <Input v-model="metadata.tokenBudget" type="number" min="1" />
               </div>
             </section>
-            <section
-              v-if="selectedEntry"
-              class="space-y-4 rounded-xl border p-4"
-            >
+            <section v-if="selectedEntry" class="space-y-4 rounded-xl border p-4">
               <div class="flex items-center justify-between gap-3">
-                <Input
-                  v-model="selectedEntry.title"
-                  class="max-w-md font-medium"
-                />
+                <Input v-model="selectedEntry.title" class="max-w-md font-medium" />
                 <div class="flex gap-1">
-                  <Button variant="ghost" size="icon-sm" @click="duplicateEntry"
-                    ><CopyPlus :size="15" /></Button
-                  ><Button variant="ghost" size="icon-sm" @click="removeEntry"
-                    ><Trash2 :size="15" /></Button
-                  >
+                  <Button variant="ghost" size="icon-sm" @click="duplicateEntry">
+                    <CopyPlus :size="15" />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" @click="removeEntry">
+                    <Trash2 :size="15" />
+                  </Button>
                 </div>
               </div>
               <div class="grid gap-3 sm:grid-cols-2">
@@ -560,10 +531,7 @@ async function confirmDelete() {
                 </div>
                 <div class="space-y-1.5">
                   <span class="text-sm font-medium">次要关键词</span>
-                  <Input
-                    v-model="selectedEntry.secondaryKeys"
-                    :disabled="selectedEntry.constant"
-                  />
+                  <Input v-model="selectedEntry.secondaryKeys" :disabled="selectedEntry.constant" />
                 </div>
               </div>
               <div class="space-y-1.5">
@@ -572,17 +540,17 @@ async function confirmDelete() {
               </div>
               <div class="grid gap-3 sm:grid-cols-3">
                 <div class="space-y-1.5">
-                  <span class="text-sm font-medium">位置</span
-                  ><Select v-model="selectedEntry.position"
-                    ><SelectTrigger><SelectValue /></SelectTrigger
-                    ><SelectContent
-                      ><SelectItem value="before_history">历史之前</SelectItem
-                      ><SelectItem value="after_history">历史之后</SelectItem
-                      ><SelectItem value="at_depth"
-                        >指定深度</SelectItem
-                      ></SelectContent
-                    ></Select
-                  >
+                  <span class="text-sm font-medium">位置</span>
+                  <Select v-model="selectedEntry.position">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="before_history">历史之前</SelectItem>
+                      <SelectItem value="after_history">历史之后</SelectItem>
+                      <SelectItem value="at_depth">指定深度</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div class="space-y-1.5">
                   <span class="text-sm font-medium">插入深度</span>
@@ -598,45 +566,39 @@ async function confirmDelete() {
                   <Input v-model="selectedEntry.priority" type="number" />
                 </div>
                 <div class="space-y-1.5">
-                  <span class="text-sm font-medium">关键词规则</span
-                  ><Select v-model="selectedEntry.matchMode"
-                    ><SelectTrigger><SelectValue /></SelectTrigger
-                    ><SelectContent
-                      ><SelectItem value="any">命中任意</SelectItem
-                      ><SelectItem value="all"
-                        >全部命中</SelectItem
-                      ></SelectContent
-                    ></Select
-                  >
+                  <span class="text-sm font-medium">关键词规则</span>
+                  <Select v-model="selectedEntry.matchMode">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">命中任意</SelectItem>
+                      <SelectItem value="all">全部命中</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div class="space-y-1.5">
                   <span class="text-sm font-medium">触发概率 %</span>
-                  <Input
-                    v-model="selectedEntry.probability"
-                    type="number"
-                    min="0"
-                    max="100"
-                  />
+                  <Input v-model="selectedEntry.probability" type="number" min="0" max="100" />
                 </div>
               </div>
               <div class="grid gap-3 sm:grid-cols-2">
-                <span
-                  class="flex items-center justify-between rounded-lg border p-3 text-sm"
-                  >启用
-                  <Switch v-model="selectedEntry.enabled" /></span
-                ><span
-                  class="flex items-center justify-between rounded-lg border p-3 text-sm"
-                  >常驻条目
-                  <Switch v-model="selectedEntry.constant" /></span
-                ><span
-                  class="flex items-center justify-between rounded-lg border p-3 text-sm"
-                  >区分大小写
-                  <Switch v-model="selectedEntry.caseSensitive" /></span
-                ><span
-                  class="flex items-center justify-between rounded-lg border p-3 text-sm"
-                  >完整单词匹配
-                  <Switch v-model="selectedEntry.matchWholeWords" /></span
-                >
+                <span class="flex items-center justify-between rounded-lg border p-3 text-sm">
+                  启用
+                  <Switch v-model="selectedEntry.enabled" />
+                </span>
+                <span class="flex items-center justify-between rounded-lg border p-3 text-sm">
+                  常驻条目
+                  <Switch v-model="selectedEntry.constant" />
+                </span>
+                <span class="flex items-center justify-between rounded-lg border p-3 text-sm">
+                  区分大小写
+                  <Switch v-model="selectedEntry.caseSensitive" />
+                </span>
+                <span class="flex items-center justify-between rounded-lg border p-3 text-sm">
+                  完整单词匹配
+                  <Switch v-model="selectedEntry.matchWholeWords" />
+                </span>
               </div>
             </section>
             <div
@@ -654,38 +616,32 @@ async function confirmDelete() {
           </main>
         </div>
         <SheetFooter class="border-t">
-          <Button
-            variant="outline"
-            :disabled="saving || publishing"
-            @click="saveLorebook"
-            ><Loader2 v-if="saving" class="animate-spin" :size="15" />
-            <Check v-else :size="15" />保存草稿</Button
-          ><Button :disabled="saving || publishing" @click="publish"
-            ><Loader2 v-if="publishing" class="animate-spin" :size="15" />
-            <Send v-else :size="15" />发布版本</Button
-          ></SheetFooter
-        >
+          <Button variant="outline" :disabled="saving || publishing" @click="saveLorebook">
+            <Loader2 v-if="saving" class="animate-spin" :size="15" />
+            <Check v-else :size="15" />保存草稿
+          </Button>
+          <Button :disabled="saving || publishing" @click="publish">
+            <Loader2 v-if="publishing" class="animate-spin" :size="15" />
+            <Send v-else :size="15" />发布版本
+          </Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
 
-    <AlertDialog v-model:open="deleteDialogOpen"
-      ><AlertDialogContent
-        ><AlertDialogHeader
-          ><AlertDialogTitle>删除 {{ pendingDelete?.name }}？</AlertDialogTitle
-          ><AlertDialogDescription
-            >世界书的全部版本和条目都将永久删除。</AlertDialogDescription
-          ></AlertDialogHeader
-        ><AlertDialogFooter
-          ><AlertDialogCancel :disabled="deleting">取消</AlertDialogCancel
-          ><Button
-            variant="destructive"
-            :disabled="deleting"
-            @click="confirmDelete"
-            ><Loader2 v-if="deleting" class="animate-spin" :size="15" />
-            {{ deleting ? '删除中…' : '确认删除' }}</Button
-          ></AlertDialogFooter
-        ></AlertDialogContent
-      ></AlertDialog
-    >
+    <AlertDialog v-model:open="deleteDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle> 删除 {{ pendingDelete?.name }}？ </AlertDialogTitle>
+          <AlertDialogDescription> 世界书的全部版本和条目都将永久删除。 </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel :disabled="deleting"> 取消 </AlertDialogCancel>
+          <Button variant="destructive" :disabled="deleting" @click="confirmDelete">
+            <Loader2 v-if="deleting" class="animate-spin" :size="15" />
+            {{ deleting ? '删除中…' : '确认删除' }}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>

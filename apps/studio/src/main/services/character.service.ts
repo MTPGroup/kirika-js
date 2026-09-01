@@ -17,20 +17,9 @@ import {
   CharacterRevisionAsset,
   CharacterRevisionId,
 } from '@kirika-js/core/domain/character'
-import {
-  Lorebook,
-  LorebookEntry,
-  LorebookRevisionId,
-} from '@kirika-js/core/domain/lorebook'
-import type {
-  CharacterApi,
-  CharacterDto,
-  LorebookEntryInput,
-} from '~/shared/ipc'
-import {
-  toCharacterDto,
-  toCharacterSummaryDto,
-} from '../mappers/ipc-dto.mapper'
+import { Lorebook, LorebookEntry, LorebookRevisionId } from '@kirika-js/core/domain/lorebook'
+import type { CharacterApi, CharacterDto, LorebookEntryInput } from '~/shared/ipc'
+import { toCharacterDto, toCharacterSummaryDto } from '../mappers/ipc-dto.mapper'
 import { studioRuntime } from '../studio-runtime'
 import { showOpenDialog, showSaveDialog } from './dialog.service'
 
@@ -68,9 +57,7 @@ const jsonCodec: CharacterCardCodec = {
         JSON.stringify(
           card,
           (_key, value) =>
-            value instanceof Uint8Array
-              ? { $bytes: Buffer.from(value).toString('base64') }
-              : value,
+            value instanceof Uint8Array ? { $bytes: Buffer.from(value).toString('base64') } : value,
           2,
         ),
       ),
@@ -101,17 +88,12 @@ function toImportedLorebookEntry(value: LorebookEntryInput): LorebookEntry {
   )
 }
 
-type CharacterService = Omit<
-  CharacterApi,
-  'importCharacterCard' | 'exportCharacterCard'
-> &
+type CharacterService = Omit<CharacterApi, 'importCharacterCard' | 'exportCharacterCard'> &
   Pick<CharacterApi, 'importCharacterCard' | 'exportCharacterCard'>
 
 async function load(id: string) {
   const runtime = studioRuntime.requireActive()
-  const character = await runtime.characterRepository.findById(
-    new CharacterId(id),
-  )
+  const character = await runtime.characterRepository.findById(new CharacterId(id))
   if (!character) throw new Error('角色不存在')
   return { runtime, character }
 }
@@ -124,16 +106,11 @@ async function validateAssetReferences(
   runtime: ReturnType<typeof studioRuntime.requireActive>,
   references: readonly { assetId: string }[],
 ): Promise<void> {
-  const uniqueIds = [
-    ...new Set(references.map((reference) => reference.assetId)),
-  ]
+  const uniqueIds = [...new Set(references.map((reference) => reference.assetId))]
   const resolved = await Promise.all(
-    uniqueIds.map((assetId) =>
-      runtime.assetRepository.findById(new AssetId(assetId)),
-    ),
+    uniqueIds.map((assetId) => runtime.assetRepository.findById(new AssetId(assetId))),
   )
-  if (resolved.some((asset) => asset === null))
-    throw new Error('角色引用的资源不存在')
+  if (resolved.some((asset) => asset === null)) throw new Error('角色引用的资源不存在')
 }
 
 async function validateLorebookReferences(
@@ -209,9 +186,7 @@ export const characterService: CharacterService = {
   async createCharacter(input) {
     const runtime = studioRuntime.requireActive()
     const character = Character.create({
-      ownerId: new (await import('@kirika-js/core/domain/shared')).UserId(
-        runtime.settings.ownerId,
-      ),
+      ownerId: new (await import('@kirika-js/core/domain/shared')).UserId(runtime.settings.ownerId),
       alias: input.alias,
       initialRevision: input,
     })
@@ -225,11 +200,10 @@ export const characterService: CharacterService = {
   },
   async deleteCharacter(input) {
     const runtime = studioRuntime.requireActive()
-    const referenced = (await runtime.conversationRepository.findAll()).some(
-      (conversation) =>
-        conversation.participants.some(
-          (participant) => participant.characterId?.value === input.characterId,
-        ),
+    const referenced = (await runtime.conversationRepository.findAll()).some((conversation) =>
+      conversation.participants.some(
+        (participant) => participant.characterId?.value === input.characterId,
+      ),
     )
     if (referenced) throw new Error('角色仍被会话引用，无法删除')
     await runtime.characterRepository.delete(new CharacterId(input.characterId))
@@ -272,11 +246,7 @@ export const characterService: CharacterService = {
     const filePath = result.canceled ? null : result.filePaths[0]
     if (!filePath) return null
     const info = await stat(filePath)
-    if (
-      !info.isFile() ||
-      info.size <= 0 ||
-      info.size > MAX_EMBEDDED_ASSET_BYTES
-    )
+    if (!info.isFile() || info.size <= 0 || info.size > MAX_EMBEDDED_ASSET_BYTES)
       throw new Error('角色资源文件必须小于 25 MB')
     const data = await readFile(filePath)
     const sha256 = createHash('sha256').update(data).digest('hex')
@@ -290,12 +260,7 @@ export const characterService: CharacterService = {
         data,
         contentType: 'application/octet-stream',
       })
-      asset = Asset.create(
-        storageKey,
-        'application/octet-stream',
-        data.byteLength,
-        sha256,
-      )
+      asset = Asset.create(storageKey, 'application/octet-stream', data.byteLength, sha256)
       try {
         await runtime.assetRepository.save(asset)
       } catch (error) {
@@ -345,11 +310,7 @@ export const characterService: CharacterService = {
     const filePath = result.canceled ? null : result.filePaths[0]
     if (!filePath) throw new Error('已取消导入角色卡')
     const info = await stat(filePath)
-    if (
-      !info.isFile() ||
-      info.size <= 0 ||
-      info.size > MAX_CHARACTER_CARD_BYTES
-    )
+    if (!info.isFile() || info.size <= 0 || info.size > MAX_CHARACTER_CARD_BYTES)
       throw new Error('角色卡文件必须小于 10 MB')
     const imported = await characterCardService.importCard(
       {
@@ -367,8 +328,7 @@ export const characterService: CharacterService = {
     try {
       content = await toCharacterRevisionContent(imported.card, {
         async importAsset(card) {
-          if (!card.data)
-            throw new Error(`角色卡资源“${card.name}”没有嵌入数据`)
+          if (!card.data) throw new Error(`角色卡资源“${card.name}”没有嵌入数据`)
           if (card.data.byteLength > MAX_EMBEDDED_ASSET_BYTES)
             throw new Error(`角色卡资源“${card.name}”超过 25 MB`)
           const sha256 = createHash('sha256').update(card.data).digest('hex')
@@ -399,48 +359,33 @@ export const characterService: CharacterService = {
           const lorebook = Lorebook.create(
             card.name ?? `${imported.card.name} 世界书`,
             card.description ?? '',
-            new (await import('@kirika-js/core/domain/shared')).UserId(
-              runtime.settings.ownerId,
-            ),
+            new (await import('@kirika-js/core/domain/shared')).UserId(runtime.settings.ownerId),
           )
           const draft = lorebook.draftRevision
           if (!draft) throw new Error('导入世界书未创建草稿')
-          lorebook.replaceRevisionEntries(
-            draft.id,
-            card.entries.map(toImportedLorebookEntry),
-          )
+          lorebook.replaceRevisionEntries(draft.id, card.entries.map(toImportedLorebookEntry))
           lorebook.publishRevision(draft.id)
           importedLorebooks.push(lorebook)
           return draft.id
         },
       })
     } catch (error) {
-      await Promise.allSettled(
-        writtenAssetKeys.map((key) => runtime.objectStorage.delete(key)),
-      )
+      await Promise.allSettled(writtenAssetKeys.map((key) => runtime.objectStorage.delete(key)))
       throw error
     }
     const character = Character.create({
-      ownerId: new (await import('@kirika-js/core/domain/shared')).UserId(
-        runtime.settings.ownerId,
-      ),
+      ownerId: new (await import('@kirika-js/core/domain/shared')).UserId(runtime.settings.ownerId),
       initialRevision: content,
     })
     try {
-      for (const asset of importedAssets)
-        await runtime.assetRepository.save(asset)
-      for (const lorebook of importedLorebooks)
-        await runtime.lorebookRepository.save(lorebook)
+      for (const asset of importedAssets) await runtime.assetRepository.save(asset)
+      for (const lorebook of importedLorebooks) await runtime.lorebookRepository.save(lorebook)
       return await save(runtime, character)
     } catch (error) {
       await Promise.allSettled([
         ...writtenAssetKeys.map((key) => runtime.objectStorage.delete(key)),
-        ...importedAssets.map((asset) =>
-          runtime.assetRepository.delete(asset.id),
-        ),
-        ...importedLorebooks.map((lorebook) =>
-          runtime.lorebookRepository.delete(lorebook.id),
-        ),
+        ...importedAssets.map((asset) => runtime.assetRepository.delete(asset.id)),
+        ...importedLorebooks.map((lorebook) => runtime.lorebookRepository.delete(lorebook.id)),
       ])
       throw error
     }
@@ -452,12 +397,9 @@ export const characterService: CharacterService = {
       : (character.currentRevision ?? character.draftRevision)
     if (!revision) throw new Error('角色版本不存在')
     const lorebookRevisions = new Map(
-      (
-        await studioRuntime.requireActive().lorebookRepository.findAll()
-      ).flatMap((book) =>
+      (await studioRuntime.requireActive().lorebookRepository.findAll()).flatMap((book) =>
         book.revisions.map(
-          (lorebookRevision) =>
-            [lorebookRevision.id.value, { book, lorebookRevision }] as const,
+          (lorebookRevision) => [lorebookRevision.id.value, { book, lorebookRevision }] as const,
         ),
       ),
     )

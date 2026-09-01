@@ -10,9 +10,7 @@ const studio = useStudioStore()
 const isMacOS = window.platform === 'darwin'
 
 async function switchWorkspace() {
-  const selected = await studio.execute(() =>
-    api.selectDirectory({ title: '切换 Workspace' }),
-  )
+  const selected = await studio.execute(() => api.selectDirectory({ title: '切换 Workspace' }))
   if (selected?.path) await studio.openWorkspace(selected.path)
 }
 </script>
@@ -28,15 +26,8 @@ async function switchWorkspace() {
     <div v-else class="w-3 shrink-0" />
 
     <div class="flex min-w-0 items-center gap-3">
-      <img
-        v-if="!isMacOS"
-        :src="appIcon"
-        alt=""
-        class="size-5 shrink-0 object-contain"
-      >
-      <span class="shrink-0 text-sm font-semibold text-foreground">
-        Kirika Studio
-      </span>
+      <img v-if="!isMacOS" :src="appIcon" alt="" class="size-5 shrink-0 object-contain">
+      <span class="shrink-0 text-sm font-semibold text-foreground"> Kirika Studio </span>
     </div>
 
     <!-- right -->

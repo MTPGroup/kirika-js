@@ -16,10 +16,7 @@ export class StudioApiError extends Error {
   }
 }
 
-export async function invoke<T>(
-  channel: PreloadChannel,
-  input?: unknown,
-): Promise<T> {
+export async function invoke<T>(channel: PreloadChannel, input?: unknown): Promise<T> {
   const response =
     input === undefined
       ? await ipcRenderer.invoke(channel)

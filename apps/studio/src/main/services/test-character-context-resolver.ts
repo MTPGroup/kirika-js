@@ -8,16 +8,11 @@ import {
   CharacterRevision,
   type CharacterRevisionId,
 } from '@kirika-js/core/domain/character'
-import {
-  type LorebookRevision,
-  LorebookRevisionId,
-} from '@kirika-js/core/domain/lorebook'
+import { type LorebookRevision, LorebookRevisionId } from '@kirika-js/core/domain/lorebook'
 import type { GenerationContextOverrideDto } from '~/shared/ipc'
 import type { StudioRuntime } from '../studio-runtime'
 
-export class TestCharacterContextResolver
-  implements ChatCharacterContextResolverPort
-{
+export class TestCharacterContextResolver implements ChatCharacterContextResolverPort {
   constructor(
     private readonly runtime: StudioRuntime,
     private readonly override: GenerationContextOverrideDto,
@@ -27,8 +22,7 @@ export class TestCharacterContextResolver
     characterId: CharacterId,
     characterRevisionId: CharacterRevisionId,
   ): Promise<ResolvedChatCharacterContext | null> {
-    const character =
-      await this.runtime.characterRepository.findById(characterId)
+    const character = await this.runtime.characterRepository.findById(characterId)
     const revision = character?.findRevision(characterRevisionId)
     if (!revision) return null
 

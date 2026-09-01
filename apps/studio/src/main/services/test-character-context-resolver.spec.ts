@@ -15,14 +15,7 @@ function setup() {
   const firstDraft = first.draftRevision
   if (!firstDraft) throw new Error('missing draft')
   first.replaceRevisionEntries(firstDraft.id, [
-    LorebookEntry.create(
-      ['forest'],
-      'Forest',
-      true,
-      '角色绑定内容',
-      'before_history',
-      0,
-    ),
+    LorebookEntry.create(['forest'], 'Forest', true, '角色绑定内容', 'before_history', 0),
   ])
   first.publishRevision(firstDraft.id)
 
@@ -30,14 +23,7 @@ function setup() {
   const secondDraft = second.draftRevision
   if (!secondDraft) throw new Error('missing draft')
   second.replaceRevisionEntries(secondDraft.id, [
-    LorebookEntry.create(
-      ['moon'],
-      'Moon',
-      true,
-      '测试附加内容',
-      'after_history',
-      0,
-    ),
+    LorebookEntry.create(['moon'], 'Moon', true, '测试附加内容', 'after_history', 0),
   ])
   second.publishRevision(secondDraft.id)
 
@@ -73,12 +59,10 @@ describe('TestCharacterContextResolver', () => {
       character.id,
       character.draftRevision?.id as CharacterRevisionId,
     )
-    expect(resolved?.lorebooks.map((item) => item.id.value)).toEqual([
+    expect(resolved?.lorebooks.map((item) => item.id.value)).toEqual([secondDraft.id.value])
+    expect(resolved?.revision.lorebooks.map((item) => item.lorebookRevisionId.value)).toEqual([
       secondDraft.id.value,
     ])
-    expect(
-      resolved?.revision.lorebooks.map((item) => item.lorebookRevisionId.value),
-    ).toEqual([secondDraft.id.value])
   })
 
   it('merges character bindings with selected versions and rejects missing versions', async () => {
@@ -99,10 +83,7 @@ describe('TestCharacterContextResolver', () => {
       new TestCharacterContextResolver(runtime, {
         includeCharacterLorebooks: false,
         lorebookRevisionIds: ['99999999-9999-4999-8999-999999999999'],
-      }).resolve(
-        character.id,
-        character.draftRevision?.id as CharacterRevisionId,
-      ),
+      }).resolve(character.id, character.draftRevision?.id as CharacterRevisionId),
     ).rejects.toThrow('测试世界书版本不存在')
   })
 })

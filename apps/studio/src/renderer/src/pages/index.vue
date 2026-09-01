@@ -1,13 +1,5 @@
 <script setup lang="ts">
-import {
-  BookOpen,
-  Bot,
-  FolderOpen,
-  MessageCircle,
-  Plus,
-  Settings2,
-  User,
-} from '@lucide/vue'
+import { BookOpen, Bot, FolderOpen, MessageCircle, Plus, Settings2, User } from '@lucide/vue'
 import StatCard from '@renderer/components/layout/StatCard.vue'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
@@ -87,9 +79,7 @@ const stats = computed(
 <template>
   <div class="mx-auto w-full max-w-280 px-6 py-7 lg:px-8">
     <!-- Hero -->
-    <section
-      class="relative isolate min-h-90 overflow-hidden rounded-3xl border bg-card"
-    >
+    <section class="relative isolate min-h-90 overflow-hidden rounded-3xl border bg-card">
       <WorkspaceHeroBackground />
 
       <div
@@ -102,9 +92,7 @@ const stats = computed(
         aria-hidden="true"
       />
 
-      <div
-        class="relative flex min-h-90 items-center px-6 py-9 sm:px-10 lg:px-14"
-      >
+      <div class="relative flex min-h-90 items-center px-6 py-9 sm:px-10 lg:px-14">
         <div class="flex w-full max-w-2xl flex-col gap-6">
           <div class="flex flex-col gap-4">
             <div class="flex flex-wrap items-center gap-2">
@@ -119,18 +107,12 @@ const stats = computed(
             </div>
 
             <div class="flex flex-col gap-2.5">
-              <h1
-                class="max-w-xl text-2xl font-semibold tracking-tight text-balance sm:text-3xl"
-              >
+              <h1 class="max-w-xl text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
                 欢迎回到
-                <span class="text-primary"
-                  >{{ workspaceState.workspaceName }}</span
-                >
+                <span class="text-primary">{{ workspaceState.workspaceName }}</span>
               </h1>
 
-              <p
-                class="max-w-xl text-sm leading-6 text-pretty text-muted-foreground sm:text-base"
-              >
+              <p class="max-w-xl text-sm leading-6 text-pretty text-muted-foreground sm:text-base">
                 在这里组织角色、世界书与对话。一切都保存在本地，随时离线创作。
               </p>
             </div>
@@ -186,9 +168,7 @@ const stats = computed(
             <h2 class="text-foreground text-sm font-semibold">最近角色</h2>
             <span class="text-muted-foreground flex items-center gap-1 text-xs">
               查看全部
-              <span class="transition-transform group-hover:translate-x-0.5">
-                →
-              </span>
+              <span class="transition-transform group-hover:translate-x-0.5"> → </span>
             </span>
           </div>
 
@@ -208,13 +188,10 @@ const stats = computed(
                   {{ chr.name }}
                 </p>
                 <p class="text-muted-foreground text-xs">
-                  {{ chr.alias }}
-                  · {{ timeAgo(chr.updatedAt) }}
+                  {{ chr.alias }}· {{ timeAgo(chr.updatedAt) }}
                 </p>
               </div>
-              <Badge v-if="chr.hasDraft" variant="soft" class="shrink-0"
-                >草稿</Badge
-              >
+              <Badge v-if="chr.hasDraft" variant="soft" class="shrink-0">草稿</Badge>
             </li>
           </ul>
         </div>

@@ -17,7 +17,5 @@ export const profileChannels = {
 
 export interface ProfileApi {
   selectProfileAvatar(): Promise<SelectedProfileAvatarResult>
-  saveProfileAvatar(
-    input: SaveProfileAvatarInput,
-  ): Promise<SavedProfileAvatarResult>
+  saveProfileAvatar(input: SaveProfileAvatarInput): Promise<SavedProfileAvatarResult>
 }

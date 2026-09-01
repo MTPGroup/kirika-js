@@ -65,11 +65,7 @@ export const lorebookService: LorebookApi = {
     const runtime = studioRuntime.requireActive()
     return save(
       runtime,
-      Lorebook.create(
-        input.name,
-        input.description ?? '',
-        new UserId(runtime.settings.ownerId),
-      ),
+      Lorebook.create(input.name, input.description ?? '', new UserId(runtime.settings.ownerId)),
     )
   },
   async getLorebook(input) {
@@ -80,20 +76,13 @@ export const lorebookService: LorebookApi = {
   },
   async deleteLorebook(input) {
     const runtime = studioRuntime.requireActive()
-    const lorebook = await runtime.lorebookRepository.findById(
-      new LorebookId(input.lorebookId),
-    )
+    const lorebook = await runtime.lorebookRepository.findById(new LorebookId(input.lorebookId))
     if (!lorebook) return
-    const revisionIds = new Set(
-      lorebook.revisions.map((revision) => revision.id.value),
-    )
-    const referenced = (await runtime.characterRepository.findAll()).some(
-      (character) =>
-        character.revisions.some((revision) =>
-          revision.lorebooks.some((reference) =>
-            revisionIds.has(reference.lorebookRevisionId.value),
-          ),
-        ),
+    const revisionIds = new Set(lorebook.revisions.map((revision) => revision.id.value))
+    const referenced = (await runtime.characterRepository.findAll()).some((character) =>
+      character.revisions.some((revision) =>
+        revision.lorebooks.some((reference) => revisionIds.has(reference.lorebookRevisionId.value)),
+      ),
     )
     if (referenced) throw new Error('世界书仍被角色版本引用，无法删除')
     await runtime.lorebookRepository.delete(lorebook.id)
@@ -119,14 +108,12 @@ export const lorebookService: LorebookApi = {
     if (!revision) throw new Error('世界书不存在草稿版本')
     const draftEntryIds = new Set(revision.entries.map((item) => item.id.value))
     for (const item of input.entries) {
-      if (item.id && !draftEntryIds.has(item.id))
-        throw new Error('世界书条目不属于当前草稿版本')
+      if (item.id && !draftEntryIds.has(item.id)) throw new Error('世界书条目不属于当前草稿版本')
     }
     lorebook.updateMetadata(input.name, input.description)
     lorebook.updateDraftSettings(input.scanDepth, input.tokenBudget)
     lorebook.replaceRevisionEntries(revision.id, input.entries.map(entry))
-    if (lorebook.visibility !== input.visibility)
-      lorebook.changeVisibility(input.visibility)
+    if (lorebook.visibility !== input.visibility) lorebook.changeVisibility(input.visibility)
     return save(runtime, lorebook)
   },
   async publishLorebookRevision(input) {

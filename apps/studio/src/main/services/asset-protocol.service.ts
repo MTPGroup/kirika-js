@@ -42,9 +42,7 @@ export function registerAssetProtocol(): void {
         .join('/')
       if (!storageKey) return new Response('Not found', { status: 404 })
 
-      const content = await studioRuntime
-        .requireActive()
-        .objectStorage.get(storageKey)
+      const content = await studioRuntime.requireActive().objectStorage.get(storageKey)
 
       const body = content.buffer.slice(
         content.byteOffset,
@@ -54,8 +52,7 @@ export function registerAssetProtocol(): void {
       return new Response(body, {
         headers: {
           'Content-Type':
-            contentTypes[extname(storageKey).toLowerCase()] ??
-            'application/octet-stream',
+            contentTypes[extname(storageKey).toLowerCase()] ?? 'application/octet-stream',
           'Cache-Control': 'private, max-age=31536000, immutable',
         },
       })

@@ -41,10 +41,7 @@ withDefaults(defineProps<Props>(), {
 
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-2">
-        <p
-          class="text-sm font-medium"
-          :class="done ? 'text-muted-foreground' : 'text-foreground'"
-        >
+        <p class="text-sm font-medium" :class="done ? 'text-muted-foreground' : 'text-foreground'">
           {{ title }}
         </p>
         <Badge v-if="optional" variant="soft">可选</Badge>

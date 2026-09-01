@@ -150,27 +150,13 @@ export interface CharacterApi {
   deleteCharacter(input: CharacterIdInput): Promise<void>
   updateCharacterDraft(input: UpdateCharacterDraftInput): Promise<CharacterDto>
   saveCharacterDraft(input: SaveCharacterDraftInput): Promise<CharacterDto>
-  replaceCharacterGreetings(
-    input: ReplaceCharacterGreetingsInput,
-  ): Promise<CharacterDto>
-  replaceCharacterExamples(
-    input: ReplaceCharacterExamplesInput,
-  ): Promise<CharacterDto>
-  importCharacterAsset(
-    input: ImportCharacterAssetInput,
-  ): Promise<CharacterRevisionAssetDto | null>
-  replaceCharacterAssets(
-    input: ReplaceCharacterAssetsInput,
-  ): Promise<CharacterDto>
-  replaceCharacterLorebooks(
-    input: ReplaceCharacterLorebooksInput,
-  ): Promise<CharacterDto>
+  replaceCharacterGreetings(input: ReplaceCharacterGreetingsInput): Promise<CharacterDto>
+  replaceCharacterExamples(input: ReplaceCharacterExamplesInput): Promise<CharacterDto>
+  importCharacterAsset(input: ImportCharacterAssetInput): Promise<CharacterRevisionAssetDto | null>
+  replaceCharacterAssets(input: ReplaceCharacterAssetsInput): Promise<CharacterDto>
+  replaceCharacterLorebooks(input: ReplaceCharacterLorebooksInput): Promise<CharacterDto>
   createCharacterDraft(input: CharacterIdInput): Promise<CharacterDto>
-  publishCharacterRevision(
-    input: PublishCharacterRevisionInput,
-  ): Promise<CharacterDto>
+  publishCharacterRevision(input: PublishCharacterRevisionInput): Promise<CharacterDto>
   importCharacterCard(input: ImportCharacterCardInput): Promise<CharacterDto>
-  exportCharacterCard(
-    input: ExportCharacterCardInput,
-  ): Promise<ExportCharacterCardResult>
+  exportCharacterCard(input: ExportCharacterCardInput): Promise<ExportCharacterCardResult>
 }

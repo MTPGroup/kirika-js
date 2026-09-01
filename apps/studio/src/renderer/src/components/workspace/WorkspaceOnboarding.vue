@@ -29,14 +29,10 @@ interface OnboardingStepModel {
 
 const studio = useStudioStore()
 
-const enabledProviders = computed(() =>
-  studio.providers.filter((provider) => provider.enabled),
-)
+const enabledProviders = computed(() => studio.providers.filter((provider) => provider.enabled))
 const usableCharacters = computed(() =>
   studio.characters.filter(
-    (character) =>
-      character.currentRevisionId !== null ||
-      character.draftRevisionId !== null,
+    (character) => character.currentRevisionId !== null || character.draftRevisionId !== null,
   ),
 )
 const hasCompletedGeneration = computed(() =>
@@ -96,9 +92,7 @@ const requiredSteps = computed<readonly OnboardingStepModel[]>(() => [
   {
     id: 'generation',
     title: '运行第一次生成',
-    description: hasCompletedGeneration.value
-      ? '已完成第一条角色回复'
-      : '测试角色设定和模型输出',
+    description: hasCompletedGeneration.value ? '已完成第一条角色回复' : '测试角色设定和模型输出',
     done: hasCompletedGeneration.value,
     action: '开始测试',
     to: '/tests',
@@ -113,12 +107,8 @@ const completedRequiredCount = computed(
 const requiredProgress = computed(() =>
   Math.round((completedRequiredCount.value / requiredSteps.value.length) * 100),
 )
-const nextStepId = computed(
-  () => requiredSteps.value.find((step) => !step.done)?.id,
-)
-const coreComplete = computed(
-  () => completedRequiredCount.value === requiredSteps.value.length,
-)
+const nextStepId = computed(() => requiredSteps.value.find((step) => !step.done)?.id)
+const coreComplete = computed(() => completedRequiredCount.value === requiredSteps.value.length)
 </script>
 
 <template>
@@ -139,9 +129,7 @@ const coreComplete = computed(
         </div>
         <div class="flex items-center gap-3">
           <Progress :model-value="requiredProgress" aria-label="基础设置进度" />
-          <span
-            class="w-8 text-right text-xs tabular-nums text-muted-foreground"
-          >
+          <span class="w-8 text-right text-xs tabular-nums text-muted-foreground">
             {{ requiredProgress }}%
           </span>
         </div>

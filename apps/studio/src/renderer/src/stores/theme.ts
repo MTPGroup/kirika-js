@@ -70,9 +70,7 @@ export const useThemeStore = defineStore('theme', () => {
   function syncFromStorage(event: StorageEvent) {
     if (
       event.key === APPEARANCE_STORAGE_KEY &&
-      (event.newValue === 'light' ||
-        event.newValue === 'dark' ||
-        event.newValue === 'system')
+      (event.newValue === 'light' || event.newValue === 'dark' || event.newValue === 'system')
     ) {
       appearance.value = event.newValue
       applyAppearance()
@@ -103,14 +101,9 @@ export const useThemeStore = defineStore('theme', () => {
       appearance.value = storedAppearance
     }
 
-    const storedCharacterTheme = localStorage.getItem(
-      CHARACTER_THEME_STORAGE_KEY,
-    )
+    const storedCharacterTheme = localStorage.getItem(CHARACTER_THEME_STORAGE_KEY)
 
-    if (
-      storedCharacterTheme === 'kirika' ||
-      storedCharacterTheme === 'shirabe'
-    ) {
+    if (storedCharacterTheme === 'kirika' || storedCharacterTheme === 'shirabe') {
       characterTheme.value = storedCharacterTheme
     }
 

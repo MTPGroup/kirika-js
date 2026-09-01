@@ -41,10 +41,7 @@ import { useStudioStore } from '@renderer/stores/studio'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 type Tab = 'response' | 'prompt' | 'request' | 'metrics' | 'logs'
-type TerminalEvent = Extract<
-  GenerationEvent,
-  { type: 'completed' | 'failed' | 'cancelled' }
->
+type TerminalEvent = Extract<GenerationEvent, { type: 'completed' | 'failed' | 'cancelled' }>
 interface TestRun {
   id: string
   createdAt: string
@@ -85,26 +82,17 @@ const logs = ref<string[]>([])
 const history = ref<TestRun[]>([])
 const conversationMessages = ref<readonly ConversationMessageDto[]>([])
 const compareRun = ref<TestRun | null>(null)
-const activeRunSnapshot = ref<Pick<
-  TestRun,
-  'character' | 'revision' | 'input'
-> | null>(null)
+const activeRunSnapshot = ref<Pick<TestRun, 'character' | 'revision' | 'input'> | null>(null)
 
 const selectedCharacter = computed(
-  () =>
-    characters.value.find((item) => item.id === selectedCharacterId.value) ??
-    null,
+  () => characters.value.find((item) => item.id === selectedCharacterId.value) ?? null,
 )
 const selectedRevision = computed(
   () =>
-    selectedCharacter.value?.revisions.find(
-      (item) => item.id === selectedRevisionId.value,
-    ) ?? null,
+    selectedCharacter.value?.revisions.find((item) => item.id === selectedRevisionId.value) ?? null,
 )
 const selectedProvider = computed(
-  () =>
-    studio.providers.find((item) => item.id === selectedProviderId.value) ??
-    null,
+  () => studio.providers.find((item) => item.id === selectedProviderId.value) ?? null,
 )
 const revisionOptions = computed(() =>
   [...(selectedCharacter.value?.revisions ?? [])].sort(
@@ -130,9 +118,7 @@ const lorebookRevisionOptions = computed(() =>
 const running = computed(() => generation.running)
 const output = computed(() => generation.output)
 const durationMs = computed(() =>
-  startedAt.value
-    ? Math.max(0, (finishedAt.value ?? clock.value) - startedAt.value)
-    : 0,
+  startedAt.value ? Math.max(0, (finishedAt.value ?? clock.value) - startedAt.value) : 0,
 )
 const tokenUsage = computed(() =>
   terminal.value?.type === 'completed' ? terminal.value.tokenUsage : null,
@@ -167,16 +153,10 @@ function log(message: string) {
 }
 function messageText(content: ConversationMessageDto['content']) {
   if (typeof content === 'string') return content
-  return content
-    .map((part) => (part.type === 'text' ? part.text : `[${part.type}]`))
-    .join('')
+  return content.map((part) => (part.type === 'text' ? part.text : `[${part.type}]`)).join('')
 }
 function _partText(parts: readonly { type: string; text?: string }[]) {
-  return parts
-    .map((part) =>
-      part.type === 'text' ? (part.text ?? '') : `[${part.type}]`,
-    )
-    .join('')
+  return parts.map((part) => (part.type === 'text' ? (part.text ?? '') : `[${part.type}]`)).join('')
 }
 function resetRunState() {
   request.value = null
@@ -191,8 +171,7 @@ function discardConversation() {
   const id = conversationId.value
   conversationId.value = null
   conversationMessages.value = []
-  if (id)
-    void api.deleteConversation({ conversationId: id }).catch(() => undefined)
+  if (id) void api.deleteConversation({ conversationId: id }).catch(() => undefined)
 }
 function resetConversation(reason = '配置已变化') {
   discardConversation()
@@ -208,26 +187,13 @@ onMounted(async () => {
   try {
     await studio.execute(studio.refreshResources)
     const [loadedCharacters, loadedLorebooks] = await Promise.all([
-      Promise.all(
-        studio.characters.map((item) =>
-          api.getCharacter({ characterId: item.id }),
-        ),
-      ),
-      Promise.all(
-        studio.lorebooks.map((item) =>
-          api.getLorebook({ lorebookId: item.id }),
-        ),
-      ),
+      Promise.all(studio.characters.map((item) => api.getCharacter({ characterId: item.id }))),
+      Promise.all(studio.lorebooks.map((item) => api.getLorebook({ lorebookId: item.id }))),
     ])
-    characters.value = loadedCharacters.filter(
-      (item): item is CharacterDto => item !== null,
-    )
-    lorebooks.value = loadedLorebooks.filter(
-      (item): item is LorebookDto => item !== null,
-    )
+    characters.value = loadedCharacters.filter((item): item is CharacterDto => item !== null)
+    lorebooks.value = loadedLorebooks.filter((item): item is LorebookDto => item !== null)
     selectedCharacterId.value = characters.value[0]?.id ?? ''
-    selectedProviderId.value =
-      studio.providers.find((item) => item.enabled)?.id ?? ''
+    selectedProviderId.value = studio.providers.find((item) => item.enabled)?.id ?? ''
   } finally {
     loading.value = false
   }
@@ -240,27 +206,20 @@ onBeforeUnmount(() => {
   conversationMessages.value = []
   void (async () => {
     if (running.value) await generation.abort().catch(() => undefined)
-    if (id)
-      await api
-        .deleteConversation({ conversationId: id })
-        .catch(() => undefined)
+    if (id) await api.deleteConversation({ conversationId: id }).catch(() => undefined)
   })()
 })
 
 watch(selectedCharacterId, () => {
   selectedRevisionId.value =
-    selectedCharacter.value?.currentRevisionId ??
-    selectedCharacter.value?.draftRevisionId ??
-    ''
+    selectedCharacter.value?.currentRevisionId ?? selectedCharacter.value?.draftRevisionId ?? ''
   resetConversation('角色已变化')
 })
 watch(selectedProviderId, () => {
   model.value = selectedProvider.value?.defaultModel ?? ''
   resetConversation('Provider 已变化')
 })
-watch([selectedRevisionId, includeCharacterLorebooks], () =>
-  resetConversation('生成上下文已变化'),
-)
+watch([selectedRevisionId, includeCharacterLorebooks], () => resetConversation('生成上下文已变化'))
 let processedEventCount = 0
 watch(
   () => generation.events.length,
@@ -274,10 +233,8 @@ watch(
       } else if (event.type === 'started') {
         request.value = event.request
         log(`请求已开始：${event.request.model}`)
-      } else if (event.type === 'text_delta')
-        log(`收到文本增量：${event.delta.length} 字符`)
-      else if (event.type === 'content_part')
-        log(`收到内容片段：${event.part.type}`)
+      } else if (event.type === 'text_delta') log(`收到文本增量：${event.delta.length} 字符`)
+      else if (event.type === 'content_part') log(`收到内容片段：${event.part.type}`)
       else {
         terminal.value = event
         finishedAt.value = Date.now()
@@ -293,10 +250,7 @@ watch(
           const id = generation.conversationId
           conversationId.value = null
           conversationMessages.value = []
-          if (id)
-            void api
-              .deleteConversation({ conversationId: id })
-              .catch(() => undefined)
+          if (id) void api.deleteConversation({ conversationId: id }).catch(() => undefined)
         } else void refreshConversationHistory()
       }
     }
@@ -307,23 +261,13 @@ watch(
 async function start() {
   validationError.value = ''
   if (!selectedRevision.value) validationError.value = '请选择可用的角色版本'
-  else if (!selectedProvider.value)
-    validationError.value = '请选择已启用的 Provider'
+  else if (!selectedProvider.value) validationError.value = '请选择已启用的 Provider'
   else if (!testInput.value.trim()) validationError.value = '测试消息不能为空'
-  if (
-    validationError.value ||
-    running.value ||
-    !selectedRevision.value ||
-    !selectedProvider.value
-  )
+  if (validationError.value || running.value || !selectedRevision.value || !selectedProvider.value)
     return
   const parsedTemperature = Number(temperature.value)
   const parsedMaxTokens = Number(maxTokens.value)
-  if (
-    !Number.isFinite(parsedTemperature) ||
-    parsedTemperature < 0 ||
-    parsedTemperature > 2
-  )
+  if (!Number.isFinite(parsedTemperature) || parsedTemperature < 0 || parsedTemperature > 2)
     validationError.value = 'Temperature 必须是 0 到 2 的数值'
   else if (!Number.isSafeInteger(parsedMaxTokens) || parsedMaxTokens < 1)
     validationError.value = 'Max Tokens 必须是大于 0 的整数'
@@ -337,17 +281,13 @@ async function start() {
     revision: `v${selectedRevision.value.revisionNumber}`,
     input: testInput.value.trim(),
   }
-  log(
-    `使用 ${selectedRevision.value.name} v${selectedRevision.value.revisionNumber}`,
-  )
+  log(`使用 ${selectedRevision.value.name} v${selectedRevision.value.revisionNumber}`)
   await generation.start({
     characterId: selectedCharacterId.value,
     characterRevisionId: selectedRevisionId.value,
     allowDraftCharacterRevision: selectedRevision.value.isDraft,
     cleanupConversationOnFailure: !conversationId.value,
-    conversationId: conversationMode.value
-      ? (conversationId.value ?? undefined)
-      : undefined,
+    conversationId: conversationMode.value ? (conversationId.value ?? undefined) : undefined,
     providerId: selectedProvider.value.id,
     model: model.value || selectedProvider.value.defaultModel,
     text: testInput.value.trim(),
@@ -373,8 +313,7 @@ async function refreshConversationHistory() {
 }
 function saveRun() {
   const snapshot = activeRunSnapshot.value
-  if (!startedAt.value || !snapshot || (!generation.output && !terminal.value))
-    return
+  if (!startedAt.value || !snapshot || (!generation.output && !terminal.value)) return
   history.value.unshift({
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
@@ -397,10 +336,9 @@ function clearConversation() {
 }
 function toggleLorebook(id: string) {
   if (running.value) return
-  selectedLorebookRevisionIds.value =
-    selectedLorebookRevisionIds.value.includes(id)
-      ? selectedLorebookRevisionIds.value.filter((value) => value !== id)
-      : [...selectedLorebookRevisionIds.value, id]
+  selectedLorebookRevisionIds.value = selectedLorebookRevisionIds.value.includes(id)
+    ? selectedLorebookRevisionIds.value.filter((value) => value !== id)
+    : [...selectedLorebookRevisionIds.value, id]
   resetConversation('世界书覆盖已变化')
 }
 </script>
@@ -413,10 +351,10 @@ function toggleLorebook(id: string) {
       description="用精确角色与世界书版本运行真实生成，并检查模型请求、Prompt、指标和事件。"
     >
       <template #actions>
-        <Button v-if="running" variant="destructive" @click="stop"
-          ><Square :size="15" />停止</Button
-        >
-        <Button v-else @click="start"><Play :size="15" />运行生成</Button>
+        <Button v-if="running" variant="destructive" @click="stop">
+          <Square :size="15" />停止
+        </Button>
+        <Button v-else @click="start"> <Play :size="15" />运行生成 </Button>
       </template>
     </PageHeader>
 
@@ -444,68 +382,54 @@ function toggleLorebook(id: string) {
           <h2 class="text-sm font-semibold">真实生成配置</h2>
           <div class="space-y-1.5">
             <div class="text-sm font-medium">角色</div>
-            <Select v-model="selectedCharacterId" :disabled="running"
-              ><SelectTrigger
-                ><SelectValue placeholder="选择角色" /></SelectTrigger
-              ><SelectContent
-                ><SelectItem
-                  v-for="item in characters"
-                  :key="item.id"
-                  :value="item.id"
-                  >{{ item.revisions.find((r) => r.id === (item.currentRevisionId ?? item.draftRevisionId))?.name ?? '角色' }}</SelectItem
-                ></SelectContent
-              ></Select
-            >
+            <Select v-model="selectedCharacterId" :disabled="running">
+              <SelectTrigger>
+                <SelectValue placeholder="选择角色" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="item in characters" :key="item.id" :value="item.id">
+                  {{ item.revisions.find((r) => r.id === (item.currentRevisionId ?? item.draftRevisionId))?.name ?? '角色' }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div class="space-y-1.5">
             <div class="text-sm font-medium">精确角色版本</div>
-            <Select v-model="selectedRevisionId" :disabled="running"
-              ><SelectTrigger
-                ><SelectValue placeholder="选择版本" /></SelectTrigger
-              ><SelectContent
-                ><SelectItem
+            <Select v-model="selectedRevisionId" :disabled="running">
+              <SelectTrigger>
+                <SelectValue placeholder="选择版本" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
                   v-for="revision in revisionOptions"
                   :key="revision.id"
                   :value="revision.id"
-                  >v{{ revision.revisionNumber }}
+                >
+                  v{{ revision.revisionNumber }}
                   · {{ revision.isDraft ? '草稿' : '已发布' }} ·
-                  {{ revision.name }}</SelectItem
-                ></SelectContent
-              ></Select
-            >
+                  {{ revision.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-sm font-medium">包含角色绑定世界书</span>
               <Switch v-model="includeCharacterLorebooks" :disabled="running" />
             </div>
-            <p class="text-xs text-muted-foreground">
-              关闭后仅使用下方手动选择的精确版本。
-            </p>
-            <div
-              v-if="includeCharacterLorebooks"
-              class="flex flex-wrap gap-1.5"
-            >
-              <Badge
-                v-for="id in characterBoundLorebookIds"
-                :key="id"
-                variant="outline"
-              >
+            <p class="text-xs text-muted-foreground">关闭后仅使用下方手动选择的精确版本。</p>
+            <div v-if="includeCharacterLorebooks" class="flex flex-wrap gap-1.5">
+              <Badge v-for="id in characterBoundLorebookIds" :key="id" variant="outline">
                 {{ lorebookRevisionOptions.find((item) => item.id === id)?.label ?? id }}
               </Badge>
-              <p
-                v-if="!characterBoundLorebookIds.length"
-                class="text-xs text-muted-foreground"
-              >
+              <p v-if="!characterBoundLorebookIds.length" class="text-xs text-muted-foreground">
                 当前角色版本没有已启用的世界书绑定。
               </p>
             </div>
           </div>
           <div class="space-y-2">
             <div class="text-sm font-medium">附加世界书版本</div>
-            <div
-              class="max-h-44 space-y-1 overflow-y-auto rounded-xl border p-2"
-            >
+            <div class="max-h-44 space-y-1 overflow-y-auto rounded-xl border p-2">
               <button
                 v-for="revision in lorebookRevisionOptions"
                 :key="revision.id"
@@ -515,12 +439,10 @@ function toggleLorebook(id: string) {
                 :class="selectedLorebookRevisionIds.includes(revision.id) ? 'bg-primary/10 text-primary' : ''"
                 @click="toggleLorebook(revision.id)"
               >
-                <span class="truncate">{{ revision.label }}</span
-                ><Badge
-                  v-if="selectedLorebookRevisionIds.includes(revision.id)"
-                  variant="soft"
-                  >已选择</Badge
-                >
+                <span class="truncate">{{ revision.label }}</span>
+                <Badge v-if="selectedLorebookRevisionIds.includes(revision.id)" variant="soft">
+                  已选择
+                </Badge>
               </button>
               <p
                 v-if="!lorebookRevisionOptions.length"
@@ -532,18 +454,20 @@ function toggleLorebook(id: string) {
           </div>
           <div class="space-y-1.5">
             <div class="text-sm font-medium">Provider</div>
-            <Select v-model="selectedProviderId" :disabled="running"
-              ><SelectTrigger
-                ><SelectValue placeholder="选择 Provider" /></SelectTrigger
-              ><SelectContent
-                ><SelectItem
+            <Select v-model="selectedProviderId" :disabled="running">
+              <SelectTrigger>
+                <SelectValue placeholder="选择 Provider" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
                   v-for="provider in studio.providers.filter((item) => item.enabled)"
                   :key="provider.id"
                   :value="provider.id"
-                  >{{ provider.name }}</SelectItem
-                ></SelectContent
-              ></Select
-            >
+                >
+                  {{ provider.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div class="space-y-1.5">
             <div class="text-sm font-medium">模型</div>
@@ -552,13 +476,7 @@ function toggleLorebook(id: string) {
           <div class="grid grid-cols-2 gap-3">
             <div>
               <div class="text-sm font-medium">Temperature</div>
-              <Input
-                v-model="temperature"
-                type="number"
-                min="0"
-                max="2"
-                step="0.1"
-              />
+              <Input v-model="temperature" type="number" min="0" max="2" step="0.1" />
             </div>
             <div>
               <div class="text-sm font-medium">Max Tokens</div>
@@ -567,47 +485,37 @@ function toggleLorebook(id: string) {
           </div>
           <div class="space-y-1.5">
             <div class="text-sm font-medium">测试消息</div>
-            <Textarea
-              v-model="testInput"
-              placeholder="请输入测试文本"
-              rows="6"
-            />
+            <Textarea v-model="testInput" placeholder="请输入测试文本" rows="6" />
           </div>
           <div class="flex items-center justify-between rounded-xl border p-3">
             <div>
               <p class="text-sm font-medium">连续对话</p>
-              <p class="text-xs text-muted-foreground">
-                复用同一个真实会话历史
-              </p>
+              <p class="text-xs text-muted-foreground">复用同一个真实会话历史</p>
             </div>
             <Switch v-model="conversationMode" :disabled="running" />
           </div>
-          <Button
-            v-if="conversationId"
-            variant="outline"
-            size="sm"
-            @click="clearConversation"
-            ><RotateCcw :size="14" />清空测试会话</Button
-          >
+          <Button v-if="conversationId" variant="outline" size="sm" @click="clearConversation">
+            <RotateCcw :size="14" />清空测试会话
+          </Button>
         </div>
       </aside>
 
       <Tabs v-model="activeTab" class="min-h-0 lg:w-3/5">
-        <section
-          class="flex h-full min-h-150 flex-col overflow-hidden rounded-2xl border bg-card"
-        >
+        <section class="flex h-full min-h-150 flex-col overflow-hidden rounded-2xl border bg-card">
           <div class="flex items-center gap-1 border-b p-1.5">
-            <TabsList class="h-auto bg-transparent"
-              ><TabsTrigger v-for="tab in tabs" :key="tab.id" :value="tab.id"
-                ><component :is="tab.icon" :size="14" />
-                {{ tab.label }}</TabsTrigger
-              ></TabsList
-            ><Badge
+            <TabsList class="h-auto bg-transparent">
+              <TabsTrigger v-for="tab in tabs" :key="tab.id" :value="tab.id">
+                <component :is="tab.icon" :size="14" />
+                {{ tab.label }}
+              </TabsTrigger>
+            </TabsList>
+            <Badge
               class="ml-auto"
               :variant="running ? 'default' : terminal?.type === 'failed' ? 'destructive' : 'outline'"
-              ><Activity v-if="running" :size="12" class="animate-pulse" />
-              {{ running ? '生成中' : finishLabel }}</Badge
             >
+              <Activity v-if="running" :size="12" class="animate-pulse" />
+              {{ running ? '生成中' : finishLabel }}
+            </Badge>
           </div>
           <ScrollArea class="min-h-0 flex-1">
             <div class="p-5">
@@ -622,9 +530,7 @@ function toggleLorebook(id: string) {
                   v-if="conversationMode && conversationMessages.length"
                   class="space-y-2 rounded-xl border bg-muted/20 p-3"
                 >
-                  <p class="text-xs font-semibold text-muted-foreground">
-                    真实会话历史
-                  </p>
+                  <p class="text-xs font-semibold text-muted-foreground">真实会话历史</p>
                   <div
                     v-for="message in conversationMessages"
                     :key="message.id"
@@ -632,35 +538,24 @@ function toggleLorebook(id: string) {
                     :class="message.source === 'human' ? 'ml-12 bg-primary text-primary-foreground' : 'mr-12 bg-muted'"
                   >
                     <p class="mb-1 text-[10px] uppercase opacity-70">
-                      {{ message.source }}
-                      · {{ message.status }}
+                      {{ message.source }}· {{ message.status }}
                     </p>
                     <p class="whitespace-pre-wrap">
                       {{ messageText(message.content) }}
                     </p>
                   </div>
                 </div>
-                <p
-                  v-if="output || running"
-                  class="whitespace-pre-wrap text-sm leading-7"
-                >
+                <p v-if="output || running" class="whitespace-pre-wrap text-sm leading-7">
                   {{ output }}
                   <span v-if="running" class="animate-pulse">▍</span>
                 </p>
-                <div
-                  v-if="compareRun"
-                  class="rounded-xl border border-dashed p-4"
-                >
+                <div v-if="compareRun" class="rounded-xl border border-dashed p-4">
                   <div class="mb-2 flex justify-between text-xs font-semibold">
-                    <span
-                      >对比：{{ compareRun.character }}
-                      {{ compareRun.revision }}</span
-                    ><Button
-                      size="sm"
-                      variant="ghost"
-                      @click="compareRun = null"
-                      >关闭</Button
-                    >
+                    <span>
+                      对比：{{ compareRun.character }}
+                      {{ compareRun.revision }}
+                    </span>
+                    <Button size="sm" variant="ghost" @click="compareRun = null">关闭</Button>
                   </div>
                   <p class="whitespace-pre-wrap text-xs text-muted-foreground">
                     {{ compareRun.output }}
@@ -676,12 +571,10 @@ function toggleLorebook(id: string) {
                   :key="index"
                   class="rounded-xl border p-3"
                 >
-                  <Badge variant="outline"
-                    >{{ message.role }}
-                    <template v-if="message.name">
-                      · {{ message.name }}</template
-                    ></Badge
-                  >
+                  <Badge variant="outline">
+                    {{ message.role }}
+                    <template v-if="message.name"> · {{ message.name }}</template>
+                  </Badge>
                   <pre
                     class="mt-2 whitespace-pre-wrap font-mono text-xs"
                   >{{ _partText(message.content) }}</pre>
@@ -745,12 +638,9 @@ function toggleLorebook(id: string) {
               {{ run.terminal?.type ?? 'unknown' }}
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            @click="compareRun = run; activeTab = 'response'"
-            >对比</Button
-          >
+          <Button size="sm" variant="outline" @click="compareRun = run; activeTab = 'response'">
+            对比
+          </Button>
         </div>
       </div>
       <p v-else class="mt-3 text-sm text-muted-foreground">

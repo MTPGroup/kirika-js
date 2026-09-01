@@ -30,15 +30,12 @@ describe('ProviderCredentialStore', () => {
 
   it('can remove a credential without decrypting damaged ciphertext', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'kirika-credentials-'))
-    const store = new ProviderCredentialStore(
-      join(directory, 'credentials.json'),
-      {
-        ...cipher,
-        decrypt: () => {
-          throw new Error('damaged')
-        },
+    const store = new ProviderCredentialStore(join(directory, 'credentials.json'), {
+      ...cipher,
+      decrypt: () => {
+        throw new Error('damaged')
       },
-    )
+    })
 
     await store.set('key', 'secret')
     await expect(store.get('key')).rejects.toThrow('无法解密')
@@ -48,26 +45,20 @@ describe('ProviderCredentialStore', () => {
 
   it('fails closed when secure encryption is unavailable', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'kirika-credentials-'))
-    const store = new ProviderCredentialStore(
-      join(directory, 'credentials.json'),
-      {
-        ...cipher,
-        isAvailable: () => false,
-      },
-    )
+    const store = new ProviderCredentialStore(join(directory, 'credentials.json'), {
+      ...cipher,
+      isAvailable: () => false,
+    })
 
     await expect(store.set('key', 'secret')).rejects.toThrow('安全存储')
   })
 
   it('rejects weak basic_text-style storage backends', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'kirika-credentials-'))
-    const store = new ProviderCredentialStore(
-      join(directory, 'credentials.json'),
-      {
-        ...cipher,
-        isSecureBackend: () => false,
-      },
-    )
+    const store = new ProviderCredentialStore(join(directory, 'credentials.json'), {
+      ...cipher,
+      isSecureBackend: () => false,
+    })
 
     await expect(store.set('key', 'secret')).rejects.toThrow('basic_text')
   })

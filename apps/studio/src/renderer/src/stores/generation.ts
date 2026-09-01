@@ -1,9 +1,4 @@
-import {
-  api,
-  type GenerationEvent,
-  type IpcErrorPayload,
-  toIpcError,
-} from '@renderer/services/api'
+import { api, type GenerationEvent, type IpcErrorPayload, toIpcError } from '@renderer/services/api'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useStudioStore } from './studio'
@@ -63,30 +58,25 @@ export const useGenerationStore = defineStore('generation', () => {
         existingConversation ??
         (input.characterRevisionId
           ? await api.createTestConversation({
-              ownerDisplayName:
-                localStorage.getItem('kirika-profile-name') || '我',
-              allowDraftCharacterRevision:
-                input.allowDraftCharacterRevision === true,
+              ownerDisplayName: localStorage.getItem('kirika-profile-name') || '我',
+              allowDraftCharacterRevision: input.allowDraftCharacterRevision === true,
               characters: [
                 {
                   characterId: character.id,
                   characterRevisionId: revision,
                   displayName:
-                    character.revisions.find((item) => item.id === revision)
-                      ?.name ?? '角色',
+                    character.revisions.find((item) => item.id === revision)?.name ?? '角色',
                 },
               ],
             })
           : await api.createConversation({
-              ownerDisplayName:
-                localStorage.getItem('kirika-profile-name') || '我',
+              ownerDisplayName: localStorage.getItem('kirika-profile-name') || '我',
               characters: [
                 {
                   characterId: character.id,
                   characterRevisionId: revision,
                   displayName:
-                    character.revisions.find((item) => item.id === revision)
-                      ?.name ?? '角色',
+                    character.revisions.find((item) => item.id === revision)?.name ?? '角色',
                 },
               ],
             }))
@@ -124,11 +114,9 @@ export const useGenerationStore = defineStore('generation', () => {
             contextOverride: input.contextOverride,
           })
         : await api.startGeneration(request)
-      if (result.requestId !== nextRequestId)
-        throw new Error('生成请求 ID 不一致')
+      if (result.requestId !== nextRequestId) throw new Error('生成请求 ID 不一致')
       preparing.value = false
-      if (preparationAbortRequested)
-        await api.abortGeneration({ requestId: nextRequestId })
+      if (preparationAbortRequested) await api.abortGeneration({ requestId: nextRequestId })
       void studio.refreshResources().catch(() => undefined)
     } catch (cause) {
       if (input.cleanupConversationOnFailure && createdConversationId)
@@ -158,22 +146,12 @@ export const useGenerationStore = defineStore('generation', () => {
   }
 
   function handleEvent(event: GenerationEvent) {
-    if (
-      preparationAbortRequested ||
-      !requestId.value ||
-      event.requestId !== requestId.value
-    )
-      return
+    if (preparationAbortRequested || !requestId.value || event.requestId !== requestId.value) return
     lastEvent.value = event
     events.value.push(event)
     if (event.type === 'text_delta') output.value += event.delta
-    if (event.type === 'failed')
-      error.value = { code: 'MODEL', message: event.reason }
-    if (
-      event.type === 'completed' ||
-      event.type === 'failed' ||
-      event.type === 'cancelled'
-    )
+    if (event.type === 'failed') error.value = { code: 'MODEL', message: event.reason }
+    if (event.type === 'completed' || event.type === 'failed' || event.type === 'cancelled')
       requestId.value = null
   }
 

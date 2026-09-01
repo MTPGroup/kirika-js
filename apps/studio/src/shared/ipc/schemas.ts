@@ -14,18 +14,12 @@ const id = nonEmpty
 const optionalText = z.string().optional()
 const apiKeyUpdate = z.discriminatedUnion('action', [
   z.object({ action: z.literal('retain') }).strict(),
-  z
-    .object({ action: z.literal('replace'), value: nonEmpty.max(16_384) })
-    .strict(),
+  z.object({ action: z.literal('replace'), value: nonEmpty.max(16_384) }).strict(),
   z.object({ action: z.literal('clear') }).strict(),
 ])
 const providerUrl = z.url().refine((value) => {
   const url = new URL(value)
-  return (
-    (url.protocol === 'http:' || url.protocol === 'https:') &&
-    !url.username &&
-    !url.password
-  )
+  return (url.protocol === 'http:' || url.protocol === 'https:') && !url.username && !url.password
 }, '必须是无用户凭据的 HTTP 或 HTTPS URL')
 const providerConnection = z
   .object({
@@ -62,15 +56,7 @@ const characterContent = {
 const characterAsset = z
   .object({
     assetId: id,
-    kind: z.enum([
-      'avatar',
-      'background',
-      'emotion',
-      'audio',
-      'video',
-      'model',
-      'other',
-    ]),
+    kind: z.enum(['avatar', 'background', 'emotion', 'audio', 'video', 'model', 'other']),
     name: nonEmpty.max(200),
     uri: nonEmpty.max(4096),
     ordinal: z.number().int().nonnegative().max(10_000),
@@ -126,11 +112,7 @@ const dialogOptions = z
   })
   .strict()
 const fileFilters = z
-  .array(
-    z
-      .object({ name: nonEmpty, extensions: z.array(nonEmpty).min(1).max(20) })
-      .strict(),
-  )
+  .array(z.object({ name: nonEmpty, extensions: z.array(nonEmpty).min(1).max(20) }).strict())
   .max(20)
   .optional()
 
@@ -141,9 +123,7 @@ export const studioInputSchemas = {
     })
     .strict(),
   [dialogChannels.selectDirectory]: dialogOptions.optional(),
-  [dialogChannels.selectFile]: dialogOptions
-    .extend({ filters: fileFilters })
-    .optional(),
+  [dialogChannels.selectFile]: dialogOptions.extend({ filters: fileFilters }).optional(),
   [dialogChannels.saveFile]: dialogOptions
     .extend({
       filters: fileFilters,
@@ -151,9 +131,7 @@ export const studioInputSchemas = {
     })
     .optional(),
   [workspaceChannels.open]: z.object({ path: nonEmpty }).strict(),
-  [workspaceChannels.create]: z
-    .object({ path: nonEmpty, name: optionalText })
-    .strict(),
+  [workspaceChannels.create]: z.object({ path: nonEmpty, name: optionalText }).strict(),
   [providerChannels.save]: z
     .object({
       id: id.optional(),
@@ -201,15 +179,7 @@ export const studioInputSchemas = {
   [characterChannels.importAsset]: z
     .object({
       characterId: id,
-      kind: z.enum([
-        'avatar',
-        'background',
-        'emotion',
-        'audio',
-        'video',
-        'model',
-        'other',
-      ]),
+      kind: z.enum(['avatar', 'background', 'emotion', 'audio', 'video', 'model', 'other']),
     })
     .strict(),
   [characterChannels.replaceAssets]: z
@@ -225,12 +195,8 @@ export const studioInputSchemas = {
     })
     .strict(),
   [characterChannels.createDraft]: characterId,
-  [characterChannels.publish]: z
-    .object({ characterId: id, revisionId: id })
-    .strict(),
-  [characterChannels.importCard]: z
-    .object({ formatHint: z.literal('json').optional() })
-    .strict(),
+  [characterChannels.publish]: z.object({ characterId: id, revisionId: id }).strict(),
+  [characterChannels.importCard]: z.object({ formatHint: z.literal('json').optional() }).strict(),
   [characterChannels.exportCard]: z
     .object({
       characterId: id,
@@ -238,9 +204,7 @@ export const studioInputSchemas = {
       format: z.literal('json'),
     })
     .strict(),
-  [lorebookChannels.create]: z
-    .object({ name: nonEmpty, description: optionalText })
-    .strict(),
+  [lorebookChannels.create]: z.object({ name: nonEmpty, description: optionalText }).strict(),
   [lorebookChannels.get]: lorebookId,
   [lorebookChannels.delete]: lorebookId,
   [lorebookChannels.updateMetadata]: z
@@ -264,9 +228,7 @@ export const studioInputSchemas = {
       entries: z.array(lorebookEntry).max(10_000),
     })
     .strict(),
-  [lorebookChannels.publish]: z
-    .object({ lorebookId: id, revisionId: id })
-    .strict(),
+  [lorebookChannels.publish]: z.object({ lorebookId: id, revisionId: id }).strict(),
   [conversationChannels.create]: z
     .object({
       title: z.string().nullable().optional(),
@@ -316,9 +278,7 @@ export const studioInputSchemas = {
       content: z.union([nonEmpty, z.array(messagePart).min(1)]),
     })
     .strict(),
-  [conversationChannels.selectBranch]: z
-    .object({ conversationId: id, leafMessageId: id })
-    .strict(),
+  [conversationChannels.selectBranch]: z.object({ conversationId: id, leafMessageId: id }).strict(),
   [conversationChannels.archive]: conversationId,
   [conversationChannels.restore]: conversationId,
   [generationChannels.start]: z

@@ -130,8 +130,7 @@ function openEdit(provider: ProviderDto) {
       provider.generation.maxOutputTokens == null
         ? ''
         : String(provider.generation.maxOutputTokens),
-    seed:
-      provider.generation.seed == null ? '' : String(provider.generation.seed),
+    seed: provider.generation.seed == null ? '' : String(provider.generation.seed),
     enabled: provider.enabled,
   })
   resetFeedback()
@@ -153,8 +152,7 @@ function parseNumber(
   if (!value.trim()) return undefined
   const parsed = Number(value)
   if (!Number.isFinite(parsed)) throw new Error(`${label} 必须是有效数字`)
-  if (options.integer && !Number.isInteger(parsed))
-    throw new Error(`${label} 必须是整数`)
+  if (options.integer && !Number.isInteger(parsed)) throw new Error(`${label} 必须是整数`)
   if (options.min != null && parsed < options.min)
     throw new Error(`${label} 不能小于 ${options.min}`)
   if (options.max != null && parsed > options.max)
@@ -165,14 +163,9 @@ function parseNumber(
 function validateConnection(requireModel = false) {
   if (!form.name.trim()) throw new Error('请输入显示名称')
   const url = new URL(form.baseUrl.trim())
-  if (
-    !['http:', 'https:'].includes(url.protocol) ||
-    url.username ||
-    url.password
-  )
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
     throw new Error('Base URL 必须是无用户凭据的 HTTP 或 HTTPS 地址')
-  if (requireModel && !form.defaultModel.trim())
-    throw new Error('请输入默认模型')
+  if (requireModel && !form.defaultModel.trim()) throw new Error('请输入默认模型')
 }
 
 function buildGeneration() {
@@ -306,9 +299,7 @@ async function confirmRemove() {
   }
 }
 
-const enabledCount = computed(
-  () => providers.value.filter((provider) => provider.enabled).length,
-)
+const enabledCount = computed(() => providers.value.filter((provider) => provider.enabled).length)
 </script>
 
 <template>
@@ -334,10 +325,7 @@ const enabledCount = computed(
       {{ pageError }}
     </p>
 
-    <div
-      v-if="providers.length"
-      class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2"
-    >
+    <div v-if="providers.length" class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div
         v-for="provider in providers"
         :key="provider.id"
@@ -361,43 +349,32 @@ const enabledCount = computed(
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                :aria-label="`${provider.name} 的更多操作`"
-              >
+              <Button variant="ghost" size="icon-sm" :aria-label="`${provider.name} 的更多操作`">
                 <MoreVertical :size="16" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" class="w-40">
               <DropdownMenuLabel>操作</DropdownMenuLabel>
-              <DropdownMenuItem @select="openEdit(provider)"
-                ><Pencil :size="14" />编辑</DropdownMenuItem
-              >
+              <DropdownMenuItem @select="openEdit(provider)">
+                <Pencil :size="14" />编辑
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                @select="requestRemove(provider)"
-                ><Trash2 :size="14" />删除</DropdownMenuItem
-              >
+              <DropdownMenuItem variant="destructive" @select="requestRemove(provider)">
+                <Trash2 :size="14" />删除
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
         <div class="mt-4 flex flex-wrap items-center gap-2">
-          <Badge variant="outline" class="gap-1.5"
-            ><Zap :size="12" />{{ provider.defaultModel }}</Badge
-          >
-          <Badge variant="soft" class="gap-1"
-            ><Gauge :size="12" />T
-            {{ provider.generation.temperature ?? '—' }}</Badge
-          >
-          <Badge variant="soft"
-            >{{ provider.hasApiKey ? '凭据已加密' : '无凭据' }}</Badge
-          >
+          <Badge variant="outline" class="gap-1.5">
+            <Zap :size="12" />{{ provider.defaultModel }}
+          </Badge>
+          <Badge variant="soft" class="gap-1">
+            <Gauge :size="12" />T{{ provider.generation.temperature ?? '—' }}
+          </Badge>
+          <Badge variant="soft">{{ provider.hasApiKey ? '凭据已加密' : '无凭据' }}</Badge>
         </div>
-        <div
-          class="mt-4 flex items-center justify-between border-t border-border/70 pt-4"
-        >
+        <div class="mt-4 flex items-center justify-between border-t border-border/70 pt-4">
           <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span
               :class="provider.enabled ? 'bg-success' : 'bg-muted-foreground/40'"
@@ -412,11 +389,7 @@ const enabledCount = computed(
             :disabled="togglingProviderId === provider.id"
             @click="toggleEnabled(provider)"
           >
-            <Loader2
-              v-if="togglingProviderId === provider.id"
-              class="animate-spin"
-              :size="13"
-            />
+            <Loader2 v-if="togglingProviderId === provider.id" class="animate-spin" :size="13" />
             <RefreshCw v-else :size="13" />
             {{ provider.enabled ? '停用' : '启用' }}
           </Button>
@@ -438,20 +411,15 @@ const enabledCount = computed(
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>删除 {{ pendingDelete?.name }}？</AlertDialogTitle>
-          <AlertDialogDescription
-            >模型配置和本机加密凭据都会被删除，此操作无法撤销。</AlertDialogDescription
-          >
+          <AlertDialogDescription>
+            模型配置和本机加密凭据都会被删除，此操作无法撤销。
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel :disabled="deleting" @click="pendingDelete = null"
-            >取消</AlertDialogCancel
-          >
-          <Button
-            type="button"
-            variant="destructive"
-            :disabled="deleting"
-            @click="confirmRemove"
-          >
+          <AlertDialogCancel :disabled="deleting" @click="pendingDelete = null">
+            取消
+          </AlertDialogCancel>
+          <Button type="button" variant="destructive" :disabled="deleting" @click="confirmRemove">
             <Loader2 v-if="deleting" class="animate-spin" :size="15" />
             {{ deleting ? '删除中…' : '确认删除' }}
           </Button>
@@ -463,9 +431,9 @@ const enabledCount = computed(
       <SheetContent side="right" class="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>{{ editing ? '编辑模型' : '添加模型' }}</SheetTitle>
-          <SheetDescription
-            >凭据使用操作系统安全存储加密，工作区文件不会保存明文 API Key。</SheetDescription
-          >
+          <SheetDescription>
+            凭据使用操作系统安全存储加密，工作区文件不会保存明文 API Key。
+          </SheetDescription>
         </SheetHeader>
         <form
           id="provider-form"
@@ -475,23 +443,12 @@ const enabledCount = computed(
           <div class="space-y-4">
             <div class="space-y-1.5">
               <label for="pf-name" class="text-sm font-medium">显示名称</label>
-              <Input
-                id="pf-name"
-                v-model="form.name"
-                placeholder="例如 DeepSeek"
-              />
+              <Input id="pf-name" v-model="form.name" placeholder="例如 DeepSeek" />
             </div>
             <div class="space-y-1.5">
               <label for="pf-url" class="text-sm font-medium">Base URL</label>
-              <Input
-                id="pf-url"
-                v-model="form.baseUrl"
-                placeholder="https://api.example.com/v1"
-              />
-              <p
-                v-if="form.baseUrl.startsWith('http://')"
-                class="text-xs text-amber-600"
-              >
+              <Input id="pf-url" v-model="form.baseUrl" placeholder="https://api.example.com/v1" />
+              <p v-if="form.baseUrl.startsWith('http://')" class="text-xs text-amber-600">
                 非 HTTPS 连接会明文传输请求，仅建议用于本机服务。
               </p>
             </div>
@@ -516,9 +473,7 @@ const enabledCount = computed(
             </div>
             <div class="space-y-1.5">
               <div class="flex items-center justify-between gap-3">
-                <label for="pf-model" class="text-sm font-medium"
-                  >默认模型</label
-                >
+                <label for="pf-model" class="text-sm font-medium">默认模型</label>
                 <Button
                   type="button"
                   variant="ghost"
@@ -526,11 +481,7 @@ const enabledCount = computed(
                   :disabled="loadingModels"
                   @click="loadModels"
                 >
-                  <Loader2
-                    v-if="loadingModels"
-                    class="animate-spin"
-                    :size="14"
-                  />
+                  <Loader2 v-if="loadingModels" class="animate-spin" :size="14" />
                   <RefreshCw v-else :size="14" />加载模型
                 </Button>
               </div>
@@ -541,18 +492,13 @@ const enabledCount = computed(
                 placeholder="选择或手动输入模型 ID"
               />
               <datalist id="provider-models">
-                <option
-                  v-for="model in remoteModels"
-                  :key="model.id"
-                  :value="model.id"
-                />
+                <option v-for="model in remoteModels" :key="model.id" :value="model.id" />
               </datalist>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1.5">
-                <label for="pf-temp" class="text-sm font-medium"
-                  >Temperature</label
-                ><Input
+                <label for="pf-temp" class="text-sm font-medium">Temperature</label>
+                <Input
                   id="pf-temp"
                   v-model="form.temperature"
                   type="number"
@@ -563,45 +509,21 @@ const enabledCount = computed(
               </div>
               <div class="space-y-1.5">
                 <label for="pf-topp" class="text-sm font-medium">Top P</label>
-                <Input
-                  id="pf-topp"
-                  v-model="form.topP"
-                  type="number"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                />
+                <Input id="pf-topp" v-model="form.topP" type="number" min="0" max="1" step="0.05" />
               </div>
               <div class="space-y-1.5">
-                <label for="pf-max" class="text-sm font-medium"
-                  >Max Tokens</label
-                ><Input
-                  id="pf-max"
-                  v-model="form.maxOutputTokens"
-                  type="number"
-                  min="1"
-                  step="1"
-                />
+                <label for="pf-max" class="text-sm font-medium">Max Tokens</label>
+                <Input id="pf-max" v-model="form.maxOutputTokens" type="number" min="1" step="1" />
               </div>
               <div class="space-y-1.5">
                 <label for="pf-seed" class="text-sm font-medium">Seed</label>
-                <Input
-                  id="pf-seed"
-                  v-model="form.seed"
-                  type="number"
-                  step="1"
-                  placeholder="可选"
-                />
+                <Input id="pf-seed" v-model="form.seed" type="number" step="1" placeholder="可选" />
               </div>
             </div>
-            <div
-              class="flex items-center justify-between rounded-xl border border-border p-3"
-            >
+            <div class="flex items-center justify-between rounded-xl border border-border p-3">
               <div>
                 <p class="text-sm font-medium">启用 Provider</p>
-                <p class="text-xs text-muted-foreground">
-                  启用后可在生成和功能测试中选择。
-                </p>
+                <p class="text-xs text-muted-foreground">启用后可在生成和功能测试中选择。</p>
               </div>
               <Switch v-model="form.enabled" aria-label="启用 Provider" />
             </div>
@@ -629,9 +551,9 @@ const enabledCount = computed(
             <Loader2 v-if="probing" class="animate-spin" :size="15" />
             <Zap v-else :size="15" />测试连接
           </Button>
-          <Button variant="ghost" :disabled="saving" @click="sheetOpen = false"
-            ><X :size="15" />取消</Button
-          >
+          <Button variant="ghost" :disabled="saving" @click="sheetOpen = false">
+            <X :size="15" />取消
+          </Button>
           <Button type="submit" form="provider-form" :disabled="saving">
             <Loader2 v-if="saving" class="animate-spin" :size="15" />
             <Save v-else :size="15" />{{ saving ? '保存中…' : '保存' }}

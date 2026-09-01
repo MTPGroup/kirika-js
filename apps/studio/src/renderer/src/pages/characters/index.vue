@@ -55,20 +55,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@renderer/components/ui/sheet'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@renderer/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { Textarea } from '@renderer/components/ui/textarea'
 import { initials, timeAgo } from '@renderer/lib/format'
-import {
-  api,
-  type CharacterDto,
-  type LorebookDto,
-  toIpcError,
-} from '@renderer/services/api'
+import { api, type CharacterDto, type LorebookDto, toIpcError } from '@renderer/services/api'
 import { useStudioStore } from '@renderer/stores/studio'
 import { computed, onMounted, reactive, ref, toRaw } from 'vue'
 import { toast } from 'vue-sonner'
@@ -99,9 +89,7 @@ const editorCharacter = ref<CharacterDto | null>(null)
 const greetings = ref<string[]>([])
 const examples = ref<string[]>([])
 const editorExtensions = ref<Readonly<Record<string, unknown>>>({})
-const editorAssets = ref<CharacterDto['revisions'][number]['assets'][number][]>(
-  [],
-)
+const editorAssets = ref<CharacterDto['revisions'][number]['assets'][number][]>([])
 const editorLorebooks = ref<
   Array<{ lorebookRevisionId: string; ordinal: number; enabled: boolean }>
 >([])
@@ -115,9 +103,7 @@ const characterForm = reactive({
   postHistoryInstructions: '',
 })
 
-function toPlainRecord(
-  value: Readonly<Record<string, unknown>>,
-): Record<string, unknown> {
+function toPlainRecord(value: Readonly<Record<string, unknown>>): Record<string, unknown> {
   return JSON.parse(JSON.stringify(toRaw(value))) as Record<string, unknown>
 }
 
@@ -128,9 +114,7 @@ const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   return characters.value.filter((chr) => {
     const matchesQuery =
-      !q ||
-      chr.name.toLowerCase().includes(q) ||
-      (chr.alias ?? '').toLowerCase().includes(q)
+      !q || chr.name.toLowerCase().includes(q) || (chr.alias ?? '').toLowerCase().includes(q)
     switch (filter.value) {
       case 'published':
         return matchesQuery && !chr.hasDraft && chr.currentRevisionId != null
@@ -143,11 +127,7 @@ const filtered = computed(() => {
 })
 
 const filteredLorebooks = computed(() => {
-  const terms = lorebookQuery.value
-    .trim()
-    .toLocaleLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
+  const terms = lorebookQuery.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
   if (!terms.length) return availableLorebooks.value
   return availableLorebooks.value.filter((book) => {
     const searchable = `${book.name} ${book.description}`.toLocaleLowerCase()
@@ -160,9 +140,7 @@ const filterOptions = computed(() => [
   {
     value: 'published' as Filter,
     label: '已发布',
-    count: characters.value.filter(
-      (c) => !c.hasDraft && c.currentRevisionId != null,
-    ).length,
+    count: characters.value.filter((c) => !c.hasDraft && c.currentRevisionId != null).length,
   },
   {
     value: 'draft' as Filter,
@@ -182,8 +160,7 @@ function applyCharacter(value: CharacterDto) {
   characterForm.personality = revision?.personality ?? ''
   characterForm.scenario = revision?.scenario ?? ''
   characterForm.systemPrompt = revision?.systemPrompt ?? ''
-  characterForm.postHistoryInstructions =
-    revision?.postHistoryInstructions ?? ''
+  characterForm.postHistoryInstructions = revision?.postHistoryInstructions ?? ''
   greetings.value = [...(revision?.greetings ?? [])]
   examples.value = [...(revision?.examples ?? [])]
   editorExtensions.value = structuredClone(revision?.extensions ?? {})
@@ -242,8 +219,7 @@ async function addCharacterAsset() {
       characterId: character.id,
       kind: 'other',
     })
-    if (asset)
-      editorAssets.value.push({ ...asset, ordinal: editorAssets.value.length })
+    if (asset) editorAssets.value.push({ ...asset, ordinal: editorAssets.value.length })
   } catch (error) {
     editorError.value = toIpcError(error).message
   }
@@ -344,15 +320,12 @@ async function editCharacterLorebooks(characterId: string) {
   try {
     const [character, ...books] = await Promise.all([
       api.getCharacter({ characterId }),
-      ...studio.lorebooks.map((item) =>
-        api.getLorebook({ lorebookId: item.id }),
-      ),
+      ...studio.lorebooks.map((item) => api.getLorebook({ lorebookId: item.id })),
     ])
     if (!character) throw new Error('角色不存在')
     editingCharacter.value = character
     availableLorebooks.value = books.filter(
-      (item): item is LorebookDto =>
-        item !== null && item.currentRevisionId !== null,
+      (item): item is LorebookDto => item !== null && item.currentRevisionId !== null,
     )
     const draft = character.revisions.find((item) => item.isDraft)
     selectedLorebookRevisions.value = (draft?.lorebooks ?? []).map(
@@ -366,9 +339,7 @@ async function editCharacterLorebooks(characterId: string) {
 }
 
 function toggleLorebookRevision(revisionId: string) {
-  selectedLorebookRevisions.value = selectedLorebookRevisions.value.includes(
-    revisionId,
-  )
+  selectedLorebookRevisions.value = selectedLorebookRevisions.value.includes(revisionId)
     ? selectedLorebookRevisions.value.filter((value) => value !== revisionId)
     : [...selectedLorebookRevisions.value, revisionId]
 }
@@ -385,13 +356,11 @@ async function saveCharacterLorebooks() {
     }
     await api.replaceCharacterLorebooks({
       characterId: target.id,
-      lorebooks: selectedLorebookRevisions.value.map(
-        (lorebookRevisionId, ordinal) => ({
-          lorebookRevisionId,
-          ordinal,
-          enabled: true,
-        }),
-      ),
+      lorebooks: selectedLorebookRevisions.value.map((lorebookRevisionId, ordinal) => ({
+        lorebookRevisionId,
+        ordinal,
+        enabled: true,
+      })),
     })
     lorebookDialogOpen.value = false
     await studio.refreshResources()
@@ -403,15 +372,11 @@ async function saveCharacterLorebooks() {
 }
 
 async function exportCharacterCard(characterId: string) {
-  const character = await studio.execute(() =>
-    api.getCharacter({ characterId }),
-  )
+  const character = await studio.execute(() => api.getCharacter({ characterId }))
   if (!character) return
   const revisionId = character.currentRevisionId ?? character.draftRevisionId
   if (!revisionId) return
-  const name =
-    character.revisions.find((item) => item.id === revisionId)?.name ??
-    'character'
+  const name = character.revisions.find((item) => item.id === revisionId)?.name ?? 'character'
   const result = await studio.execute(() =>
     api.exportCharacterCard({ characterId, revisionId, format: 'json' }),
   )
@@ -464,14 +429,9 @@ async function deleteCharacter() {
     </PageHeader>
 
     <!-- Toolbar -->
-    <div
-      class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
+    <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="relative w-full sm:max-w-xs">
-        <Search
-          class="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
-          :size="15"
-        />
+        <Search class="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2" :size="15" />
         <Input v-model="query" placeholder="搜索角色名或别名…" class="pl-9" />
       </div>
 
@@ -479,9 +439,9 @@ async function deleteCharacter() {
         <DropdownMenuTrigger as-child>
           <Button variant="outline" size="sm" class="justify-start gap-2">
             筛选
-            <span class="text-muted-foreground"
-              >{{ filterOptions.find((o) => o.value === filter)?.label }}</span
-            >
+            <span class="text-muted-foreground">
+              {{ filterOptions.find((o) => o.value === filter)?.label }}
+            </span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-44">
@@ -499,10 +459,7 @@ async function deleteCharacter() {
     </div>
 
     <!-- Content -->
-    <div
-      v-if="filtered.length"
-      class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"
-    >
+    <div v-if="filtered.length" class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       <div
         v-for="chr in filtered"
         :key="chr.id"
@@ -520,8 +477,7 @@ async function deleteCharacter() {
               {{ chr.name }}
             </p>
             <p class="text-muted-foreground mt-0.5 text-xs">
-              {{ chr.alias }}
-              · {{ timeAgo(chr.updatedAt) }}
+              {{ chr.alias }}· {{ timeAgo(chr.updatedAt) }}
             </p>
           </div>
 
@@ -543,15 +499,13 @@ async function deleteCharacter() {
               <DropdownMenuItem @select="editCharacterLorebooks(chr.id)">
                 <BookMarked :size="14" />管理世界书
               </DropdownMenuItem>
-              <DropdownMenuItem @select="exportCharacterCard(chr.id)"
-                ><Download :size="14" />导出卡片</DropdownMenuItem
-              >
+              <DropdownMenuItem @select="exportCharacterCard(chr.id)">
+                <Download :size="14" />导出卡片
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                @select="confirmDelete(chr.id, chr.name)"
-                ><Trash2 :size="14" />删除</DropdownMenuItem
-              >
+              <DropdownMenuItem variant="destructive" @select="confirmDelete(chr.id, chr.name)">
+                <Trash2 :size="14" />删除
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -608,16 +562,10 @@ async function deleteCharacter() {
             编辑角色草稿。发布后会生成不可变版本并可用于实际对话。
           </SheetDescription>
         </SheetHeader>
-        <div
-          v-if="editorLoading"
-          class="flex flex-1 items-center justify-center"
-        >
+        <div v-if="editorLoading" class="flex flex-1 items-center justify-center">
           <Loader2 class="animate-spin" />
         </div>
-        <div
-          v-else-if="editorCharacter"
-          class="flex min-h-0 flex-1 flex-col px-4"
-        >
+        <div v-else-if="editorCharacter" class="flex min-h-0 flex-1 flex-col px-4">
           <Tabs default-value="profile" class="min-h-0 flex-1">
             <TabsList class="w-full justify-start">
               <TabsTrigger value="profile">基础资料</TabsTrigger>
@@ -638,21 +586,15 @@ async function deleteCharacter() {
                     别名
                     <Input v-model="characterForm.alias" maxlength="200" />
                   </div>
-                  <div
-                    class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
-                  >
+                  <div class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2">
                     描述
                     <Textarea v-model="characterForm.description" rows="6" />
                   </div>
-                  <div
-                    class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
-                  >
+                  <div class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2">
                     性格
                     <Textarea v-model="characterForm.personality" rows="5" />
                   </div>
-                  <div
-                    class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
-                  >
+                  <div class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2">
                     场景
                     <Textarea v-model="characterForm.scenario" rows="5" />
                   </div>
@@ -672,10 +614,7 @@ async function deleteCharacter() {
                   </div>
                   <div class="flex flex-col gap-1.5 text-sm font-medium">
                     历史后指令
-                    <Textarea
-                      v-model="characterForm.postHistoryInstructions"
-                      rows="8"
-                    />
+                    <Textarea v-model="characterForm.postHistoryInstructions" rows="8" />
                   </div>
                 </div>
               </ScrollArea>
@@ -684,29 +623,20 @@ async function deleteCharacter() {
               <ScrollArea class="h-full">
                 <div class="flex flex-col gap-3 py-4 pr-4">
                   <div class="flex items-center justify-between">
-                    <p class="text-sm text-muted-foreground">
-                      至少添加一条问候语后才能发布。
-                    </p>
-                    <Button size="sm" variant="outline" @click="addGreeting"
-                      ><Plus :size="14" />添加问候语</Button
-                    >
+                    <p class="text-sm text-muted-foreground">至少添加一条问候语后才能发布。</p>
+                    <Button size="sm" variant="outline" @click="addGreeting">
+                      <Plus :size="14" />添加问候语
+                    </Button>
                   </div>
-                  <div
-                    v-for="(_, index) in greetings"
-                    :key="index"
-                    class="flex items-start gap-2"
-                  >
+                  <div v-for="(_, index) in greetings" :key="index" class="flex items-start gap-2">
                     <Textarea
                       v-model="greetings[index]"
                       rows="4"
                       :placeholder="`问候语 ${index + 1}`"
                     />
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      @click="greetings.splice(index, 1)"
-                      ><X :size="14" /></Button
-                    >
+                    <Button size="icon-sm" variant="ghost" @click="greetings.splice(index, 1)">
+                      <X :size="14" />
+                    </Button>
                   </div>
                   <p
                     v-if="!greetings.length"
@@ -722,29 +652,22 @@ async function deleteCharacter() {
                 <div class="flex flex-col gap-3 py-4 pr-4">
                   <div class="flex items-center justify-between">
                     <p class="text-sm text-muted-foreground">
-                      示例会进入角色提示词，可使用 &#123;&#123;user&#125;&#125;
-                      和 &#123;&#123;char&#125;&#125;。
+                      示例会进入角色提示词，可使用 &#123;&#123;user&#125;&#125; 和
+                      &#123;&#123;char&#125;&#125;。
                     </p>
-                    <Button size="sm" variant="outline" @click="addExample"
-                      ><CopyPlus :size="14" />添加示例</Button
-                    >
+                    <Button size="sm" variant="outline" @click="addExample">
+                      <CopyPlus :size="14" />添加示例
+                    </Button>
                   </div>
-                  <div
-                    v-for="(_, index) in examples"
-                    :key="index"
-                    class="flex items-start gap-2"
-                  >
+                  <div v-for="(_, index) in examples" :key="index" class="flex items-start gap-2">
                     <Textarea
                       v-model="examples[index]"
                       rows="6"
                       :placeholder="`示例 ${index + 1}`"
                     />
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      @click="examples.splice(index, 1)"
-                      ><X :size="14" /></Button
-                    >
+                    <Button size="icon-sm" variant="ghost" @click="examples.splice(index, 1)">
+                      <X :size="14" />
+                    </Button>
                   </div>
                   <p
                     v-if="!examples.length"
@@ -762,12 +685,9 @@ async function deleteCharacter() {
                     <p class="text-sm text-muted-foreground">
                       资源会随角色版本保存，并可嵌入导出的 JSON 角色卡。
                     </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      @click="addCharacterAsset"
-                      ><Upload :size="14" />添加资源</Button
-                    >
+                    <Button size="sm" variant="outline" @click="addCharacterAsset">
+                      <Upload :size="14" />添加资源
+                    </Button>
                   </div>
                   <div
                     v-for="(asset, index) in editorAssets"
@@ -779,16 +699,12 @@ async function deleteCharacter() {
                         {{ asset.name }}
                       </p>
                       <p class="truncate text-xs text-muted-foreground">
-                        {{ asset.kind }}
-                        · {{ asset.uri }}
+                        {{ asset.kind }}· {{ asset.uri }}
                       </p>
                     </div>
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      @click="editorAssets.splice(index, 1)"
-                      ><X :size="14" /></Button
-                    >
+                    <Button size="icon-sm" variant="ghost" @click="editorAssets.splice(index, 1)">
+                      <X :size="14" />
+                    </Button>
                   </div>
                   <p
                     v-if="!editorAssets.length"
@@ -812,8 +728,7 @@ async function deleteCharacter() {
                   >
                     <div class="min-w-0 flex-1">
                       <p class="truncate text-sm font-medium">
-                        v{{ revision.revisionNumber }}
-                        · {{ revision.name }}
+                        v{{ revision.revisionNumber }}· {{ revision.name }}
                       </p>
                       <p class="text-xs text-muted-foreground">
                         {{ revision.isDraft ? '草稿' : '已发布' }}
@@ -822,14 +737,15 @@ async function deleteCharacter() {
                         个资源
                       </p>
                     </div>
-                    <Badge :variant="revision.isDraft ? 'soft' : 'success'"
-                      >{{ revision.isDraft ? '草稿' : '已发布' }}</Badge
-                    >
+                    <Badge :variant="revision.isDraft ? 'soft' : 'success'">
+                      {{ revision.isDraft ? '草稿' : '已发布' }}
+                    </Badge>
                     <Badge
                       v-if="revision.id === editorCharacter.currentRevisionId"
                       variant="outline"
-                      >当前版本</Badge
                     >
+                      当前版本
+                    </Badge>
                   </div>
                 </div>
               </ScrollArea>
@@ -851,10 +767,7 @@ async function deleteCharacter() {
             <Loader2 v-if="editorSaving" class="animate-spin" :size="15" />
             <Check v-else :size="15" />保存草稿
           </Button>
-          <Button
-            :disabled="editorSaving || editorPublishing"
-            @click="publishCharacter"
-          >
+          <Button :disabled="editorSaving || editorPublishing" @click="publishCharacter">
             <Loader2 v-if="editorPublishing" class="animate-spin" :size="15" />
             <Send v-else :size="15" />发布版本
           </Button>
@@ -875,11 +788,7 @@ async function deleteCharacter() {
             class="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
             :size="15"
           />
-          <Input
-            v-model="lorebookQuery"
-            placeholder="搜索世界书名称或描述…"
-            class="pl-9"
-          />
+          <Input v-model="lorebookQuery" placeholder="搜索世界书名称或描述…" class="pl-9" />
         </div>
         <div v-if="lorebookLoading" class="flex justify-center py-10">
           <Loader2 class="animate-spin" />
@@ -895,14 +804,10 @@ async function deleteCharacter() {
           >
             <BookMarked :size="18" />
             <span class="min-w-0 flex-1">
-              <span class="block truncate text-sm font-medium"
-                >{{ book.name }}</span
-              >
+              <span class="block truncate text-sm font-medium">{{ book.name }}</span>
               <span class="block truncate text-xs text-muted-foreground">
                 v{{ book.revisions.find((revision) => revision.id === book.currentRevisionId)?.revisionNumber }}
-                <template v-if="book.description">
-                  · {{ book.description }}</template
-                >
+                <template v-if="book.description"> · {{ book.description }}</template>
               </span>
             </span>
             <Badge
@@ -934,13 +839,8 @@ async function deleteCharacter() {
           {{ lorebookError }}
         </p>
         <DialogFooter>
-          <Button variant="outline" @click="lorebookDialogOpen = false"
-            >取消</Button
-          >
-          <Button
-            :disabled="lorebookLoading || lorebookSaving"
-            @click="saveCharacterLorebooks"
-          >
+          <Button variant="outline" @click="lorebookDialogOpen = false">取消</Button>
+          <Button :disabled="lorebookLoading || lorebookSaving" @click="saveCharacterLorebooks">
             <Loader2 v-if="lorebookSaving" class="animate-spin" :size="15" />
             保存绑定
           </Button>

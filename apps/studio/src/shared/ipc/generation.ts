@@ -95,9 +95,7 @@ export const generationChannels = {
 
 export interface GenerationApi {
   startGeneration(input: StartGenerationInput): Promise<StartGenerationResult>
-  startTestGeneration(
-    input: StartTestGenerationInput,
-  ): Promise<StartGenerationResult>
+  startTestGeneration(input: StartTestGenerationInput): Promise<StartGenerationResult>
   abortGeneration(input: AbortGenerationInput): Promise<void>
   onGenerationEvent(listener: (event: GenerationEvent) => void): () => void
 }

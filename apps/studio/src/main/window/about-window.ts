@@ -36,8 +36,7 @@ export function openAboutWindow(): BrowserWindow {
     aboutWindow = null
   })
   aboutWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://') || url.startsWith('http://'))
-      void shell.openExternal(url)
+    if (url.startsWith('https://') || url.startsWith('http://')) void shell.openExternal(url)
     return { action: 'deny' }
   })
 

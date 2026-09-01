@@ -13,11 +13,8 @@ import { computed } from 'vue'
 
 const studio = useStudioStore()
 const theme = useThemeStore()
-const auxiliaryWindow = new URLSearchParams(window.location.search).get(
-  'window',
-)
-const isAuxiliaryWindow =
-  auxiliaryWindow === 'settings' || auxiliaryWindow === 'about'
+const auxiliaryWindow = new URLSearchParams(window.location.search).get('window')
+const isAuxiliaryWindow = auxiliaryWindow === 'settings' || auxiliaryWindow === 'about'
 const starterBackground = computed(() =>
   theme.appearance === 'light' ? lightStarterBackground : darkStarterBackground,
 )
@@ -27,10 +24,7 @@ const starterBackground = computed(() =>
   <div class="flex h-screen flex-col overflow-hidden bg-background">
     <TitleBar v-if="!isAuxiliaryWindow" />
 
-    <div
-      v-if="isAuxiliaryWindow"
-      class="page-scroll min-h-0 flex-1 overflow-y-auto"
-    >
+    <div v-if="isAuxiliaryWindow" class="page-scroll min-h-0 flex-1 overflow-y-auto">
       <RouterView />
     </div>
 

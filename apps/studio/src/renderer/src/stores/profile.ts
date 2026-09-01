@@ -104,12 +104,8 @@ export const useProfileStore = defineStore('profile', () => {
     } else {
       apply({
         ...defaultProfile,
-        name:
-          localStorage.getItem(LEGACY_NAME_STORAGE_KEY)?.trim() ||
-          defaultProfile.name,
-        avatar:
-          localStorage.getItem(LEGACY_AVATAR_STORAGE_KEY)?.trim() ||
-          defaultProfile.avatar,
+        name: localStorage.getItem(LEGACY_NAME_STORAGE_KEY)?.trim() || defaultProfile.name,
+        avatar: localStorage.getItem(LEGACY_AVATAR_STORAGE_KEY)?.trim() || defaultProfile.avatar,
       })
     }
     window.addEventListener('storage', syncFromStorage)

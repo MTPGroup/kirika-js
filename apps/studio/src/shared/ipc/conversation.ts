@@ -160,13 +160,9 @@ export const conversationChannels = {
 export interface ConversationApi {
   listConversations(): Promise<readonly ConversationSummaryDto[]>
   createConversation(input: CreateConversationInput): Promise<ConversationDto>
-  createTestConversation(
-    input: CreateTestConversationInput,
-  ): Promise<ConversationDto>
+  createTestConversation(input: CreateTestConversationInput): Promise<ConversationDto>
   getConversation(input: ConversationIdInput): Promise<ConversationDto | null>
-  getConversationHistory(
-    input: GetConversationHistoryInput,
-  ): Promise<GetConversationHistoryResult>
+  getConversationHistory(input: GetConversationHistoryInput): Promise<GetConversationHistoryResult>
   deleteConversation(input: ConversationIdInput): Promise<void>
   renameConversation(
     input: ConversationIdInput & { readonly title: string | null },
@@ -176,21 +172,11 @@ export interface ConversationApi {
       readonly turnPolicy: ConversationTurnPolicy
     },
   ): Promise<ConversationDto>
-  addCharacterParticipant(
-    input: AddCharacterParticipantInput,
-  ): Promise<ConversationDto>
-  removeConversationParticipant(
-    input: ParticipantIdInput,
-  ): Promise<ConversationDto>
-  renameConversationParticipant(
-    input: RenameParticipantInput,
-  ): Promise<ConversationDto>
-  sendHumanMessage(
-    input: SendHumanMessageInput,
-  ): Promise<ConversationMessageDto>
-  selectConversationBranch(
-    input: SelectConversationBranchInput,
-  ): Promise<ConversationDto>
+  addCharacterParticipant(input: AddCharacterParticipantInput): Promise<ConversationDto>
+  removeConversationParticipant(input: ParticipantIdInput): Promise<ConversationDto>
+  renameConversationParticipant(input: RenameParticipantInput): Promise<ConversationDto>
+  sendHumanMessage(input: SendHumanMessageInput): Promise<ConversationMessageDto>
+  selectConversationBranch(input: SelectConversationBranchInput): Promise<ConversationDto>
   archiveConversation(input: ConversationIdInput): Promise<ConversationDto>
   restoreConversation(input: ConversationIdInput): Promise<ConversationDto>
 }

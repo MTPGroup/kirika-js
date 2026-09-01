@@ -3,13 +3,9 @@ import { workspaceChannels } from './channel.constants'
 import { invoke } from './invoke'
 
 export const workspaceApi: WorkspaceApi = {
-  openWorkspace: (input) =>
-    invoke<WorkspaceStateDto>(workspaceChannels.open, input),
-  createWorkspace: (input) =>
-    invoke<WorkspaceStateDto>(workspaceChannels.create, input),
-  getWorkspaceState: () =>
-    invoke<WorkspaceStateDto | null>(workspaceChannels.getState),
+  openWorkspace: (input) => invoke<WorkspaceStateDto>(workspaceChannels.open, input),
+  createWorkspace: (input) => invoke<WorkspaceStateDto>(workspaceChannels.create, input),
+  getWorkspaceState: () => invoke<WorkspaceStateDto | null>(workspaceChannels.getState),
   closeWorkspace: () => invoke<void>(workspaceChannels.close),
-  listRecentWorkspaces: () =>
-    invoke<readonly string[]>(workspaceChannels.listRecent),
+  listRecentWorkspaces: () => invoke<readonly string[]>(workspaceChannels.listRecent),
 }

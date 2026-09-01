@@ -58,15 +58,9 @@ export async function createStudioRuntime(
   ])
 
   const db = createSqliteDatabase(`file:${paths.dbPath}`)
-  const workspaceNamespace = createHash('sha256')
-    .update(paths.workspaceDir)
-    .digest('hex')
+  const workspaceNamespace = createHash('sha256').update(paths.workspaceDir).digest('hex')
   const credentials = new ProviderCredentialStore(
-    join(
-      app.getPath('userData'),
-      'provider-credentials',
-      `${workspaceNamespace}.json`,
-    ),
+    join(app.getPath('userData'), 'provider-credentials', `${workspaceNamespace}.json`),
   )
   const settings = await WorkspaceSettingsStore.open(
     paths.workspaceDir,
@@ -120,8 +114,7 @@ export class StudioRuntimeManager {
   ): Promise<StudioRuntime> {
     return this.runExclusive(async () => {
       const normalizedDir = normalizeWorkspaceDir(workspaceDir)
-      if (this.current?.paths.workspaceDir === normalizedDir)
-        return this.current
+      if (this.current?.paths.workspaceDir === normalizedDir) return this.current
 
       const next = await createStudioRuntime(normalizedDir, options)
       const previous = this.current
@@ -178,10 +171,7 @@ export function resolveMigrationsDir(): string {
   )
 }
 
-function resolveRuntimePaths(
-  workspaceDir: string,
-  migrationsDir?: string,
-): StudioRuntimePaths {
+function resolveRuntimePaths(workspaceDir: string, migrationsDir?: string): StudioRuntimePaths {
   const normalizedWorkspaceDir = normalizeWorkspaceDir(workspaceDir)
   const dataDir = join(normalizedWorkspaceDir, 'data')
 
@@ -191,9 +181,7 @@ function resolveRuntimePaths(
     dbPath: join(dataDir, 'studio.sqlite'),
     // Keep the existing directory name so current workspaces remain compatible.
     objectsDir: join(normalizedWorkspaceDir, 'assets'),
-    migrationsDir: migrationsDir
-      ? resolve(migrationsDir)
-      : resolveMigrationsDir(),
+    migrationsDir: migrationsDir ? resolve(migrationsDir) : resolveMigrationsDir(),
   }
 }
 

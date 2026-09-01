@@ -71,10 +71,6 @@ export interface ProviderApi {
   listProviders(): Promise<readonly ProviderDto[]>
   saveProvider(input: SaveProviderInput): Promise<ProviderDto>
   deleteProvider(input: DeleteProviderInput): Promise<void>
-  testProviderConnection(
-    input: ProviderConnectionInput,
-  ): Promise<ProviderConnectionResult>
-  listProviderModels(
-    input: ProviderConnectionInput,
-  ): Promise<ProviderModelsResult>
+  testProviderConnection(input: ProviderConnectionInput): Promise<ProviderConnectionResult>
+  listProviderModels(input: ProviderConnectionInput): Promise<ProviderModelsResult>
 }

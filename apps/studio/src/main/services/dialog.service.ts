@@ -1,10 +1,5 @@
 import { join } from 'node:path'
-import {
-  BrowserWindow,
-  dialog,
-  type OpenDialogOptions,
-  type SaveDialogOptions,
-} from 'electron'
+import { BrowserWindow, dialog, type OpenDialogOptions, type SaveDialogOptions } from 'electron'
 import type { DialogApi, FileFilterDto } from '~/shared/ipc'
 
 function filters(values?: readonly FileFilterDto[]) {
@@ -15,15 +10,11 @@ function filters(values?: readonly FileFilterDto[]) {
 }
 export function showOpenDialog(options: OpenDialogOptions) {
   const window = BrowserWindow.getFocusedWindow()
-  return window
-    ? dialog.showOpenDialog(window, options)
-    : dialog.showOpenDialog(options)
+  return window ? dialog.showOpenDialog(window, options) : dialog.showOpenDialog(options)
 }
 export function showSaveDialog(options: SaveDialogOptions) {
   const window = BrowserWindow.getFocusedWindow()
-  return window
-    ? dialog.showSaveDialog(window, options)
-    : dialog.showSaveDialog(options)
+  return window ? dialog.showSaveDialog(window, options) : dialog.showSaveDialog(options)
 }
 
 export const dialogService: DialogApi = {

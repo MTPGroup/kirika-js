@@ -12,26 +12,18 @@ const name = ref('')
 const selectedDirectory = ref<string | null>(null)
 
 async function openWorkspace() {
-  const selected = await studio.execute(() =>
-    api.selectDirectory({ title: '打开 Workspace' }),
-  )
+  const selected = await studio.execute(() => api.selectDirectory({ title: '打开 Workspace' }))
   if (selected?.path) await studio.openWorkspace(selected.path)
 }
 
 async function selectCreateDirectory() {
-  const selected = await studio.execute(() =>
-    api.selectDirectory({ title: '选择 Workspace 目录' }),
-  )
+  const selected = await studio.execute(() => api.selectDirectory({ title: '选择 Workspace 目录' }))
   if (selected?.path) selectedDirectory.value = selected.path
 }
 
 async function createWorkspace() {
   if (!selectedDirectory.value) return
-  await studio.openWorkspace(
-    selectedDirectory.value,
-    true,
-    name.value.trim() || undefined,
-  )
+  await studio.openWorkspace(selectedDirectory.value, true, name.value.trim() || undefined)
 }
 
 async function openRecent(path: string) {
@@ -49,12 +41,8 @@ async function openRecent(path: string) {
       >
         <Database :size="26" />
       </div>
-      <h1 class="mt-5 text-center text-3xl font-semibold tracking-tight">
-        Kirika Studio
-      </h1>
-      <p
-        class="mx-auto mt-2 max-w-md text-center text-sm text-muted-foreground"
-      >
+      <h1 class="mt-5 text-center text-3xl font-semibold tracking-tight">Kirika Studio</h1>
+      <p class="mx-auto mt-2 max-w-md text-center text-sm text-muted-foreground">
         打开本地 Workspace，角色、世界书和会话都将保存在你选择的目录中。
       </p>
       <div
@@ -64,40 +52,36 @@ async function openRecent(path: string) {
         {{ studio.error.message }}
       </div>
       <div class="mt-7 grid gap-3 sm:grid-cols-2">
-        <Button type="button" size="lg" class="h-14" @click="openWorkspace"
-          ><FolderOpen :size="18" />打开 Workspace</Button
-        >
+        <Button type="button" size="lg" class="h-14" @click="openWorkspace">
+          <FolderOpen :size="18" />打开 Workspace
+        </Button>
         <Button
           type="button"
           size="lg"
           variant="outline"
           class="h-14"
           @click="creating = !creating"
-          ><Plus :size="18" />创建 Workspace</Button
         >
+          <Plus :size="18" />创建 Workspace
+        </Button>
       </div>
-      <div
-        v-if="creating"
-        class="mt-3 flex gap-2 rounded-xl border bg-card p-3"
-      >
-        <Input
-          v-model="name"
-          placeholder="Workspace 名称（可选）"
-          @keyup.enter="createWorkspace"
-        />
+      <div v-if="creating" class="mt-3 flex gap-2 rounded-xl border bg-card p-3">
+        <Input v-model="name" placeholder="Workspace 名称（可选）" @keyup.enter="createWorkspace" />
         <Button
           type="button"
           variant="outline"
           :disabled="studio.loading"
           @click="selectCreateDirectory"
-          >选择目录</Button
         >
+          选择目录
+        </Button>
         <Button
           type="button"
           :disabled="studio.loading || !selectedDirectory"
           @click="createWorkspace"
-          >创建并打开</Button
         >
+          创建并打开
+        </Button>
       </div>
       <p
         v-if="creating && selectedDirectory"
@@ -118,9 +102,7 @@ async function openRecent(path: string) {
             @click="openRecent(path)"
           >
             <FolderOpen :size="16" class="shrink-0 text-muted-foreground" />
-            <span class="min-w-0 flex-1 truncate font-mono text-xs"
-              >{{ path }}</span
-            >
+            <span class="min-w-0 flex-1 truncate font-mono text-xs">{{ path }}</span>
           </button>
         </div>
       </section>

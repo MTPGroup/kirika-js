@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { Camera, Pencil, UserRound } from '@lucide/vue'
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@renderer/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@renderer/components/ui/avatar'
 import { Button } from '@renderer/components/ui/button'
 import {
   Dialog,
@@ -23,12 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@renderer/components/ui/dropdown-menu'
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from '@renderer/components/ui/field'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@renderer/components/ui/field'
 import { Input } from '@renderer/components/ui/input'
 import {
   Select,
@@ -118,29 +109,16 @@ function saveProfile() {
           aria-label="打开个人资料菜单"
         >
           <Avatar class="size-9 border border-sidebar-border">
-            <AvatarImage
-              v-if="profile.avatar"
-              :src="profile.avatar"
-              :alt="profile.name"
-            />
+            <AvatarImage v-if="profile.avatar" :src="profile.avatar" :alt="profile.name" />
             <AvatarFallback>{{ profile.initials }}</AvatarFallback>
           </Avatar>
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent
-        side="right"
-        align="start"
-        :side-offset="10"
-        class="w-64"
-      >
+      <DropdownMenuContent side="right" align="start" :side-offset="10" class="w-64">
         <DropdownMenuLabel class="flex items-center gap-3 p-3 font-normal">
           <Avatar class="size-12 border">
-            <AvatarImage
-              v-if="profile.avatar"
-              :src="profile.avatar"
-              :alt="profile.name"
-            />
+            <AvatarImage v-if="profile.avatar" :src="profile.avatar" :alt="profile.name" />
             <AvatarFallback>{{ profile.initials }}</AvatarFallback>
           </Avatar>
           <span class="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -167,9 +145,7 @@ function saveProfile() {
     <DialogScrollContent class="max-w-2xl gap-0 overflow-hidden p-0">
       <DialogHeader class="border-b px-6 py-4 text-left">
         <DialogTitle>编辑资料</DialogTitle>
-        <DialogDescription>
-          此资料仅保存在本机，并用于对话中的用户身份。
-        </DialogDescription>
+        <DialogDescription> 此资料仅保存在本机，并用于对话中的用户身份。 </DialogDescription>
       </DialogHeader>
 
       <form @submit.prevent="saveProfile">
@@ -182,9 +158,7 @@ function saveProfile() {
               aria-label="选择头像图片"
               @click="selectAvatar"
             >
-              <Avatar
-                class="size-24 border-2 border-background shadow-md ring-1 ring-border"
-              >
+              <Avatar class="size-24 border-2 border-background shadow-md ring-1 ring-border">
                 <AvatarImage
                   v-if="draft.avatar"
                   :key="draft.avatar"
@@ -209,15 +183,8 @@ function saveProfile() {
           <FieldGroup>
             <Field>
               <FieldLabel for="profile-name">昵称</FieldLabel>
-              <Input
-                id="profile-name"
-                v-model="draft.name"
-                maxlength="36"
-                placeholder="你的名称"
-              />
-              <FieldDescription class="text-right">
-                {{ draft.name.length }}/36
-              </FieldDescription>
+              <Input id="profile-name" v-model="draft.name" maxlength="36" placeholder="你的名称" />
+              <FieldDescription class="text-right"> {{ draft.name.length }}/36 </FieldDescription>
             </Field>
 
             <Field>
@@ -229,9 +196,7 @@ function saveProfile() {
                 placeholder="介绍一下自己"
                 class="min-h-20 resize-none"
               />
-              <FieldDescription class="text-right">
-                {{ draft.bio.length }}/80
-              </FieldDescription>
+              <FieldDescription class="text-right"> {{ draft.bio.length }}/80 </FieldDescription>
             </Field>
 
             <div class="grid gap-4 sm:grid-cols-2">
@@ -257,11 +222,7 @@ function saveProfile() {
 
               <Field>
                 <FieldLabel for="profile-birthday">生日</FieldLabel>
-                <Input
-                  id="profile-birthday"
-                  v-model="draft.birthday"
-                  type="date"
-                />
+                <Input id="profile-birthday" v-model="draft.birthday" type="date" />
               </Field>
             </div>
 
@@ -288,20 +249,14 @@ function saveProfile() {
 
               <Field>
                 <FieldLabel for="profile-region">所在地区</FieldLabel>
-                <Input
-                  id="profile-region"
-                  v-model="draft.region"
-                  placeholder="城市或地区"
-                />
+                <Input id="profile-region" v-model="draft.region" placeholder="城市或地区" />
               </Field>
             </div>
           </FieldGroup>
         </div>
 
         <DialogFooter class="border-t bg-muted/30 px-6 py-4">
-          <Button type="button" variant="outline" @click="editorOpen = false">
-            取消
-          </Button>
+          <Button type="button" variant="outline" @click="editorOpen = false"> 取消 </Button>
           <Button type="submit">保存</Button>
         </DialogFooter>
       </form>
@@ -334,12 +289,7 @@ function saveProfile() {
       </div>
 
       <DialogFooter class="border-t bg-background px-6 py-4">
-        <Button
-          type="button"
-          variant="outline"
-          :disabled="savingCrop"
-          @click="cropperOpen = false"
-        >
+        <Button type="button" variant="outline" :disabled="savingCrop" @click="cropperOpen = false">
           取消
         </Button>
         <Button type="button" :disabled="savingCrop" @click="applyCrop">

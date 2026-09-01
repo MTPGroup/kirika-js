@@ -2,26 +2,17 @@ import type {
   ChatCharacterContextResolverPort,
   ResolvedChatCharacterContext,
 } from '@kirika-js/core/chat'
-import type {
-  CharacterId,
-  CharacterRevisionId,
-} from '@kirika-js/core/domain/character'
-import {
-  type LorebookRevision,
-  LorebookRevisionId,
-} from '@kirika-js/core/domain/lorebook'
+import type { CharacterId, CharacterRevisionId } from '@kirika-js/core/domain/character'
+import { type LorebookRevision, LorebookRevisionId } from '@kirika-js/core/domain/lorebook'
 import type { StudioRuntime } from '../studio-runtime'
 
-export class SqliteCharacterContextResolver
-  implements ChatCharacterContextResolverPort
-{
+export class SqliteCharacterContextResolver implements ChatCharacterContextResolverPort {
   constructor(private readonly runtime: StudioRuntime) {}
   async resolve(
     characterId: CharacterId,
     characterRevisionId: CharacterRevisionId,
   ): Promise<ResolvedChatCharacterContext | null> {
-    const character =
-      await this.runtime.characterRepository.findById(characterId)
+    const character = await this.runtime.characterRepository.findById(characterId)
     const revision = character?.findRevision(characterRevisionId)
     if (!revision) return null
     const lorebooks: LorebookRevision[] = []
@@ -30,9 +21,7 @@ export class SqliteCharacterContextResolver
       .filter((r) => r.enabled)
       .sort((a, b) => a.ordinal - b.ordinal)) {
       const book = allLorebooks.find((item) =>
-        item.findRevision(
-          new LorebookRevisionId(reference.lorebookRevisionId.value),
-        ),
+        item.findRevision(new LorebookRevisionId(reference.lorebookRevisionId.value)),
       )
       const loreRevision = book?.findRevision(
         new LorebookRevisionId(reference.lorebookRevisionId.value),

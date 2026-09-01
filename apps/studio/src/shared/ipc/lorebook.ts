@@ -121,17 +121,9 @@ export interface LorebookApi {
   createLorebook(input: CreateLorebookInput): Promise<LorebookDto>
   getLorebook(input: LorebookIdInput): Promise<LorebookDto | null>
   deleteLorebook(input: LorebookIdInput): Promise<void>
-  updateLorebookMetadata(
-    input: UpdateLorebookMetadataInput,
-  ): Promise<LorebookDto>
-  changeLorebookVisibility(
-    input: ChangeLorebookVisibilityInput,
-  ): Promise<LorebookDto>
+  updateLorebookMetadata(input: UpdateLorebookMetadataInput): Promise<LorebookDto>
+  changeLorebookVisibility(input: ChangeLorebookVisibilityInput): Promise<LorebookDto>
   createLorebookDraft(input: LorebookIdInput): Promise<LorebookDto>
-  replaceLorebookEntries(
-    input: ReplaceLorebookEntriesInput,
-  ): Promise<LorebookDto>
-  publishLorebookRevision(
-    input: PublishLorebookRevisionInput,
-  ): Promise<LorebookDto>
+  replaceLorebookEntries(input: ReplaceLorebookEntriesInput): Promise<LorebookDto>
+  publishLorebookRevision(input: PublishLorebookRevisionInput): Promise<LorebookDto>
 }

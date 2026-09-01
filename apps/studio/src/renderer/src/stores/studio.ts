@@ -42,13 +42,12 @@ export const useStudioStore = defineStore('studio', () => {
 
   async function refreshResources() {
     if (!workspace.value) return
-    const [nextCharacters, nextLorebooks, nextConversations, nextProviders] =
-      await Promise.all([
-        api.listCharacters(),
-        api.listLorebooks(),
-        api.listConversations(),
-        api.listProviders(),
-      ])
+    const [nextCharacters, nextLorebooks, nextConversations, nextProviders] = await Promise.all([
+      api.listCharacters(),
+      api.listLorebooks(),
+      api.listConversations(),
+      api.listProviders(),
+    ])
     characters.value = nextCharacters
     lorebooks.value = nextLorebooks
     conversations.value = nextConversations
@@ -76,9 +75,7 @@ export const useStudioStore = defineStore('studio', () => {
     })
   }
 
-  async function execute<T>(
-    operation: () => Promise<T>,
-  ): Promise<T | undefined> {
+  async function execute<T>(operation: () => Promise<T>): Promise<T | undefined> {
     loading.value = true
     error.value = null
     try {

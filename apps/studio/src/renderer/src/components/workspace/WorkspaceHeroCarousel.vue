@@ -13,14 +13,11 @@ interface HeroSlide {
   alt: string
 }
 
-const modules = import.meta.glob<string>(
-  '../../assets/heros/*.{png,jpg,jpeg,webp,avif}',
-  {
-    eager: true,
-    query: '?url',
-    import: 'default',
-  },
-)
+const modules = import.meta.glob<string>('../../assets/heros/*.{png,jpg,jpeg,webp,avif}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
 
 const slides: HeroSlide[] = Object.entries(modules)
   .sort(([left], [right]) =>
@@ -54,12 +51,7 @@ const autoplay = Autoplay({
     <CarouselContent>
       <CarouselItem v-for="slide in slides" :key="slide.src">
         <div class="aspect-video overflow-hidden rounded-xl bg-muted">
-          <img
-            :src="slide.src"
-            :alt="slide.alt"
-            class="size-full object-cover"
-            draggable="false"
-          >
+          <img :src="slide.src" :alt="slide.alt" class="size-full object-cover" draggable="false">
         </div>
       </CarouselItem>
     </CarouselContent>

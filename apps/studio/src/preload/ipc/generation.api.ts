@@ -1,10 +1,6 @@
 import type { IpcRendererEvent } from 'electron'
 import { ipcRenderer } from 'electron'
-import type {
-  GenerationApi,
-  GenerationEvent,
-  StartGenerationResult,
-} from '../../shared/ipc'
+import type { GenerationApi, GenerationEvent, StartGenerationResult } from '../../shared/ipc'
 import { generationChannels } from './channel.constants'
 import { invoke } from './invoke'
 
@@ -28,8 +24,7 @@ function isGenerationEvent(value: unknown): value is GenerationEvent {
 }
 
 export const generationApi: GenerationApi = {
-  startGeneration: (input) =>
-    invoke<StartGenerationResult>(generationChannels.start, input),
+  startGeneration: (input) => invoke<StartGenerationResult>(generationChannels.start, input),
   startTestGeneration: (input) =>
     invoke<StartGenerationResult>(generationChannels.startTest, input),
   abortGeneration: (input) => invoke<void>(generationChannels.abort, input),

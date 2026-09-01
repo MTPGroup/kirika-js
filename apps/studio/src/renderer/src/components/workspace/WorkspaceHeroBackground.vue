@@ -2,14 +2,11 @@
 import { usePreferredReducedMotion } from '@vueuse/core'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
-const imageModules = import.meta.glob<string>(
-  '../../assets/heros/*.{png,jpg,jpeg,webp,avif}',
-  {
-    eager: true,
-    query: '?url',
-    import: 'default',
-  },
-)
+const imageModules = import.meta.glob<string>('../../assets/heros/*.{png,jpg,jpeg,webp,avif}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
 
 const images = Object.entries(imageModules)
   .sort(([left], [right]) =>
