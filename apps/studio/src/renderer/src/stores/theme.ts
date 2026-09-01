@@ -10,6 +10,7 @@ const CHARACTER_THEME_STORAGE_KEY = 'studio-character-theme'
 export const useThemeStore = defineStore('theme', () => {
   const appearance = ref<Appearance>('system')
   const characterTheme = ref<CharacterTheme>('kirika')
+  const themeChannel = new BroadcastChannel('kirika-theme')
 
   const systemDark = ref(false)
 
@@ -38,9 +39,25 @@ export const useThemeStore = defineStore('theme', () => {
     root.classList.add(`theme-${characterTheme.value}`)
   }
 
+  function syncTitleBar() {
+    const styles = getComputedStyle(document.documentElement)
+    const foreground = styles.getPropertyValue('--foreground').trim()
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    if (context && foreground) {
+      context.fillStyle = foreground
+    }
+    const symbolColor = context && foreground ? String(context.fillStyle) : foreground
+    void window.api.updateTitleBarOverlay({
+      color: 'rgba(0, 0, 0, 0)',
+      symbolColor,
+    })
+  }
+
   function apply() {
     applyAppearance()
     applyCharacterTheme()
+    syncTitleBar()
   }
 
   function setAppearance(value: Appearance) {
@@ -49,6 +66,8 @@ export const useThemeStore = defineStore('theme', () => {
     localStorage.setItem(APPEARANCE_STORAGE_KEY, value)
 
     applyAppearance()
+    syncTitleBar()
+    broadcastTheme()
   }
 
   function setCharacterTheme(value: CharacterTheme) {
@@ -57,6 +76,8 @@ export const useThemeStore = defineStore('theme', () => {
     localStorage.setItem(CHARACTER_THEME_STORAGE_KEY, value)
 
     applyCharacterTheme()
+    syncTitleBar()
+    broadcastTheme()
   }
 
   function toggleAppearance() {
@@ -74,6 +95,7 @@ export const useThemeStore = defineStore('theme', () => {
     ) {
       appearance.value = event.newValue
       applyAppearance()
+      syncTitleBar()
       return
     }
 
@@ -83,7 +105,33 @@ export const useThemeStore = defineStore('theme', () => {
     ) {
       characterTheme.value = event.newValue
       applyCharacterTheme()
+      syncTitleBar()
     }
+  }
+  function broadcastTheme() {
+    themeChannel.postMessage({
+      appearance: appearance.value,
+      characterTheme: characterTheme.value,
+    })
+  }
+
+  function syncFromChannel(
+    event: MessageEvent<{
+      appearance: Appearance
+      characterTheme: CharacterTheme
+    }>,
+  ) {
+    const { appearance: nextAppearance, characterTheme: nextCharacterTheme } = event.data
+    if (
+      (nextAppearance !== 'light' && nextAppearance !== 'dark' && nextAppearance !== 'system') ||
+      (nextCharacterTheme !== 'kirika' && nextCharacterTheme !== 'shirabe')
+    ) {
+      return
+    }
+
+    appearance.value = nextAppearance
+    characterTheme.value = nextCharacterTheme
+    apply()
   }
 
   function initialize() {
@@ -110,11 +158,13 @@ export const useThemeStore = defineStore('theme', () => {
     apply()
 
     window.addEventListener('storage', syncFromStorage)
+    themeChannel.addEventListener('message', syncFromChannel)
     media.addEventListener('change', (event) => {
       systemDark.value = event.matches
 
       if (appearance.value === 'system') {
         applyAppearance()
+        syncTitleBar()
       }
     })
   }

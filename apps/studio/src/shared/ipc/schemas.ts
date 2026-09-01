@@ -7,6 +7,7 @@ import { generationChannels } from './generation'
 import { lorebookChannels } from './lorebook'
 import { profileChannels } from './profile'
 import { providerChannels } from './provider'
+import { windowChannels } from './window'
 import { workspaceChannels } from './workspace'
 
 const nonEmpty = z.string().trim().min(1)
@@ -124,14 +125,18 @@ export const studioInputSchemas = {
     .strict(),
   [dialogChannels.selectDirectory]: dialogOptions.optional(),
   [dialogChannels.selectFile]: dialogOptions.extend({ filters: fileFilters }).optional(),
-  [dialogChannels.saveFile]: dialogOptions
-    .extend({
-      filters: fileFilters,
-      defaultName: z.string().max(255).optional(),
-    })
-    .optional(),
+  [dialogChannels.saveFile]: dialogOptions.extend({
+    filters: fileFilters,
+    defaultName: z.string().max(255).optional(),
+  }),
   [workspaceChannels.open]: z.object({ path: nonEmpty }).strict(),
   [workspaceChannels.create]: z.object({ path: nonEmpty, name: optionalText }).strict(),
+  [windowChannels.updateTitleBarOverlay]: z
+    .object({
+      color: z.string().min(1).max(64),
+      symbolColor: z.string().min(1).max(64),
+    })
+    .strict(),
   [providerChannels.save]: z
     .object({
       id: id.optional(),

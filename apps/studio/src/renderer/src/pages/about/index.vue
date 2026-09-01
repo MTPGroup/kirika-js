@@ -9,7 +9,8 @@ const electronVersion = __ELECTRON_VERSION__.replace('^', '')
 </script>
 
 <template>
-  <main class="flex min-h-full items-center justify-center p-8">
+  <main class="relative flex min-h-full items-center justify-center p-8">
+    <div class="app-drag absolute inset-x-0 top-0 h-11" aria-hidden="true" />
     <section class="flex w-full max-w-md flex-col items-center gap-5 text-center">
       <img :src="appIcon" alt="Kirika Studio" class="size-28 object-contain">
       <div class="flex flex-col gap-2">

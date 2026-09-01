@@ -21,6 +21,16 @@ export function openSettingsWindow(): BrowserWindow {
     show: false,
     autoHideMenuBar: true,
     title: '设置',
+    titleBarStyle: 'hidden',
+    ...(process.platform !== 'darwin'
+      ? {
+          titleBarOverlay: {
+            color: '#00000000',
+            symbolColor: '#d6d8cf',
+            height: 44,
+          },
+        }
+      : {}),
     ...(process.platform !== 'darwin' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -50,4 +60,9 @@ export function openSettingsWindow(): BrowserWindow {
   }
 
   return settingsWindow
+}
+
+export function updateSettingsWindowTitleBarOverlay(color: string, symbolColor: string): void {
+  if (process.platform === 'darwin') return
+  settingsWindow?.setTitleBarOverlay({ color, symbolColor, height: 44 })
 }

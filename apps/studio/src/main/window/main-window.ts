@@ -4,8 +4,10 @@ import { BrowserWindow, shell } from 'electron'
 import icon from '../../../resources/icon.png?asset'
 import { generationService } from '../services/generation.service'
 
+let mainWindow: BrowserWindow | null = null
+
 export function createMainWindow(): void {
-  const mainWindow = new BrowserWindow({
+  const window = new BrowserWindow({
     width: 1200,
     height: 800,
     minHeight: 900,
@@ -26,6 +28,7 @@ export function createMainWindow(): void {
       : {
           titleBarOverlay: {
             height: 44,
+            color: '#00000000',
           },
         }),
 
@@ -40,19 +43,20 @@ export function createMainWindow(): void {
       sandbox: true,
     },
   })
+  mainWindow = window
 
-  const ownerWebContentsId = mainWindow.webContents.id
-  mainWindow.webContents.once('destroyed', () => {
+  const ownerWebContentsId = window.webContents.id
+  window.webContents.once('destroyed', () => {
     void generationService.abortByOwner(ownerWebContentsId).catch((error) => {
       console.error('取消窗口生成任务失败', error)
     })
   })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+  window.on('ready-to-show', () => {
+    window.show()
   })
 
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+  window.webContents.setWindowOpenHandler(({ url }) => {
     const parsed = new URL(url)
 
     if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
@@ -65,8 +69,13 @@ export function createMainWindow(): void {
   })
 
   if (is.dev && process.env.ELECTRON_RENDERER_URL) {
-    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
+    window.loadURL(process.env.ELECTRON_RENDERER_URL)
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    window.loadFile(join(__dirname, '../renderer/index.html'))
   }
+}
+
+export function updateMainWindowTitleBarOverlay(color: string, symbolColor: string): void {
+  if (process.platform === 'darwin') return
+  mainWindow?.setTitleBarOverlay({ color, symbolColor, height: 44 })
 }

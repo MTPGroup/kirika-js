@@ -27,6 +27,7 @@ export const dialogChannels = {
 export const windowChannels = {
   openSettings: 'studio:window:open-settings',
   openAbout: 'studio:window:open-about',
+  updateTitleBarOverlay: 'studio:window:update-title-bar-overlay',
 } as const
 export const characterChannels = {
   list: 'studio:characters:list',

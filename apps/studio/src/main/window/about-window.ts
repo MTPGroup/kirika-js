@@ -22,6 +22,16 @@ export function openAboutWindow(): BrowserWindow {
     maximizable: false,
     autoHideMenuBar: true,
     title: '关于 Kirika Studio',
+    titleBarStyle: 'hidden',
+    ...(process.platform !== 'darwin'
+      ? {
+          titleBarOverlay: {
+            color: '#00000000',
+            symbolColor: '#d6d8cf',
+            height: 44,
+          },
+        }
+      : {}),
     ...(process.platform !== 'darwin' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -53,4 +63,9 @@ export function openAboutWindow(): BrowserWindow {
   }
 
   return aboutWindow
+}
+
+export function updateAboutWindowTitleBarOverlay(color: string, symbolColor: string): void {
+  if (process.platform === 'darwin') return
+  aboutWindow?.setTitleBarOverlay({ color, symbolColor, height: 44 })
 }

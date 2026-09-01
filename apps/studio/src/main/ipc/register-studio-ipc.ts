@@ -21,7 +21,13 @@ import { generationService } from '../services/generation.service'
 import { lorebookService } from '../services/lorebook.service'
 import { profileService } from '../services/profile.service'
 import { providerService, workspaceService } from '../services/workspace-provider.service'
-import { openAboutWindow, openSettingsWindow } from '../window'
+import {
+  openAboutWindow,
+  openSettingsWindow,
+  updateAboutWindowTitleBarOverlay,
+  updateMainWindowTitleBarOverlay,
+  updateSettingsWindowTitleBarOverlay,
+} from '../window'
 import { toIpcError } from './ipc-error'
 
 function result<T>(operation: () => Promise<T> | T): Promise<IpcResult<T>> {
@@ -73,6 +79,11 @@ export function registerStudioIpc(): () => void {
   })
   registerNoInput(channels, windowChannels.openAbout, () => {
     openAboutWindow()
+  })
+  register(channels, windowChannels.updateTitleBarOverlay, (input) => {
+    updateMainWindowTitleBarOverlay(input.color, input.symbolColor)
+    updateAboutWindowTitleBarOverlay(input.color, input.symbolColor)
+    updateSettingsWindowTitleBarOverlay(input.color, input.symbolColor)
   })
   registerNoInput(channels, profileChannels.selectAvatar, profileService.selectProfileAvatar)
   register(channels, profileChannels.saveAvatar, profileService.saveProfileAvatar)
