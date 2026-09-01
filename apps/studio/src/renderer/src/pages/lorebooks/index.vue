@@ -12,7 +12,6 @@ import {
   Search,
   Send,
   Trash2,
-  X,
 } from '@lucide/vue'
 import EmptyState from '@renderer/components/layout/EmptyState.vue'
 import PageHeader from '@renderer/components/layout/PageHeader.vue'
@@ -654,12 +653,8 @@ async function confirmDelete() {
             </p>
           </main>
         </div>
-        <SheetFooter class="border-t"
-          ><Badge variant="outline"
-            >{{ draftRevision ? `草稿 v${draftRevision.revisionNumber}` : currentRevision ? `已发布 v${currentRevision.revisionNumber}` : '未发布' }}</Badge
-          ><Button variant="ghost" @click="editorOpen = false"
-            ><X :size="15" />关闭</Button
-          ><Button
+        <SheetFooter class="border-t">
+          <Button
             variant="outline"
             :disabled="saving || publishing"
             @click="saveLorebook"

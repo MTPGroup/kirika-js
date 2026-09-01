@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from '@renderer/components/ui/dropdown-menu'
 import { Input } from '@renderer/components/ui/input'
+import { ScrollArea } from '@renderer/components/ui/scroll-area'
 import {
   Sheet,
   SheetContent,
@@ -600,7 +601,7 @@ async function deleteCharacter() {
     </AlertDialog>
 
     <Sheet v-model:open="editorOpen">
-      <SheetContent side="right" class="w-full overflow-y-auto sm:max-w-4xl">
+      <SheetContent side="right" class="w-full overflow-hidden sm:max-w-4xl">
         <SheetHeader>
           <SheetTitle>{{ characterForm.name || '角色编辑器' }}</SheetTitle>
           <SheetDescription>
@@ -613,198 +614,228 @@ async function deleteCharacter() {
         >
           <Loader2 class="animate-spin" />
         </div>
-        <Tabs
+        <div
           v-else-if="editorCharacter"
-          default-value="profile"
-          class="min-h-0 flex-1 px-4"
+          class="flex min-h-0 flex-1 flex-col px-4"
         >
-          <TabsList class="w-full justify-start">
-            <TabsTrigger value="profile">基础资料</TabsTrigger>
-            <TabsTrigger value="prompts">提示词</TabsTrigger>
-            <TabsTrigger value="greetings">问候语</TabsTrigger>
-            <TabsTrigger value="examples">对话示例</TabsTrigger>
-            <TabsTrigger value="assets">资源</TabsTrigger>
-            <TabsTrigger value="versions">版本</TabsTrigger>
-          </TabsList>
-          <TabsContent value="profile" class="grid gap-4 py-4 sm:grid-cols-2">
-            <div class="flex flex-col gap-1.5 text-sm font-medium">
-              角色名称
-              <Input v-model="characterForm.name" maxlength="200" />
-            </div>
-            <div class="flex flex-col gap-1.5 text-sm font-medium">
-              别名
-              <Input v-model="characterForm.alias" maxlength="200" />
-            </div>
-            <div
-              class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
-            >
-              描述
-              <Textarea v-model="characterForm.description" rows="6" />
-            </div>
-            <div
-              class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
-            >
-              性格
-              <Textarea v-model="characterForm.personality" rows="5" />
-            </div>
-            <div
-              class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
-            >
-              场景
-              <Textarea v-model="characterForm.scenario" rows="5" />
-            </div>
-          </TabsContent>
-          <TabsContent value="prompts" class="flex flex-col gap-4 py-4">
-            <div class="flex flex-col gap-1.5 text-sm font-medium">
-              系统提示词
-              <Textarea
-                v-model="characterForm.systemPrompt"
-                rows="10"
-                placeholder="支持 {{char}}、{{user}} 与 {{original}} 宏。"
-              />
-            </div>
-            <div class="flex flex-col gap-1.5 text-sm font-medium">
-              历史后指令
-              <Textarea
-                v-model="characterForm.postHistoryInstructions"
-                rows="8"
-              />
-            </div>
-          </TabsContent>
-          <TabsContent value="greetings" class="flex flex-col gap-3 py-4">
-            <div class="flex items-center justify-between">
-              <p class="text-sm text-muted-foreground">
-                至少添加一条问候语后才能发布。
-              </p>
-              <Button size="sm" variant="outline" @click="addGreeting"
-                ><Plus :size="14" />添加问候语</Button
-              >
-            </div>
-            <div
-              v-for="(_, index) in greetings"
-              :key="index"
-              class="flex items-start gap-2"
-            >
-              <Textarea
-                v-model="greetings[index]"
-                rows="4"
-                :placeholder="`问候语 ${index + 1}`"
-              />
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                @click="greetings.splice(index, 1)"
-                ><X :size="14" /></Button
-              >
-            </div>
-            <p
-              v-if="!greetings.length"
-              class="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"
-            >
-              尚未添加问候语。
-            </p>
-          </TabsContent>
-          <TabsContent value="examples" class="flex flex-col gap-3 py-4">
-            <div class="flex items-center justify-between">
-              <p class="text-sm text-muted-foreground">
-                示例会进入角色提示词，可使用 &#123;&#123;user&#125;&#125; 和
-                &#123;&#123;char&#125;&#125;。
-              </p>
-              <Button size="sm" variant="outline" @click="addExample"
-                ><CopyPlus :size="14" />添加示例</Button
-              >
-            </div>
-            <div
-              v-for="(_, index) in examples"
-              :key="index"
-              class="flex items-start gap-2"
-            >
-              <Textarea
-                v-model="examples[index]"
-                rows="6"
-                :placeholder="`示例 ${index + 1}`"
-              />
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                @click="examples.splice(index, 1)"
-                ><X :size="14" /></Button
-              >
-            </div>
-            <p
-              v-if="!examples.length"
-              class="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"
-            >
-              尚未添加对话示例。
-            </p>
-          </TabsContent>
-          <TabsContent value="assets" class="flex flex-col gap-3 py-4">
-            <div class="flex items-center justify-between">
-              <p class="text-sm text-muted-foreground">
-                资源会随角色版本保存，并可嵌入导出的 JSON 角色卡。
-              </p>
-              <Button size="sm" variant="outline" @click="addCharacterAsset"
-                ><Upload :size="14" />添加资源</Button
-              >
-            </div>
-            <div
-              v-for="(asset, index) in editorAssets"
-              :key="asset.assetId"
-              class="flex items-center gap-3 rounded-xl border p-3"
-            >
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium">{{ asset.name }}</p>
-                <p class="truncate text-xs text-muted-foreground">
-                  {{ asset.kind }}
-                  · {{ asset.uri }}
-                </p>
-              </div>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                @click="editorAssets.splice(index, 1)"
-                ><X :size="14" /></Button
-              >
-            </div>
-            <p
-              v-if="!editorAssets.length"
-              class="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"
-            >
-              尚未添加角色资源。
-            </p>
-          </TabsContent>
-          <TabsContent value="versions" class="flex flex-col gap-3 py-4">
-            <p class="text-sm text-muted-foreground">
-              已发布版本不可修改；编辑已发布角色时会自动创建下一个草稿版本。
-            </p>
-            <div
-              v-for="revision in [...editorCharacter.revisions].sort((a, b) => b.revisionNumber - a.revisionNumber)"
-              :key="revision.id"
-              class="flex items-center gap-3 rounded-xl border p-3"
-            >
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium">
-                  v{{ revision.revisionNumber }}
-                  · {{ revision.name }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                  {{ revision.isDraft ? '草稿' : '已发布' }}
-                  · {{ revision.greetings.length }} 条问候语 ·
-                  {{ revision.assets.length }}
-                  个资源
-                </p>
-              </div>
-              <Badge :variant="revision.isDraft ? 'soft' : 'success'"
-                >{{ revision.isDraft ? '草稿' : '已发布' }}</Badge
-              >
-              <Badge
-                v-if="revision.id === editorCharacter.currentRevisionId"
-                variant="outline"
-                >当前版本</Badge
-              >
-            </div>
-          </TabsContent>
-        </Tabs>
+          <Tabs default-value="profile" class="min-h-0 flex-1">
+            <TabsList class="w-full justify-start">
+              <TabsTrigger value="profile">基础资料</TabsTrigger>
+              <TabsTrigger value="prompts">提示词</TabsTrigger>
+              <TabsTrigger value="greetings">问候语</TabsTrigger>
+              <TabsTrigger value="examples">对话示例</TabsTrigger>
+              <TabsTrigger value="assets">资源</TabsTrigger>
+              <TabsTrigger value="versions">版本</TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile" class="min-h-0">
+              <ScrollArea class="h-full">
+                <div class="grid gap-4 py-4 pr-4 sm:grid-cols-2">
+                  <div class="flex flex-col gap-1.5 text-sm font-medium">
+                    角色名称
+                    <Input v-model="characterForm.name" maxlength="200" />
+                  </div>
+                  <div class="flex flex-col gap-1.5 text-sm font-medium">
+                    别名
+                    <Input v-model="characterForm.alias" maxlength="200" />
+                  </div>
+                  <div
+                    class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
+                  >
+                    描述
+                    <Textarea v-model="characterForm.description" rows="6" />
+                  </div>
+                  <div
+                    class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
+                  >
+                    性格
+                    <Textarea v-model="characterForm.personality" rows="5" />
+                  </div>
+                  <div
+                    class="flex flex-col gap-1.5 text-sm font-medium sm:col-span-2"
+                  >
+                    场景
+                    <Textarea v-model="characterForm.scenario" rows="5" />
+                  </div>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent value="prompts" class="min-h-0">
+              <ScrollArea class="h-full">
+                <div class="flex flex-col gap-4 py-4 pr-4">
+                  <div class="flex flex-col gap-1.5 text-sm font-medium">
+                    系统提示词
+                    <Textarea
+                      v-model="characterForm.systemPrompt"
+                      rows="10"
+                      placeholder="支持 {{char}}、{{user}} 与 {{original}} 宏。"
+                    />
+                  </div>
+                  <div class="flex flex-col gap-1.5 text-sm font-medium">
+                    历史后指令
+                    <Textarea
+                      v-model="characterForm.postHistoryInstructions"
+                      rows="8"
+                    />
+                  </div>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent value="greetings" class="min-h-0">
+              <ScrollArea class="h-full">
+                <div class="flex flex-col gap-3 py-4 pr-4">
+                  <div class="flex items-center justify-between">
+                    <p class="text-sm text-muted-foreground">
+                      至少添加一条问候语后才能发布。
+                    </p>
+                    <Button size="sm" variant="outline" @click="addGreeting"
+                      ><Plus :size="14" />添加问候语</Button
+                    >
+                  </div>
+                  <div
+                    v-for="(_, index) in greetings"
+                    :key="index"
+                    class="flex items-start gap-2"
+                  >
+                    <Textarea
+                      v-model="greetings[index]"
+                      rows="4"
+                      :placeholder="`问候语 ${index + 1}`"
+                    />
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      @click="greetings.splice(index, 1)"
+                      ><X :size="14" /></Button
+                    >
+                  </div>
+                  <p
+                    v-if="!greetings.length"
+                    class="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"
+                  >
+                    尚未添加问候语。
+                  </p>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent value="examples" class="min-h-0">
+              <ScrollArea class="h-full">
+                <div class="flex flex-col gap-3 py-4 pr-4">
+                  <div class="flex items-center justify-between">
+                    <p class="text-sm text-muted-foreground">
+                      示例会进入角色提示词，可使用 &#123;&#123;user&#125;&#125;
+                      和 &#123;&#123;char&#125;&#125;。
+                    </p>
+                    <Button size="sm" variant="outline" @click="addExample"
+                      ><CopyPlus :size="14" />添加示例</Button
+                    >
+                  </div>
+                  <div
+                    v-for="(_, index) in examples"
+                    :key="index"
+                    class="flex items-start gap-2"
+                  >
+                    <Textarea
+                      v-model="examples[index]"
+                      rows="6"
+                      :placeholder="`示例 ${index + 1}`"
+                    />
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      @click="examples.splice(index, 1)"
+                      ><X :size="14" /></Button
+                    >
+                  </div>
+                  <p
+                    v-if="!examples.length"
+                    class="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"
+                  >
+                    尚未添加对话示例。
+                  </p>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent value="assets" class="min-h-0">
+              <ScrollArea class="h-full">
+                <div class="flex flex-col gap-3 py-4 pr-4">
+                  <div class="flex items-center justify-between">
+                    <p class="text-sm text-muted-foreground">
+                      资源会随角色版本保存，并可嵌入导出的 JSON 角色卡。
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      @click="addCharacterAsset"
+                      ><Upload :size="14" />添加资源</Button
+                    >
+                  </div>
+                  <div
+                    v-for="(asset, index) in editorAssets"
+                    :key="asset.assetId"
+                    class="flex items-center gap-3 rounded-xl border p-3"
+                  >
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm font-medium">
+                        {{ asset.name }}
+                      </p>
+                      <p class="truncate text-xs text-muted-foreground">
+                        {{ asset.kind }}
+                        · {{ asset.uri }}
+                      </p>
+                    </div>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      @click="editorAssets.splice(index, 1)"
+                      ><X :size="14" /></Button
+                    >
+                  </div>
+                  <p
+                    v-if="!editorAssets.length"
+                    class="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"
+                  >
+                    尚未添加角色资源。
+                  </p>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent value="versions" class="min-h-0">
+              <ScrollArea class="h-full">
+                <div class="flex flex-col gap-3 py-4 pr-4">
+                  <p class="text-sm text-muted-foreground">
+                    已发布版本不可修改；编辑已发布角色时会自动创建下一个草稿版本。
+                  </p>
+                  <div
+                    v-for="revision in [...editorCharacter.revisions].sort((a, b) => b.revisionNumber - a.revisionNumber)"
+                    :key="revision.id"
+                    class="flex items-center gap-3 rounded-xl border p-3"
+                  >
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm font-medium">
+                        v{{ revision.revisionNumber }}
+                        · {{ revision.name }}
+                      </p>
+                      <p class="text-xs text-muted-foreground">
+                        {{ revision.isDraft ? '草稿' : '已发布' }}
+                        · {{ revision.greetings.length }} 条问候语 ·
+                        {{ revision.assets.length }}
+                        个资源
+                      </p>
+                    </div>
+                    <Badge :variant="revision.isDraft ? 'soft' : 'success'"
+                      >{{ revision.isDraft ? '草稿' : '已发布' }}</Badge
+                    >
+                    <Badge
+                      v-if="revision.id === editorCharacter.currentRevisionId"
+                      variant="outline"
+                      >当前版本</Badge
+                    >
+                  </div>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </div>
         <p
           v-if="editorError"
           class="mx-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
@@ -812,12 +843,6 @@ async function deleteCharacter() {
           {{ editorError }}
         </p>
         <SheetFooter class="border-t">
-          <Badge variant="outline">
-            {{ editorCharacter?.draftRevisionId ? '草稿' : '已发布' }}
-          </Badge>
-          <Button variant="ghost" @click="editorOpen = false"
-            ><X :size="15" />关闭</Button
-          >
           <Button
             variant="outline"
             :disabled="editorSaving || editorPublishing"
